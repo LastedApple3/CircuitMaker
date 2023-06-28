@@ -1,0 +1,3 @@
+board emits layout changed - triggers pins to delete themself if no longer connected
+can they do this, or does this need to be a handwritten function in board
+
