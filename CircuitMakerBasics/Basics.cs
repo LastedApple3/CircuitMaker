@@ -159,17 +159,27 @@ namespace CircuitMaker.Basics
             return $"({X}, {Y})";
         }
 
-        /*
-        void Write(this BinaryWriter bw)
+        public Pos Rotate(Rotation rotation)
         {
-            bw.Write(X);
-            bw.Write(Y);
+            if (rotation == Rotation.CLOCKWISE)
+            {
+                return new Pos(Y, -X);
+            } else if (rotation == Rotation.HALF)
+            {
+                return new Pos(-X, -Y);
+            } else if (rotation == Rotation.ANTICLOCKWISE)
+            {
+                return new Pos(-Y, X);
+            } else
+            {
+                return this;
+            }
         }
+    }
 
-        static Pos ReadPos(this BinaryReader br)
-        {
-            return new Pos(br.ReadInt32(), br.ReadInt32());
-        }//*/
+    public enum Rotation
+    {
+        ZERO, CLOCKWISE, HALF, ANTICLOCKWISE
     }
 
     readonly struct Wire
@@ -220,7 +230,7 @@ namespace CircuitMaker.Basics
         }
     }
 
-    interface IComponent // implement way to define clearance?
+    interface IComponent// implement way to define clearance?
     {
         void Place(Pos pos, Board board);
         void Remove();
@@ -230,7 +240,10 @@ namespace CircuitMaker.Basics
         Pos[] GetAllPinPositions();
 
         Pos GetComponentPos();
+        Rotation GetRotation();
         Board GetComponentBoard();
+
+        IComponent Copy();
 
         string GetComponentID();
         string GetComponentDetails();
@@ -320,79 +333,6 @@ namespace CircuitMaker.Basics
         {
             return CalculateBinOp(state1, state2, XorDef);
         }
-
-        /*
-        public static Pin.State Not(this Pin.State state)
-        {
-            switch (state)
-            {
-                case Pin.State.FLOATING: return Pin.State.FLOATING;
-                case Pin.State.LOW: return Pin.State.HIGH;
-                case Pin.State.HIGH: return Pin.State.LOW;
-                case Pin.State.ILLEGAL: return Pin.State.ILLEGAL;
-                default: return Pin.State.ILLEGAL; // shouldn't be possible, so it's illegal anyway
-            }
-        }
-
-        public static Pin.State Or(this Pin.State state1, Pin.State state2)
-        {
-            if (state1 == Pin.State.ILLEGAL || state2 == Pin.State.ILLEGAL)
-            {
-                return Pin.State.ILLEGAL;
-            }
-
-            if (state1 == Pin.State.FLOATING || state2 == Pin.State.FLOATING)
-            {
-                return Pin.State.FLOATING;
-            }
-
-            if (state1 == Pin.State.LOW && state2 == Pin.State.LOW)
-            {
-                return Pin.State.LOW;
-            }
-
-            return Pin.State.HIGH;
-        }
-
-        public static Pin.State And(this Pin.State state1, Pin.State state2)
-        {
-            if (state1 == Pin.State.ILLEGAL || state2 == Pin.State.ILLEGAL)
-            {
-                return Pin.State.ILLEGAL;
-            }
-
-            if (state1 == Pin.State.FLOATING || state2 == Pin.State.FLOATING)
-            {
-                return Pin.State.FLOATING;
-            }
-
-            if (state1 == Pin.State.HIGH && state2 == Pin.State.HIGH)
-            {
-                return Pin.State.HIGH;
-            }
-
-            return Pin.State.LOW;
-        }
-
-        public static Pin.State Xor(this Pin.State state1, Pin.State state2)
-        {
-            if (state1 == Pin.State.ILLEGAL || state2 == Pin.State.ILLEGAL)
-            {
-                return Pin.State.ILLEGAL;
-            }
-
-            if (state1 == Pin.State.FLOATING || state2 == Pin.State.FLOATING)
-            {
-                return Pin.State.FLOATING;
-            }
-
-            if (state1 == state2)
-            {
-                return Pin.State.LOW;
-            }
-
-            return Pin.State.HIGH;
-        }//*/
     }
 
     class Pin
@@ -632,7 +572,7 @@ namespace CircuitMaker.Basics
         {
             StringBuilder sb = new StringBuilder("components: ");
 
-            Func<string, string, string> listBuilder = (first, second) => first + ", " + second;
+            string listBuilder(string first, string second) => first + ", " + second;
 
             sb.Append(Components.Select(comp => comp.ToString()).Aggregate(listBuilder));
             sb.Append(", wires: ");
@@ -667,6 +607,23 @@ namespace CircuitMaker.Basics
                     return br.ReadBoard();
                 }
             }
+        }
+
+        public Board Copy(string copyName = null)
+        {
+            Board copy = new Board(copyName ?? Name + " - Copy");
+
+            foreach (IComponent comp in Components)
+            {
+                comp.Copy().Place(comp.GetComponentPos(), copy);
+            }
+
+            foreach (Wire wire in GetAllWires())
+            {
+                new Wire(wire.Pos1, wire.Pos2, copy);
+            }
+
+            return copy;
         }
     }//*/
 }

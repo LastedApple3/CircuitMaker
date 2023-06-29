@@ -30,11 +30,17 @@ namespace CircuitMaker.Components
     abstract class BaseComponent : IComponent
     {
         private Pos ComponentPos;
+        private Rotation Rotation;
         private Board ComponentBoard;
 
         public Pos GetComponentPos()
         {
             return ComponentPos;
+        }
+
+        public Rotation GetRotation()
+        {
+            return Rotation;
         }
 
         public Board GetComponentBoard()
@@ -75,6 +81,13 @@ namespace CircuitMaker.Components
         public abstract string GetComponentID();
         public abstract string GetComponentDetails();
 
+        public abstract IComponent NonStaticConstructor(string details);
+
+        public IComponent Copy()
+        {
+            return NonStaticConstructor(GetComponentDetails());
+        }
+
         public override string ToString()
         {
             return $"{GetComponentID()}:{GetComponentDetails()}@{ComponentPos}";
@@ -109,6 +122,7 @@ namespace CircuitMaker.Components
         public interface ISingInpComponent : IComponent
         {
             Pos GetInpOffset();
+            Pos GetRotatedInpOffset();
             Pos GetInpPosition();
             Pin GetInpPin();
         }
@@ -116,6 +130,7 @@ namespace CircuitMaker.Components
         public interface IMultInpComponent : IComponent
         {
             Pos[] GetInpOffsets();
+            Pos[] GetRotatedInpOffsets();
             Pos[] GetInpPositions();
             Pin[] GetInpPins();
         }
@@ -123,6 +138,7 @@ namespace CircuitMaker.Components
         public interface ISingOutpComponent : IComponent
         {
             Pos GetOutpOffset();
+            Pos GetRotatedOutpOffset();
             Pos GetOutpPosition();
             Pin GetOutpPin();
         }
@@ -130,6 +146,7 @@ namespace CircuitMaker.Components
         public interface IMultOutpComponent : IComponent
         {
             Pos[] GetOutpOffsets();
+            Pos[] GetRotatedOutpOffsets();
             Pos[] GetOutpPositions();
             Pin[] GetOutpPins();
         }
@@ -144,6 +161,11 @@ namespace CircuitMaker.Components
         public abstract class SingInpNoneOutpBaseComponent : BaseComponent, ISingInpComponent
         {
             public abstract Pos GetInpOffset();
+
+            public Pos GetRotatedInpOffset() // copy to others
+            {
+                return GetInpOffset().Rotate(GetRotation());
+            }
 
             public Pos GetInpPosition()
             {
@@ -423,6 +445,11 @@ namespace CircuitMaker.Components
 
                 throw new Exception();
             }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
         }
 
         public class VarInpOrComponent : BaseVarInpComponent
@@ -451,6 +478,11 @@ namespace CircuitMaker.Components
                 }
 
                 throw new Exception();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
             }
         }
 
@@ -481,6 +513,11 @@ namespace CircuitMaker.Components
 
                 throw new Exception();
             }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
         }
 
         public class VarInpNandComponent : BaseVarInpComponent
@@ -509,6 +546,11 @@ namespace CircuitMaker.Components
                 }
 
                 throw new Exception();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
             }
         }
 
@@ -539,6 +581,11 @@ namespace CircuitMaker.Components
 
                 throw new Exception();
             }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
         }
 
         public class VarInpXnorComponent : BaseVarInpComponent
@@ -567,6 +614,11 @@ namespace CircuitMaker.Components
                 }
 
                 throw new Exception();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
             }
         }
     }
@@ -613,6 +665,11 @@ namespace CircuitMaker.Components
 
             throw new Exception();
         }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
+        }
     }
 
     class UserToggleInpComponent : FixedStateComponent, IInteractibleComponent
@@ -641,6 +698,11 @@ namespace CircuitMaker.Components
             }
 
             throw new Exception();
+        }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
         }
     }
 
@@ -681,6 +743,11 @@ namespace CircuitMaker.Components
             public static BoardInputComponent Constructor(string details)
             {
                 return new BoardInputComponent(details);
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
             }
 
             public void SetInputState(Pin.State state)
@@ -731,6 +798,11 @@ namespace CircuitMaker.Components
                 return new BoardOutputComponent(details);
             }
 
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
+
             public Pin.State GetOutputState()
             {
                 return State;
@@ -744,7 +816,7 @@ namespace CircuitMaker.Components
 
         public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent
         {
-            Board InternalBoard;
+            public Board InternalBoard;
 
             private Pos[] InpOffsets;
             private string[] InpNames;
@@ -784,7 +856,7 @@ namespace CircuitMaker.Components
 
                 for (int i = 0; i < outputCount; i++)
                 {
-                    OutpOffsets[i] = new Pos(-5, (2 * i) - outputCount);
+                    OutpOffsets[i] = new Pos(5, (2 * i) - outputCount);
                     OutpNames[i] = outpComps[i].GetComponentName();
                 }
             }
@@ -821,6 +893,16 @@ namespace CircuitMaker.Components
             public static BoardContainerComponent Constructor(string details)
             {
                 return new BoardContainerComponent(Board.Load(details));
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
+
+            public new IComponent Copy()
+            {
+                return new BoardContainerComponent(InternalBoard.Copy());
             }
         }
     } 

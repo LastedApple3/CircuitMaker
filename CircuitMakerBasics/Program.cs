@@ -13,6 +13,28 @@ namespace CircuitMaker
 {
     internal class Program
     {
+        static void RenderComponents(Board board, int recurseLevel = 0)
+        {
+            foreach (IComponent comp in board.GetComponents())
+            {
+                Console.WriteLine(comp);
+
+                foreach (Pos pos in comp.GetAllPinPositions())
+                {
+                    Console.WriteLine(board[pos].GetStateForDisplay());
+                }
+
+                if (recurseLevel != 0 && comp is BoardContainerComponents.BoardContainerComponent boardComp)
+                {
+                    Console.WriteLine("\nRendering Internal Board Components:");
+                    RenderComponents(boardComp.InternalBoard, recurseLevel - 1);
+                    Console.WriteLine("Ending Rendering Internal Board Components");
+                }
+
+                Console.WriteLine();
+            }
+        }
+
         [STAThread]
         static void Main(string[] args)
         {
@@ -24,10 +46,10 @@ namespace CircuitMaker
 
             //Board board = Board.Load("SR-Latch.brd");
 
-            Action<string> textInteract = (str) => _ = str;
+            //Action<string> textInteract = (str) => _ = str;
 
             /*
-            Board board = new Board("SR-Latch");
+            Board board = new Board("SR-Nor-Latch");
 
             IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S");
             IBoardInputComponent Reset = new BoardContainerComponents.BoardInputComponent("R");
@@ -38,8 +60,8 @@ namespace CircuitMaker
             IBoardOutputComponent Q = new BoardContainerComponents.BoardOutputComponent("Q");
             IBoardOutputComponent QBar = new BoardContainerComponents.BoardOutputComponent("QBAR");
 
-            Reset.Place(new Pos(4, 0), board);
             Set.Place(new Pos(0, 0), board);
+            Reset.Place(new Pos(4, 0), board);
 
             QNor.Place(new Pos(4, 4), board);
             QBarNor.Place(new Pos(0, 4), board);
@@ -64,7 +86,7 @@ namespace CircuitMaker
             //*/
 
             /*
-            Board board = Board.Load("SR-Latch");
+            Board board = Board.Load("SR-Nor-Latch");
             //*/
 
             /*
@@ -79,13 +101,14 @@ namespace CircuitMaker
             };
             //*/
 
-            //*
+            /*
             Board board = new Board("test");
 
             IInteractibleComponent Set = new UserToggleInpComponent(Pin.State.LOW);
-            IInteractibleComponent Reset = new UserToggleInpComponent(Pin.State.LOW);
+            IInteractibleComponent Reset = (IInteractibleComponent)Set.Copy();
+            //IInteractibleComponent Reset = new UserToggleInpComponent(Pin.State.LOW);
 
-            IComponent srLatch = new BoardContainerComponents.BoardContainerComponent(Board.Load("SR-Latch")); // make this another constructor? it is the Constructor function.
+            IComponent srLatch = new BoardContainerComponents.BoardContainerComponent(Board.Load("SR-Nor-Latch")); // make this another constructor? it is the Constructor function.
 
             Set.Place(new Pos(0, 5), board);
             Reset.Place(new Pos(0, 0), board);
@@ -101,22 +124,13 @@ namespace CircuitMaker
             textInteract = str => { if (str == "S") { Set.Interact(); } else if (str == "R") { Reset.Interact(); } };
             //*/
 
-            //*
+            /*
             string inp;
             while (true)
             {
                 board.Tick();
 
-                foreach (IComponent comp in board.GetComponents()) {
-                    Console.WriteLine(comp);
-
-                    foreach (Pos pos in comp.GetAllPinPositions())
-                    {
-                        Console.WriteLine(board[pos].GetStateForDisplay());
-                    }
-
-                    Console.WriteLine();
-                }
+                RenderComponents(board);
 
                 textInteract(Console.ReadLine());
 

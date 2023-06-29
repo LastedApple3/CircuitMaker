@@ -36,7 +36,7 @@
             this.tblWholePage = new System.Windows.Forms.TableLayoutPanel();
             this.pnlBuilder = new System.Windows.Forms.Panel();
             this.btnSimulate = new System.Windows.Forms.Button();
-            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.tblSelector = new System.Windows.Forms.TableLayoutPanel();
             this.menuStrip.SuspendLayout();
             this.tblWholePage.SuspendLayout();
             this.SuspendLayout();
@@ -64,19 +64,19 @@
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
             this.saveToolStripMenuItem.Text = "Save";
             // 
             // saveAsToolStripMenuItem
             // 
             this.saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
             this.saveAsToolStripMenuItem.Text = "Save As";
             // 
             // loadToolStripMenuItem
             // 
             this.loadToolStripMenuItem.Name = "loadToolStripMenuItem";
-            this.loadToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.loadToolStripMenuItem.Size = new System.Drawing.Size(114, 22);
             this.loadToolStripMenuItem.Text = "Load";
             // 
             // tblWholePage
@@ -86,7 +86,7 @@
             this.tblWholePage.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
             this.tblWholePage.Controls.Add(this.pnlBuilder, 0, 0);
             this.tblWholePage.Controls.Add(this.btnSimulate, 1, 1);
-            this.tblWholePage.Controls.Add(this.tableLayoutPanel1, 0, 1);
+            this.tblWholePage.Controls.Add(this.tblSelector, 0, 1);
             this.tblWholePage.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tblWholePage.Location = new System.Drawing.Point(0, 24);
             this.tblWholePage.Name = "tblWholePage";
@@ -115,18 +115,18 @@
             this.btnSimulate.Text = "Start Simulation";
             this.btnSimulate.UseVisualStyleBackColor = true;
             // 
-            // tableLayoutPanel1
+            // tblSelector
             // 
-            this.tableLayoutPanel1.ColumnCount = 2;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(3, 379);
-            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 1;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(694, 44);
-            this.tableLayoutPanel1.TabIndex = 2;
+            this.tblSelector.ColumnCount = 2;
+            this.tblSelector.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tblSelector.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tblSelector.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.tblSelector.Location = new System.Drawing.Point(3, 379);
+            this.tblSelector.Name = "tblSelector";
+            this.tblSelector.RowCount = 1;
+            this.tblSelector.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tblSelector.Size = new System.Drawing.Size(694, 44);
+            this.tblSelector.TabIndex = 2;
             // 
             // GUIForm
             // 
@@ -154,6 +154,6 @@
         private System.Windows.Forms.TableLayoutPanel tblWholePage;
         private System.Windows.Forms.Panel pnlBuilder;
         private System.Windows.Forms.Button btnSimulate;
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.TableLayoutPanel tblSelector;
     }
 }
