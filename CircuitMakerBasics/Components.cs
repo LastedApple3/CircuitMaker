@@ -30,7 +30,7 @@ namespace CircuitMaker.Components
     abstract class BaseComponent : IComponent
     {
         private Pos ComponentPos;
-        private Rotation Rotation;
+        private Rotation ComponentRotation;
         private Board ComponentBoard;
 
         public Pos GetComponentPos()
@@ -40,7 +40,7 @@ namespace CircuitMaker.Components
 
         public Rotation GetRotation()
         {
-            return Rotation;
+            return ComponentRotation;
         }
 
         public Board GetComponentBoard()
@@ -52,12 +52,18 @@ namespace CircuitMaker.Components
 
         public void Place(Pos pos, Board board)
         {
+            Place(pos, Rotation.ZERO, board);
+        }
+
+        public void Place(Pos pos, Rotation rotation, Board board)
+        {
             if (IsPlaced)
             {
                 throw new Exception("Already placed, can't place again.");
             }
 
             ComponentPos = pos;
+            ComponentRotation = rotation;
             ComponentBoard = board;
 
             board.AddComponent(this);
@@ -117,6 +123,16 @@ namespace CircuitMaker.Components
             {
                 return comp.GetComponentBoard()[GetSingPosition(comp, SingOffset)];
             }
+
+            public static Pos ApplySingRotation(Rotation rotation, Pos SingOffsets)
+            {
+                return SingOffsets.Rotate(rotation);
+            }
+
+            public static Pos[] ApplyMultRotation(Rotation rotation, Pos[] MultOffsets)
+            {
+                return MultOffsets.Select((pos) => pos.Rotate(rotation)).ToArray();
+            }
         }
 
         public interface ISingInpComponent : IComponent
@@ -162,20 +178,22 @@ namespace CircuitMaker.Components
         {
             public abstract Pos GetInpOffset();
 
-            public Pos GetRotatedInpOffset() // copy to others
+            public Pos GetRotatedInpOffset()
             {
-                return GetInpOffset().Rotate(GetRotation());
+                return InpOutpTools.ApplySingRotation(GetRotation(), GetInpOffset());
             }
 
             public Pos GetInpPosition()
             {
-                return InpOutpTools.GetSingPosition(this, GetInpOffset());
+                return InpOutpTools.GetSingPosition(this, GetRotatedInpOffset());
             }
 
             public Pin GetInpPin()
             {
-                return InpOutpTools.GetSingPin(this, GetInpOffset());
+                return InpOutpTools.GetSingPin(this, GetRotatedInpOffset());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {
@@ -187,15 +205,22 @@ namespace CircuitMaker.Components
         {
             public abstract Pos[] GetInpOffsets();
 
+            public Pos[] GetRotatedInpOffsets()
+            {
+                return InpOutpTools.ApplyMultRotation(GetRotation(), GetInpOffsets());
+            }
+
             public Pos[] GetInpPositions()
             {
-                return InpOutpTools.GetMultPositions(this, GetInpOffsets());
+                return InpOutpTools.GetMultPositions(this, GetRotatedInpOffsets());
             }
 
             public Pin[] GetInpPins()
             {
-                return InpOutpTools.GetMultPins(this, GetInpOffsets());
+                return InpOutpTools.GetMultPins(this, GetRotatedInpOffsets());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {
@@ -207,15 +232,22 @@ namespace CircuitMaker.Components
         {
             public abstract Pos GetOutpOffset();
 
+            public Pos GetRotatedOutpOffset()
+            {
+                return InpOutpTools.ApplySingRotation(GetRotation(), GetOutpOffset());
+            }
+
             public Pos GetOutpPosition()
             {
-                return InpOutpTools.GetSingPosition(this, GetOutpOffset());
+                return InpOutpTools.GetSingPosition(this, GetRotatedOutpOffset());
             }
 
             public Pin GetOutpPin()
             {
-                return InpOutpTools.GetSingPin(this, GetOutpOffset());
+                return InpOutpTools.GetSingPin(this, GetRotatedOutpOffset());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {
@@ -227,15 +259,22 @@ namespace CircuitMaker.Components
         {
             public abstract Pos[] GetOutpOffsets();
 
+            public Pos[] GetRotatedOutpOffsets()
+            {
+                return InpOutpTools.ApplyMultRotation(GetRotation(), GetOutpOffsets());
+            }
+
             public Pos[] GetOutpPositions()
             {
-                return InpOutpTools.GetMultPositions(this, GetOutpOffsets());
+                return InpOutpTools.GetMultPositions(this, GetRotatedOutpOffsets());
             }
 
             public Pin[] GetOutpPins()
             {
-                return InpOutpTools.GetMultPins(this, GetOutpOffsets());
+                return InpOutpTools.GetMultPins(this, GetRotatedOutpOffsets());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {
@@ -248,27 +287,41 @@ namespace CircuitMaker.Components
         {
             public abstract Pos GetInpOffset();
 
+            public Pos GetRotatedInpOffset()
+            {
+                return InpOutpTools.ApplySingRotation(GetRotation(), GetInpOffset());
+            }
+
             public Pos GetInpPosition()
             {
-                return InpOutpTools.GetSingPosition(this, GetInpOffset());
+                return InpOutpTools.GetSingPosition(this, GetRotatedInpOffset());
             }
 
             public Pin GetInpPin()
             {
-                return InpOutpTools.GetSingPin(this, GetInpOffset());
+                return InpOutpTools.GetSingPin(this, GetRotatedInpOffset());
             }
+
+
 
             public abstract Pos GetOutpOffset();
 
+            public Pos GetRotatedOutpOffset()
+            {
+                return InpOutpTools.ApplySingRotation(GetRotation(), GetOutpOffset());
+            }
+
             public Pos GetOutpPosition()
             {
-                return InpOutpTools.GetSingPosition(this, GetOutpOffset());
+                return InpOutpTools.GetSingPosition(this, GetRotatedOutpOffset());
             }
 
             public Pin GetOutpPin()
             {
-                return InpOutpTools.GetSingPin(this, GetOutpOffset());
+                return InpOutpTools.GetSingPin(this, GetRotatedOutpOffset());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {
@@ -280,27 +333,41 @@ namespace CircuitMaker.Components
         {
             public abstract Pos GetInpOffset();
 
+            public Pos GetRotatedInpOffset()
+            {
+                return InpOutpTools.ApplySingRotation(GetRotation(), GetInpOffset());
+            }
+
             public Pos GetInpPosition()
             {
-                return InpOutpTools.GetSingPosition(this, GetInpOffset());
+                return InpOutpTools.GetSingPosition(this, GetRotatedInpOffset());
             }
 
             public Pin GetInpPin()
             {
-                return InpOutpTools.GetSingPin(this, GetInpOffset());
+                return InpOutpTools.GetSingPin(this, GetRotatedInpOffset());
             }
+
+
 
             public abstract Pos[] GetOutpOffsets();
 
+            public Pos[] GetRotatedOutpOffsets()
+            {
+                return InpOutpTools.ApplyMultRotation(GetRotation(), GetOutpOffsets());
+            }
+
             public Pos[] GetOutpPositions()
             {
-                return InpOutpTools.GetMultPositions(this, GetOutpOffsets());
+                return InpOutpTools.GetMultPositions(this, GetRotatedOutpOffsets());
             }
 
             public Pin[] GetOutpPins()
             {
-                return InpOutpTools.GetMultPins(this, GetOutpOffsets());
+                return InpOutpTools.GetMultPins(this, GetRotatedOutpOffsets());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {
@@ -312,27 +379,41 @@ namespace CircuitMaker.Components
         {
             public abstract Pos[] GetInpOffsets();
 
+            public Pos[] GetRotatedInpOffsets()
+            {
+                return InpOutpTools.ApplyMultRotation(GetRotation(), GetInpOffsets());
+            }
+
             public Pos[] GetInpPositions()
             {
-                return InpOutpTools.GetMultPositions(this, GetInpOffsets());
+                return InpOutpTools.GetMultPositions(this, GetRotatedInpOffsets());
             }
 
             public Pin[] GetInpPins()
             {
-                return InpOutpTools.GetMultPins(this, GetInpOffsets());
+                return InpOutpTools.GetMultPins(this, GetRotatedInpOffsets());
             }
+
+
 
             public abstract Pos GetOutpOffset();
 
+            public Pos GetRotatedOutpOffset()
+            {
+                return InpOutpTools.ApplySingRotation(GetRotation(), GetOutpOffset());
+            }
+
             public Pos GetOutpPosition()
             {
-                return InpOutpTools.GetSingPosition(this, GetOutpOffset());
+                return InpOutpTools.GetSingPosition(this, GetRotatedOutpOffset());
             }
 
             public Pin GetOutpPin()
             {
-                return InpOutpTools.GetSingPin(this, GetOutpOffset());
+                return InpOutpTools.GetSingPin(this, GetRotatedOutpOffset());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {
@@ -344,27 +425,41 @@ namespace CircuitMaker.Components
         {
             public abstract Pos[] GetInpOffsets();
 
+            public Pos[] GetRotatedInpOffsets()
+            {
+                return InpOutpTools.ApplyMultRotation(GetRotation(), GetInpOffsets());
+            }
+
             public Pos[] GetInpPositions()
             {
-                return InpOutpTools.GetMultPositions(this, GetInpOffsets());
+                return InpOutpTools.GetMultPositions(this, GetRotatedInpOffsets());
             }
 
             public Pin[] GetInpPins()
             {
-                return InpOutpTools.GetMultPins(this, GetInpOffsets());
+                return InpOutpTools.GetMultPins(this, GetRotatedInpOffsets());
             }
+
+
 
             public abstract Pos[] GetOutpOffsets();
 
+            public Pos[] GetRotatedOutpOffsets()
+            {
+                return InpOutpTools.ApplyMultRotation(GetRotation(), GetOutpOffsets());
+            }
+
             public Pos[] GetOutpPositions()
             {
-                return InpOutpTools.GetMultPositions(this, GetOutpOffsets());
+                return InpOutpTools.GetMultPositions(this, GetRotatedOutpOffsets());
             }
 
             public Pin[] GetOutpPins()
             {
-                return InpOutpTools.GetMultPins(this, GetOutpOffsets());
+                return InpOutpTools.GetMultPins(this, GetRotatedOutpOffsets());
             }
+
+
 
             public override Pos[] GetAllPinPositions()
             {

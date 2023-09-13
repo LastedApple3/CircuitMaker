@@ -142,5 +142,4 @@ namespace CircuitMaker
 
 //TODO:
 
-// 1) Create Component that contains Board.
-// 2) Construct GUI.
+// 1) Construct GUI.

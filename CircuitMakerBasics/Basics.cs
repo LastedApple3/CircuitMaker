@@ -182,6 +182,30 @@ namespace CircuitMaker.Basics
         ZERO, CLOCKWISE, HALF, ANTICLOCKWISE
     }
 
+    /*
+    static class RotationExtensions
+    {
+        public static Pos ApplyRotation(this Rotation rotation, Pos offset)
+        {
+            if (rotation == Rotation.CLOCKWISE)
+            {
+                return new Pos(offset.Y, -offset.X);
+            }
+
+            if (rotation == Rotation.ANTICLOCKWISE)
+            {
+                return new Pos(-offset.Y, offset.X);
+            }
+
+            if (rotation == Rotation.HALF)
+            {
+                return new Pos(-offset.X, -offset.Y);
+            }
+
+            return offset;
+        }
+    }//*/
+
     readonly struct Wire
     {
         public readonly Pos Pos1;
@@ -233,6 +257,7 @@ namespace CircuitMaker.Basics
     interface IComponent// implement way to define clearance?
     {
         void Place(Pos pos, Board board);
+        void Place(Pos pos, Rotation rotation, Board board);
         void Remove();
 
         void Tick();
