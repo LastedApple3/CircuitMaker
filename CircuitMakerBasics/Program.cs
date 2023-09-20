@@ -40,15 +40,17 @@ namespace CircuitMaker
         {
             ComponentRegisterer.RegisterComponents();
 
-            //Application.EnableVisualStyles();
-            //Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new GUIForm());
+            //*
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new GUIForm());
+            //*/
 
             //Board board = Board.Load("SR-Latch.brd");
 
             //Action<string> textInteract = (str) => _ = str;
 
-            /*
+            //*
             Board board = new Board("SR-Nor-Latch");
 
             IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S");
@@ -61,13 +63,13 @@ namespace CircuitMaker
             IBoardOutputComponent QBar = new BoardContainerComponents.BoardOutputComponent("QBAR");
 
             Set.Place(new Pos(0, 0), board);
-            Reset.Place(new Pos(4, 0), board);
+            Reset.Place(new Pos(0, 4), board);
 
-            QNor.Place(new Pos(4, 4), board);
-            QBarNor.Place(new Pos(0, 4), board);
+            QNor.Place(new Pos(6, 4), board);
+            QBarNor.Place(new Pos(6, 0), board);
 
-            Q.Place(new Pos(4, 8), board);
-            QBar.Place(new Pos(0, 8), board);
+            Q.Place(new Pos(12, 4), board);
+            QBar.Place(new Pos(12, 0), board);
 
             Wire[] wires = new Wire[]
             {

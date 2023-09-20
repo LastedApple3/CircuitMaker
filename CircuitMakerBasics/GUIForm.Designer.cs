@@ -34,7 +34,7 @@
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tblWholePage = new System.Windows.Forms.TableLayoutPanel();
-            this.pnlBuilder = new System.Windows.Forms.Panel();
+            this.builder = new Builder();
             this.btnSimulate = new System.Windows.Forms.Button();
             this.tblSelector = new System.Windows.Forms.TableLayoutPanel();
             this.menuStrip.SuspendLayout();
@@ -84,7 +84,7 @@
             this.tblWholePage.ColumnCount = 2;
             this.tblWholePage.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tblWholePage.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 100F));
-            this.tblWholePage.Controls.Add(this.pnlBuilder, 0, 0);
+            this.tblWholePage.Controls.Add(this.builder, 0, 0);
             this.tblWholePage.Controls.Add(this.btnSimulate, 1, 1);
             this.tblWholePage.Controls.Add(this.tblSelector, 0, 1);
             this.tblWholePage.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -96,14 +96,14 @@
             this.tblWholePage.Size = new System.Drawing.Size(800, 426);
             this.tblWholePage.TabIndex = 2;
             // 
-            // pnlBuilder
+            // builder
             // 
-            this.tblWholePage.SetColumnSpan(this.pnlBuilder, 2);
-            this.pnlBuilder.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlBuilder.Location = new System.Drawing.Point(3, 3);
-            this.pnlBuilder.Name = "pnlBuilder";
-            this.pnlBuilder.Size = new System.Drawing.Size(794, 370);
-            this.pnlBuilder.TabIndex = 0;
+            this.tblWholePage.SetColumnSpan(this.builder, 2);
+            this.builder.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.builder.Location = new System.Drawing.Point(3, 3);
+            this.builder.Name = "builder";
+            this.builder.Size = new System.Drawing.Size(794, 370);
+            this.builder.TabIndex = 0;
             // 
             // btnSimulate
             // 
@@ -152,7 +152,7 @@
         private System.Windows.Forms.ToolStripMenuItem saveAsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem loadToolStripMenuItem;
         private System.Windows.Forms.TableLayoutPanel tblWholePage;
-        private System.Windows.Forms.Panel pnlBuilder;
+        private Builder builder;
         private System.Windows.Forms.Button btnSimulate;
         private System.Windows.Forms.TableLayoutPanel tblSelector;
     }

@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace CircuitMaker.Basics
 {
@@ -254,6 +256,11 @@ namespace CircuitMaker.Basics
         }
     }
 
+    struct ColourScheme
+    {
+        public Color Background, ComponentBackground, ComponentEdge, Wire;
+    }
+
     interface IComponent// implement way to define clearance?
     {
         void Place(Pos pos, Board board);
@@ -262,6 +269,7 @@ namespace CircuitMaker.Basics
 
         void Tick();
 
+        Pos[] GetAllPinOffsets();
         Pos[] GetAllPinPositions();
 
         Pos GetComponentPos();
@@ -272,6 +280,12 @@ namespace CircuitMaker.Basics
 
         string GetComponentID();
         string GetComponentDetails();
+
+        Rectangle GetComponentBounds();
+        Rectangle GetOffsetComponentBounds();
+
+        void Render(Graphics graphics, ColourScheme colourScheme);
+        void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
     }
 
     interface IInteractibleComponent : IComponent
@@ -547,6 +561,16 @@ namespace CircuitMaker.Basics
 
         internal void AddComponent(IComponent comp)
         {
+            Rectangle collision = comp.GetOffsetComponentBounds();
+
+            foreach (IComponent otherComp in Components)
+            {
+                if (otherComp.GetOffsetComponentBounds().IntersectsWith(collision))
+                {
+                    throw new Exception("cant place on another component. this error shouldn't be in the final product");
+                }
+            }
+
             Components.Add(comp);
 
             if (comp is IBoardInputComponent inpComponent)
@@ -591,6 +615,53 @@ namespace CircuitMaker.Basics
                     Pins.Remove(pinPos);
                 }
             }
+        }
+
+        public void Render(Graphics graphics, Rectangle bounds, ColourScheme colourScheme)
+        {
+            for (int x = bounds.Left; x < bounds.Right; x++)
+            {
+                for (int y = bounds.Top; y < bounds.Bottom; y++)
+                {
+                    graphics.FillEllipse(Brushes.Black, x - 0.05F, y - 0.05F, 0.1F, 0.1F); // should make this better
+                }
+            }
+
+            Matrix matrix = new Matrix();
+
+            foreach (IComponent comp in Components)
+            {
+                matrix.Reset();
+                matrix.Translate(comp.GetComponentPos().X, comp.GetComponentPos().Y);
+                //matrix.Scale(0.01F, 0.01F);
+
+                graphics.MultiplyTransform(matrix);
+                comp.Render(graphics, colourScheme);
+
+                matrix.Invert();
+                graphics.MultiplyTransform(matrix);
+            }
+
+            /*
+            Brush[] colours = new Brush[]
+            {
+                Brushes.Black, Brushes.Red, Brushes.Green, Brushes.Blue, Brushes.Cyan, Brushes.Magenta, Brushes.Yellow
+            };
+
+            int idx = 0;
+
+            foreach (Wire wire in GetAllWires())
+            {
+                //matrix.Reset();
+
+                //graphics.MultiplyTransform(matrix);
+                graphics.DrawLine(new Pen(colours[idx], 0.1F), new Point(wire.Pos1.X, wire.Pos1.Y), new Point(wire.Pos2.X, wire.Pos2.Y));
+
+                idx++;
+
+                //matrix.Invert();
+                //graphics.MultiplyTransform(matrix);
+            }//*/
         }
 
         public override string ToString()

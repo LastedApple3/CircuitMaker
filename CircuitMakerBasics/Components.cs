@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CircuitMaker.Basics;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 
 namespace CircuitMaker.Components
 {
@@ -82,12 +84,72 @@ namespace CircuitMaker.Components
         }
 
         public abstract void Tick();
+
+        public abstract Pos[] GetAllPinOffsets();
         public abstract Pos[] GetAllPinPositions();
 
         public abstract string GetComponentID();
         public abstract string GetComponentDetails();
 
         public abstract IComponent NonStaticConstructor(string details);
+
+        public abstract void Render(Graphics graphics, ColourScheme colourScheme);
+
+        /*
+        public void Render(Graphics graphics)
+        {
+            graphics.DrawString(GetComponentID() + ":" + GetComponentDetails(), new Font("arial", 0.1F), Brushes.Black, new Point(0, 0));
+
+            foreach (Pos pinPos in GetAllPinOffsets())
+            {
+                float rad = 0.1F;
+                graphics.FillEllipse(Brushes.Black, pinPos.X - rad, pinPos.Y - rad, 2 * rad, 2 * rad);
+                graphics.DrawLine(new Pen(Color.FromArgb(128, Color.Black), 0.1F), new PointF(), new PointF(pinPos.X, pinPos.Y));
+            }
+
+            graphics.DrawRectangle(new Pen(Color.Black, 0.01F), GetComponentBounds());
+        }//*/
+
+        public abstract void RenderMainShape(Graphics graphics, ColourScheme colourScheme);/*
+        public void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+        {
+            Rectangle rect = GetDefaultComponentBounds();
+            rect.Inflate(-1, -1);
+
+            graphics.FillRectangle(new SolidBrush(colourScheme.ComponentBackground), rect);
+            graphics.DrawRectangle(new Pen(colourScheme.ComponentEdge), rect);
+        }
+        //*/
+
+        protected void DrawComponentFromPath(Graphics graphics, GraphicsPath path, ColourScheme colourScheme)
+        {
+            graphics.FillPath(new SolidBrush(colourScheme.ComponentBackground), path);
+            graphics.DrawPath(new Pen(colourScheme.ComponentEdge, 0.01F), path);
+        }
+
+        public abstract Rectangle GetComponentBounds();
+
+        //*
+        protected Rectangle GetDefaultComponentBounds()
+        {
+            Pos[] offsets = GetAllPinOffsets().Append(new Pos(0, 0)).ToArray();
+
+            return Rectangle.FromLTRB(
+                offsets.Select(offset => offset.X).Aggregate(Math.Min),
+                offsets.Select(offset => offset.Y).Aggregate(Math.Min),
+                offsets.Select(offset => offset.X).Aggregate(Math.Max),
+                offsets.Select(offset => offset.Y).Aggregate(Math.Max));
+        }//*/
+
+        public Rectangle GetOffsetComponentBounds()
+        {
+            Rectangle rect = GetComponentBounds();
+            Pos pos = GetComponentPos();
+
+            rect.Offset(pos.X, pos.Y);
+
+            return rect;
+        }
 
         public IComponent Copy()
         {
@@ -118,7 +180,7 @@ namespace CircuitMaker.Components
             {
                 return comp.GetComponentPos().Add(SingOffset);
             }
-
+            
             public static Pin GetSingPin(IComponent comp, Pos SingOffset)
             {
                 return comp.GetComponentBoard()[GetSingPosition(comp, SingOffset)];
@@ -132,6 +194,17 @@ namespace CircuitMaker.Components
             public static Pos[] ApplyMultRotation(Rotation rotation, Pos[] MultOffsets)
             {
                 return MultOffsets.Select((pos) => pos.Rotate(rotation)).ToArray();
+            }
+
+
+            public static void DrawInpLine(Graphics graphics, Pos inpOffset, Color wireColour)
+            {
+                graphics.DrawLine(new Pen(wireColour, 0.01F), inpOffset.X, inpOffset.Y, inpOffset.X + 1, inpOffset.Y);
+            }
+
+            public static void DrawOutpLine(Graphics graphics, Pos outpOffset, Color wireColour)
+            {
+                graphics.DrawLine(new Pen(wireColour, 0.01F), outpOffset.X, outpOffset.Y, outpOffset.X - 1, outpOffset.Y);
             }
         }
 
@@ -194,10 +267,23 @@ namespace CircuitMaker.Components
             }
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return new Pos[] { GetInpOffset() };
+            }
 
             public override Pos[] GetAllPinPositions()
             {
                 return new Pos[] { GetInpPosition() };
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                InpOutpTools.DrawInpLine(graphics, GetInpOffset(), colourScheme.Wire);
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
 
@@ -222,9 +308,26 @@ namespace CircuitMaker.Components
 
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return GetInpOffsets();
+            }
+
             public override Pos[] GetAllPinPositions()
             {
                 return GetInpPositions();
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                foreach (Pos inpOffset in GetInpOffsets())
+                {
+                    InpOutpTools.DrawInpLine(graphics, inpOffset, colourScheme.Wire);
+                }
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
 
@@ -249,9 +352,23 @@ namespace CircuitMaker.Components
 
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return new Pos[] { GetOutpOffset() };
+            }
+
             public override Pos[] GetAllPinPositions()
             {
                 return new Pos[] { GetOutpPosition() };
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                InpOutpTools.DrawOutpLine(graphics, GetOutpOffset(), colourScheme.Wire);
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
 
@@ -276,9 +393,26 @@ namespace CircuitMaker.Components
 
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return GetOutpOffsets();
+            }
+
             public override Pos[] GetAllPinPositions()
             {
                 return GetOutpPositions();
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                foreach (Pos outpOffset in GetOutpOffsets())
+                {
+                    InpOutpTools.DrawOutpLine(graphics, outpOffset, colourScheme.Wire);
+                }
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
 
@@ -323,9 +457,25 @@ namespace CircuitMaker.Components
 
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return new Pos[] { GetInpOffset(), GetOutpOffset() };
+            }
+
             public override Pos[] GetAllPinPositions()
             {
                 return new Pos[] { GetInpPosition(), GetOutpPosition() };
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                InpOutpTools.DrawInpLine(graphics, GetInpOffset(), colourScheme.Wire);
+
+                InpOutpTools.DrawOutpLine(graphics, GetOutpOffset(), colourScheme.Wire);
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
 
@@ -369,9 +519,28 @@ namespace CircuitMaker.Components
 
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return (new Pos[] { GetInpOffset() }).Concat(GetOutpOffsets()).ToArray();
+            }
+
             public override Pos[] GetAllPinPositions()
             {
                 return (new Pos[] { GetInpPosition() }).Concat(GetOutpPositions()).ToArray();
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                InpOutpTools.DrawInpLine(graphics, GetInpOffset(), colourScheme.Wire);
+
+                foreach (Pos outpOffset in GetOutpOffsets())
+                {
+                    InpOutpTools.DrawOutpLine(graphics, outpOffset, colourScheme.Wire);
+                }
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
 
@@ -415,9 +584,28 @@ namespace CircuitMaker.Components
 
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return GetInpOffsets().Append(GetOutpOffset()).ToArray();
+            }
+
             public override Pos[] GetAllPinPositions()
             {
                 return GetInpPositions().Append(GetOutpPosition()).ToArray();
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                foreach (Pos inpOffset in GetInpOffsets())
+                {
+                    InpOutpTools.DrawInpLine(graphics, inpOffset, colourScheme.Wire);
+                }
+
+                InpOutpTools.DrawOutpLine(graphics, GetOutpOffset(), colourScheme.Wire);
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
 
@@ -461,9 +649,31 @@ namespace CircuitMaker.Components
 
 
 
+            public override Pos[] GetAllPinOffsets()
+            {
+                return GetInpOffsets().Concat(GetOutpOffsets()).ToArray();
+            }
+
             public override Pos[] GetAllPinPositions()
             {
                 return GetInpPositions().Concat(GetOutpPositions()).ToArray();
+            }
+
+
+
+            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            {
+                foreach (Pos inpOffset in GetInpOffsets())
+                {
+                    InpOutpTools.DrawInpLine(graphics, inpOffset, colourScheme.Wire);
+                }
+
+                foreach (Pos outpOffset in GetOutpOffsets())
+                {
+                    InpOutpTools.DrawOutpLine(graphics, outpOffset, colourScheme.Wire);
+                }
+
+                RenderMainShape(graphics, colourScheme);
             }
         }
     }
@@ -492,9 +702,11 @@ namespace CircuitMaker.Components
                 OutpOffset = new Pos(2, 0);
                 InpOffsets = new Pos[inpCount];
 
+                int evenOffset = 1 - (inpCount % 2);
+
                 for (int inpNum = 0; inpNum < inpCount; inpNum++)
                 {
-                    InpOffsets[inpNum] = new Pos(-2, (2 * inpNum) - inpCount);
+                    InpOffsets[inpNum] = new Pos(-2, (2 * inpNum) - inpCount + evenOffset);
                 }
 
                 Details = $"{inpCount}";
@@ -510,6 +722,49 @@ namespace CircuitMaker.Components
             public override string GetComponentDetails()
             {
                 return Details;
+            }
+
+            public override Rectangle GetComponentBounds()
+            {
+                Rectangle rect = GetDefaultComponentBounds();
+                rect.Inflate(0, 1);
+                return rect;
+            }
+
+            protected void DrawNotCircle(Graphics graphics, ColourScheme colourScheme)
+            {
+                graphics.FillEllipse(new SolidBrush(colourScheme.Background), GetOutpOffset().X - 1, GetOutpOffset().Y - 0.1F, 0.2F, 0.2F);
+                graphics.DrawEllipse(new Pen(colourScheme.ComponentEdge, 0.01F), GetOutpOffset().X - 1, GetOutpOffset().Y - 0.1F, 0.2F, 0.2F);
+            }
+
+            protected void DrawAndComponent(Graphics graphics, ColourScheme colourScheme)
+            {
+                GraphicsPath path = new GraphicsPath();
+
+                float vertDist = InpOffsets.Length - 0.5F;
+
+                path.AddBeziers(new PointF[] { 
+                    new PointF(-1, -vertDist), 
+                    new PointF(1, -vertDist),
+                    new PointF(1, -vertDist),
+                    new PointF(1, 0),
+                    new PointF(1, vertDist),
+                    new PointF(1, vertDist),
+                    new PointF(-1, vertDist)
+                });
+                path.CloseFigure();
+
+                DrawComponentFromPath(graphics, path, colourScheme);
+            }
+
+            protected void DrawOrComponent(Graphics graphics, ColourScheme colourScheme)
+            {
+
+            }
+
+            protected void DrawXorComponent(Graphics graphics, ColourScheme colourScheme)
+            {
+
             }
         }
 
@@ -545,6 +800,11 @@ namespace CircuitMaker.Components
             {
                 return Constructor(details);
             }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                DrawAndComponent(graphics, colourScheme);
+            }
         }
 
         public class VarInpOrComponent : BaseVarInpComponent
@@ -578,6 +838,11 @@ namespace CircuitMaker.Components
             public override IComponent NonStaticConstructor(string details)
             {
                 return Constructor(details);
+            }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                DrawOrComponent(graphics, colourScheme);
             }
         }
 
@@ -613,6 +878,11 @@ namespace CircuitMaker.Components
             {
                 return Constructor(details);
             }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                DrawXorComponent(graphics, colourScheme);
+            }
         }
 
         public class VarInpNandComponent : BaseVarInpComponent
@@ -646,6 +916,12 @@ namespace CircuitMaker.Components
             public override IComponent NonStaticConstructor(string details)
             {
                 return Constructor(details);
+            }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                DrawAndComponent(graphics, colourScheme);
+                DrawNotCircle(graphics, colourScheme);
             }
         }
 
@@ -681,6 +957,12 @@ namespace CircuitMaker.Components
             {
                 return Constructor(details);
             }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                DrawOrComponent(graphics, colourScheme);
+                DrawNotCircle(graphics, colourScheme);
+            }
         }
 
         public class VarInpXnorComponent : BaseVarInpComponent
@@ -714,6 +996,12 @@ namespace CircuitMaker.Components
             public override IComponent NonStaticConstructor(string details)
             {
                 return Constructor(details);
+            }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                DrawXorComponent(graphics, colourScheme);
+                DrawNotCircle(graphics, colourScheme);
             }
         }
     }
@@ -765,6 +1053,25 @@ namespace CircuitMaker.Components
         {
             return Constructor(details);
         }
+
+        public override Rectangle GetComponentBounds()
+        {
+            Rectangle rect = GetDefaultComponentBounds();
+            rect.Inflate(0, 1);
+            rect.Offset(-1, 0);
+            rect.Width++;
+            return rect;
+        }
+
+        public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+        {
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddLines(new PointF[] { new PointF(-0.5F, -0.5F), new PointF(0.5F, -0.5F), new PointF(1, 0), new PointF(0.5F, 0.5F), new PointF(-0.5F, 0.5F) });
+            path.CloseFigure();
+
+            DrawComponentFromPath(graphics, path, colourScheme);
+        }
     }
 
     class UserToggleInpComponent : FixedStateComponent, IInteractibleComponent
@@ -810,7 +1117,7 @@ namespace CircuitMaker.Components
 
             public override Pos GetOutpOffset()
             {
-                return new Pos(0, 2);
+                return new Pos(2, 0);
             }
 
             public string GetComponentName()
@@ -854,6 +1161,25 @@ namespace CircuitMaker.Components
             {
                 GetOutpPin().SetState(State);
             }
+
+            public override Rectangle GetComponentBounds()
+            {
+                Rectangle rect = GetDefaultComponentBounds();
+                rect.Inflate(0, 1);
+                rect.Offset(-1, 0);
+                rect.Width++;
+                return rect;
+            }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                GraphicsPath path = new GraphicsPath();
+
+                path.AddLines(new PointF[] { new PointF(-1.5F, -0.5F), new PointF(0.5F, -0.5F), new PointF(1, 0), new PointF(0.5F, 0.5F), new PointF(-1.5F, 0.5F) });
+                path.CloseFigure();
+
+                DrawComponentFromPath(graphics, path, colourScheme);
+            }
         }
 
         public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent
@@ -863,7 +1189,7 @@ namespace CircuitMaker.Components
 
             public override Pos GetInpOffset()
             {
-                return new Pos(0, -2);
+                return new Pos(-2, 0);
             }
 
             public string GetComponentName()
@@ -906,6 +1232,24 @@ namespace CircuitMaker.Components
             public override void Tick()
             {
                 State = GetInpPin().GetStateForComponent();
+            }
+
+            public override Rectangle GetComponentBounds()
+            {
+                Rectangle rect = GetDefaultComponentBounds();
+                rect.Inflate(0, 1);
+                rect.Width++;
+                return rect;
+            }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                GraphicsPath path = new GraphicsPath();
+
+                path.AddLines(new PointF[] { new PointF(1.5F, -0.5F), new PointF(-0.5F, -0.5F), new PointF(-1, 0), new PointF(-0.5F, 0.5F), new PointF(1.5F, 0.5F) });
+                path.CloseFigure();
+
+                DrawComponentFromPath(graphics, path, colourScheme);
             }
         }
 
@@ -998,6 +1342,22 @@ namespace CircuitMaker.Components
             public new IComponent Copy()
             {
                 return new BoardContainerComponent(InternalBoard.Copy());
+            }
+
+            public override Rectangle GetComponentBounds()
+            {
+                Rectangle rect = GetDefaultComponentBounds();
+                rect.Inflate(0, 1);
+                return rect;
+            }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                Rectangle rect = GetDefaultComponentBounds();
+                rect.Inflate(-1, -1);
+
+                graphics.FillRectangle(new SolidBrush(colourScheme.ComponentBackground), rect);
+                graphics.DrawRectangle(new Pen(colourScheme.ComponentEdge), rect);
             }
         }
     } 
