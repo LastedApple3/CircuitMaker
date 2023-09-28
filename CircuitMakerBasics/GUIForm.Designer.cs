@@ -114,6 +114,7 @@
             this.btnSimulate.TabIndex = 1;
             this.btnSimulate.Text = "Start Simulation";
             this.btnSimulate.UseVisualStyleBackColor = true;
+            this.btnSimulate.Click += BtnSimulate_Click;
             // 
             // tblSelector
             // 
@@ -142,7 +143,19 @@
             this.tblWholePage.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
+        }
 
+        private void BtnSimulate_Click(object sender, System.EventArgs e)
+        {
+            builder.SetSimulation(!builder.Simulating);
+
+            if (builder.Simulating)
+            {
+                btnSimulate.Text = "Stop Simulation";
+            } else
+            {
+                btnSimulate.Text = "Start Simulation";
+            }
         }
 
         #endregion

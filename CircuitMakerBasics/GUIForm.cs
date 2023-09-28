@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+//using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -22,14 +22,29 @@ namespace CircuitMaker.GUI
 
     public class Builder : UserControl
     {
-        protected bool panning;
-        protected Point panLastMouseLocation;
+        private enum DragType
+        {
+            None, Pan, MoveComponent, DrawWire
+        }
+
+        private DragType dragType = DragType.None;
+
+        private Point panLastMouseLocation;
+
+        private IComponent dragComp;
+        private Pos dragResetPos;
+        private Rotation dragResetRot;
+        private Rotation dragNewRot;
 
         protected Matrix transformationMatrix;
 
         private Board board;
 
         private ColourScheme colourScheme;
+
+        public bool Simulating { get; private set; } = false;
+
+        private Timer simulationTimer;
 
         public Builder()
         {
@@ -38,14 +53,65 @@ namespace CircuitMaker.GUI
             transformationMatrix = new Matrix();
             transformationMatrix.Scale(10, 10);
 
+            /*
             colourScheme = new ColourScheme();
+
             colourScheme.Background = Color.White;
             colourScheme.ComponentEdge = Color.Black;
             colourScheme.ComponentBackground = Color.LightYellow;
             colourScheme.Wire = Color.Black;
+            colourScheme.WireFloating = Color.Gray;
+            colourScheme.WireLow = Color.DarkBlue;
+            colourScheme.WireHigh = Color.Blue;
+            colourScheme.WireIllegal = Color.Red;
+            //*/
+
+            //*
+            colourScheme = new ColourScheme
+            {
+                Background = Color.White,
+                ComponentEdge = Color.Black,
+                ComponentBackground = Color.LightYellow,
+                Wire = Color.Black,
+                WireFloating = Color.Gray,
+                WireLow = Color.DarkBlue,
+                WireHigh = Color.Blue,
+                WireIllegal = Color.Red
+            };
+            //*/
+
+            simulationTimer = new Timer();
+            simulationTimer.Interval = 100;
+            simulationTimer.Enabled = false;
+            simulationTimer.Tick += SimulationTick;
 
             //board = new Board("current build");
             board = Board.Load("SR-Nor-Latch");
+        }
+
+        public void SetSimulation(bool simulate)
+        {
+            if (dragType == DragType.None)
+            {
+                Simulating = simulate;
+                simulationTimer.Enabled = simulate;
+
+                if (Simulating)
+                {
+                    board.ResetForSimulation();
+                } else {
+                    board.ResetToFloating();
+                }
+
+                Invalidate();
+            }
+        }
+
+        private void SimulationTick(object sender, EventArgs e)
+        {
+            board.Tick();
+
+            Invalidate();
         }
 
         private Matrix GetInvertedTransformationMatrix()
@@ -62,10 +128,10 @@ namespace CircuitMaker.GUI
             return points[0];
         }
 
-        private PointF DetransformPoint(PointF point)
+        private PointF DetransformPointF(PointF point)
         {
             PointF[] points = new PointF[] { point };
-            DetransformPoints(points);
+            DetransformPointFs(points);
             return points[0];
         }
 
@@ -74,14 +140,31 @@ namespace CircuitMaker.GUI
             GetInvertedTransformationMatrix().TransformPoints(points);
         }
 
-        private void DetransformPoints(PointF[] points)
+        private void DetransformPointFs(PointF[] points)
         {
             GetInvertedTransformationMatrix().TransformPoints(points);
+        }
+
+        private IComponent GetClickedComponent(Point mouseLoc)
+        {
+            PointF mousePos = DetransformPointF(mouseLoc);
+
+            foreach (IComponent comp in board.GetComponents())
+            {
+                if (((RectangleF)comp.GetOffsetComponentBounds()).Contains(mousePos))
+                {
+                    return comp;
+                }
+            }
+
+            return null;
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
+
+            //Console.WriteLine(transformationMatrix.Elements.Select(f => f.ToString()).Aggregate((s1, s2) => s1 + ", " + s2));
 
             Graphics graphics = e.Graphics;
 
@@ -119,25 +202,118 @@ namespace CircuitMaker.GUI
             Invalidate();
         }
 
+        protected override void OnMouseClick(MouseEventArgs e) // see notes.txt <------------------------------------------------------------------- next thing to do
+        {
+            base.OnMouseClick(e);
+
+            if (e.Button == MouseButtons.Left)
+            {
+                if (Simulating)
+                {
+                    IComponent comp = GetClickedComponent(e.Location);
+
+                    Console.WriteLine(comp == null ? "NONE" : comp.ToString());
+
+                    if (comp != null)
+                    {
+                        if (comp is IInteractibleComponent intComp)
+                        {
+                            Console.WriteLine("interacting");
+
+                            intComp.Interact();
+
+                            Invalidate();
+                        }
+                    }
+                } else
+                {
+                    if (dragType == DragType.DrawWire)
+                    {
+                        // finish current wire
+                        // start new wire
+                    } else if (dragType == DragType.None && GetClickedComponent(e.Location) == null)
+                    {
+                        dragType = DragType.DrawWire;
+                        // start new wire
+                    }
+                }
+            }
+        }
+
+        protected override void OnMouseDoubleClick(MouseEventArgs e)
+        {
+            base.OnMouseDoubleClick(e);
+
+            if (e.Button == MouseButtons.Left && !Simulating)
+            {
+                if (dragType == DragType.DrawWire)
+                {
+                    dragType = DragType.None;
+                }
+            }
+        }
+
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
 
-            if (e.Button == MouseButtons.Right)
+            if (dragType == DragType.None)
             {
-                panning = true;
+                if (e.Button == MouseButtons.Left && !Simulating)
+                {
+                    dragType = DragType.MoveComponent;
 
-                panLastMouseLocation = e.Location;
+                    IComponent comp = GetClickedComponent(e.Location);
+
+                    if (comp != null)
+                    {
+                        dragComp = comp;
+
+                        dragResetPos = comp.GetComponentPos();
+                        dragResetRot = comp.GetComponentRotation();
+
+                        comp.Remove();
+
+                        Invalidate();
+                    }
+                } else if (e.Button == MouseButtons.Right)
+                {
+                    dragType = DragType.Pan;
+
+                    panLastMouseLocation = e.Location;
+                }
             }
         }
 
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
-
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Left && dragType == DragType.MoveComponent && !Simulating)
             {
-                panning = false;
+                dragType = DragType.None;
+
+                Point newPos = DetransformPoint(e.Location);
+
+                Rectangle newBounds = dragComp.GetComponentBounds();
+                Matrix matrix = dragComp.GetRenderMatrix();
+
+                Point[] corners = new Point[] { new Point(newBounds.Left, newBounds.Top), new Point(newBounds.Right, newBounds.Bottom) };
+                matrix.TransformPoints(corners);
+
+                newBounds = Rectangle.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
+
+                if (board.CheckAllowed(newBounds))
+                {
+                    dragComp.Place(new Pos(newPos.X, newPos.Y), dragNewRot, board);
+                } else
+                {
+                    dragComp.Place(dragResetPos, dragResetRot, board);
+                }
+
+                Invalidate();
+            } else if (e.Button == MouseButtons.Right && dragType == DragType.Pan)
+            {
+                dragType = DragType.None;
             }
         }
 
@@ -145,10 +321,10 @@ namespace CircuitMaker.GUI
         {
             base.OnMouseMove(e);
 
-            if (panning)
+            if (dragType == DragType.Pan)
             {
                 PointF[] locs = new PointF[] { e.Location, panLastMouseLocation };
-                DetransformPoints(locs);
+                DetransformPointFs(locs);
 
                 transformationMatrix.Translate(locs[0].X - locs[1].X, locs[0].Y - locs[1].Y);
 
@@ -162,79 +338,30 @@ namespace CircuitMaker.GUI
         {
             base.OnMouseWheel(e);
 
-            if (!panning)
+            if (dragType == DragType.None)
             {
                 float scale = (Math.Sign(e.Delta) * 0.1F) + 1;
 
-                Point[] locs = new Point[] { e.Location };
+                PointF loc = DetransformPointF(e.Location);
 
-                DetransformPoints(locs);
+                transformationMatrix.Translate(loc.X, loc.Y);
 
-                transformationMatrix.Translate(locs[0].X, locs[0].Y);
                 transformationMatrix.Scale(scale, scale);
-                transformationMatrix.Translate(-locs[0].X, -locs[0].Y);
+
+                float[] elements = transformationMatrix.Elements;
+
+                transformationMatrix.Scale(
+                    Math.Min(elements[0], 100F) / elements[0],
+                    Math.Min(elements[3], 100F) / elements[3]
+                );
+
+                transformationMatrix.Translate(-loc.X, -loc.Y);
 
                 Invalidate();
+            } else if (dragType == DragType.MoveComponent)
+            {
+                dragNewRot = (Rotation)(((Math.Sign(e.Delta) * 90) + ((int)dragNewRot)) % 360);
             }
         }
-    }
-
-    static class RenderTools
-    {
-        public static (Point, Point) CornersFromRect(Rectangle rect)
-        {
-            return (new Point(rect.Left, rect.Top), new Point(rect.Right, rect.Bottom));
-        }
-
-        public static Rectangle RectFromCorners(Point topLeft, Point bottomRight)
-        {
-            return new Rectangle(topLeft.X, topLeft.Y, bottomRight.X - topLeft.X, bottomRight.Y - topLeft.Y);
-        }
-    }
-
-    public struct ZoomAndPan
-    {
-        public Point PanPoint;
-        public double ZoomMult;
-
-        public int PanX
-        {
-            get { return PanPoint.X; }
-            set { PanPoint.X = value; }
-        }
-
-        public int PanY
-        {
-            get { return PanPoint.Y; }
-            set { PanPoint.Y = value; }
-        }
-
-        private int ApplyZoomMult(double val)
-        {
-            return (int)Math.Round(val * ZoomMult);
-        }
-
-        public Point TranslatePoint(Point point)
-        {
-            return new Point(
-                ApplyZoomMult(point.X + PanX),
-                ApplyZoomMult(point.Y + PanY));
-        }
-
-        public Rectangle TranslateRect(Rectangle rect)
-        {
-            //Point topLeft, bottomRight;
-
-            //(topLeft, bottomRight) = RenderTools.CornersFromRect(rect);
-
-            //return RenderTools.RectFromCorners(TranslatePoint(topLeft), TranslatePoint(bottomRight));
-
-            return new Rectangle(TranslatePoint(rect.Location), new Size(ApplyZoomMult(rect.Width), ApplyZoomMult(rect.Height)));
-        }
-    }
-
-    public struct RenderInstructions
-    {
-
     }
 }

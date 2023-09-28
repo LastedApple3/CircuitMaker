@@ -40,21 +40,41 @@ namespace CircuitMaker
         {
             ComponentRegisterer.RegisterComponents();
 
-            //*
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new GUIForm());
-            //*/
-
             //Board board = Board.Load("SR-Latch.brd");
 
             //Action<string> textInteract = (str) => _ = str;
 
+            /*
+            Board board = new Board("VarInpTests");
+
+            int inpCount = 5;
+
+            IComponent and = new VarInpComponents.VarInpAndComponent(inpCount);
+            IComponent or = new VarInpComponents.VarInpOrComponent(inpCount);
+            IComponent xor = new VarInpComponents.VarInpXorComponent(inpCount);
+            IComponent nand = new VarInpComponents.VarInpNandComponent(inpCount);
+            IComponent nor = new VarInpComponents.VarInpNorComponent(inpCount);
+            IComponent xnor = new VarInpComponents.VarInpXnorComponent(inpCount);
+
+            and.Place(new Pos(0, 0), board);
+            or.Place(new Pos(10, 0), board);
+            xor.Place(new Pos(20, 0), board);
+            nand.Place(new Pos(30, 0), board);
+            nor.Place(new Pos(40, 0), board);
+            xnor.Place(new Pos(50, 0), board);
+
+            //ReadWriteImplementation.Constructors["AND"]("5");
+
+            board.Save();
+            //*/
+
             //*
             Board board = new Board("SR-Nor-Latch");
 
-            IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S");
-            IBoardInputComponent Reset = new BoardContainerComponents.BoardInputComponent("R");
+            IComponent Fixed = new FixedStateComponent(Pin.State.LOW);
+
+            IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH);
+            IBoardInputComponent Reset = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW);
 
             IComponent QNor = new VarInpComponents.VarInpNorComponent(2);
             IComponent QBarNor = new VarInpComponents.VarInpNorComponent(2);
@@ -62,29 +82,36 @@ namespace CircuitMaker
             IBoardOutputComponent Q = new BoardContainerComponents.BoardOutputComponent("Q");
             IBoardOutputComponent QBar = new BoardContainerComponents.BoardOutputComponent("QBAR");
 
-            Set.Place(new Pos(0, 0), board);
-            Reset.Place(new Pos(0, 4), board);
+            Fixed.Place(new Pos(-10, -10), board);
+
+            Set.Place(new Pos(0, -2), board);
+            Reset.Place(new Pos(0, 5), board);
 
             QNor.Place(new Pos(6, 4), board);
-            QBarNor.Place(new Pos(6, 0), board);
+            QBarNor.Place(new Pos(6, -1), board);
 
             Q.Place(new Pos(12, 4), board);
-            QBar.Place(new Pos(12, 0), board);
+            QBar.Place(new Pos(12, -1), board);
 
             Wire[] wires = new Wire[]
             {
-                new Wire(Reset.GetAllPinPositions()[0], QNor.GetAllPinPositions()[0], board), // reset to top nor
-                new Wire(Set.GetAllPinPositions()[0], QBarNor.GetAllPinPositions()[1], board), // set to bottom nor
-                new Wire(QNor.GetAllPinPositions()[2], QBarNor.GetAllPinPositions()[0], board), // top nor out to bottom nor in
-                new Wire(QBarNor.GetAllPinPositions()[2], QNor.GetAllPinPositions()[1], board), // bottom bor out to top nor in
-                new Wire(QNor.GetAllPinPositions()[2], Q.GetAllPinPositions()[0], board), // top nor to q
-                new Wire(QBarNor.GetAllPinPositions()[2], QBar.GetAllPinPositions()[0], board), // bottom nor to qbar
+                new Wire(Reset.GetAllPinPositions()[0], QNor.GetAllPinPositions()[1], board),
+                new Wire(Set.GetAllPinPositions()[0], QBarNor.GetAllPinPositions()[0], board),
+
+                new Wire(QNor.GetAllPinPositions()[2], QNor.GetAllPinPositions()[2].Add(1, 0), board),
+                new Wire(QNor.GetAllPinPositions()[2].Add(1, 0), QNor.GetAllPinPositions()[2].Add(1, -3), board),
+                new Wire(QNor.GetAllPinPositions()[2].Add(1, -3), QBarNor.GetAllPinPositions()[1].Add(0, 1), board),
+                new Wire(QBarNor.GetAllPinPositions()[1].Add(0, 1), QBarNor.GetAllPinPositions()[1], board),
+
+                new Wire(QBarNor.GetAllPinPositions()[2], QBarNor.GetAllPinPositions()[2].Add(0, 3), board),
+                new Wire(QNor.GetAllPinPositions()[0], QNor.GetAllPinPositions()[0].Add(0, -1), board),
+                new Wire(QNor.GetAllPinPositions()[0].Add(0, -1), QBarNor.GetAllPinPositions()[2].Add(0, 3), board),
+
+                new Wire(QNor.GetAllPinPositions()[2].Add(1, 0), Q.GetAllPinPositions()[0], board),
+                new Wire(QBarNor.GetAllPinPositions()[2], QBar.GetAllPinPositions()[0], board),
             };
 
             board.Save();
-
-            Set.SetInputState(Pin.State.LOW);
-            Reset.SetInputState(Pin.State.LOW);
             //*/
 
             /*
@@ -138,6 +165,12 @@ namespace CircuitMaker
 
                 Console.Clear();
             }//*/
+
+            //*
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new GUIForm());
+            //*/
         }
     }
 }

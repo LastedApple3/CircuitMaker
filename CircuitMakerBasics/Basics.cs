@@ -181,7 +181,7 @@ namespace CircuitMaker.Basics
 
     public enum Rotation
     {
-        ZERO, CLOCKWISE, HALF, ANTICLOCKWISE
+        ZERO = 0, CLOCKWISE = 90, HALF = 180, ANTICLOCKWISE = 270
     }
 
     /*
@@ -208,7 +208,7 @@ namespace CircuitMaker.Basics
         }
     }//*/
 
-    readonly struct Wire
+    class Wire
     {
         public readonly Pos Pos1;
         public readonly Pos Pos2;
@@ -258,14 +258,42 @@ namespace CircuitMaker.Basics
 
     struct ColourScheme
     {
-        public Color Background, ComponentBackground, ComponentEdge, Wire;
+        public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WireHigh, WireIllegal;
+
+        public Color GetWireColour(Pin.State state)
+        {
+            if (state == Pin.State.FLOATING)
+            {
+                return WireFloating;
+            }
+
+            if (state == Pin.State.LOW)
+            {
+                return WireLow;
+            }
+
+            if (state == Pin.State.HIGH)
+            {
+                return WireHigh;
+            }
+
+            if (state == Pin.State.ILLEGAL)
+            {
+                return WireIllegal;
+            }
+
+            return Wire;
+        }
     }
 
-    interface IComponent// implement way to define clearance?
+    interface IComponent
     {
         void Place(Pos pos, Board board);
         void Place(Pos pos, Rotation rotation, Board board);
         void Remove();
+        bool IsPlaced();
+
+        void ResetToDefault();
 
         void Tick();
 
@@ -273,7 +301,8 @@ namespace CircuitMaker.Basics
         Pos[] GetAllPinPositions();
 
         Pos GetComponentPos();
-        Rotation GetRotation();
+        Rotation GetComponentRotation();
+        Matrix GetRenderMatrix();
         Board GetComponentBoard();
 
         IComponent Copy();
@@ -283,6 +312,9 @@ namespace CircuitMaker.Basics
 
         Rectangle GetComponentBounds();
         Rectangle GetOffsetComponentBounds();
+
+        bool HasSettings();
+        void OpenSettings();
 
         void Render(Graphics graphics, ColourScheme colourScheme);
         void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
@@ -492,7 +524,7 @@ namespace CircuitMaker.Basics
         {
             HashSet<Wire> wires = new HashSet<Wire>();
 
-            ClearUnusedPins();
+            //ClearUnusedPins();
 
             foreach (Pin pin in Pins.Values)
             {
@@ -563,7 +595,7 @@ namespace CircuitMaker.Basics
         {
             Rectangle collision = comp.GetOffsetComponentBounds();
 
-            foreach (IComponent otherComp in Components)
+            foreach (IComponent otherComp in Components) // I have a function to check this. it doesn't work <----------------------------------------------------------
             {
                 if (otherComp.GetOffsetComponentBounds().IntersectsWith(collision))
                 {
@@ -608,6 +640,25 @@ namespace CircuitMaker.Basics
                 keepPinPositions.UnionWith(comp.GetAllPinPositions());
             }
 
+            foreach (Wire wire in GetAllWires())
+            {
+                keepPinPositions.Add(wire.Pos1);
+                keepPinPositions.Add(wire.Pos2);
+            }
+
+            //*
+            HashSet<Pos> removePinPositions = new HashSet<Pos>();
+
+            removePinPositions.UnionWith(Pins.Keys);
+            removePinPositions.ExceptWith(keepPinPositions);
+
+            foreach (Pos pinPos in removePinPositions)
+            {
+                Pins.Remove(pinPos);
+            }
+            //*/
+
+            /*
             foreach (Pos pinPos in Pins.Keys)
             {
                 if (!Pins[pinPos].HasWires() && !keepPinPositions.Contains(pinPos))
@@ -615,15 +666,43 @@ namespace CircuitMaker.Basics
                     Pins.Remove(pinPos);
                 }
             }
+            //*/
         }
 
         public void Render(Graphics graphics, Rectangle bounds, ColourScheme colourScheme)
         {
+            /*
             for (int x = bounds.Left; x < bounds.Right; x++)
             {
                 for (int y = bounds.Top; y < bounds.Bottom; y++)
                 {
-                    graphics.FillEllipse(Brushes.Black, x - 0.05F, y - 0.05F, 0.1F, 0.1F); // should make this better
+                    graphics.FillEllipse(Brushes.Gray, x - 0.05F, y - 0.05F, 0.1F, 0.1F); // should make this better
+                }
+            }//*/
+
+            Pin pin;
+            int connectionCount;
+            List<Pos> compPins = new List<Pos>();
+
+            foreach (IComponent comp in Components)
+            {
+                compPins.AddRange(comp.GetAllPinPositions());
+            }
+
+            foreach (Pos pinPos in Pins.Keys)
+            {
+                if (bounds.Contains(pinPos.X, pinPos.Y))
+                {
+                    pin = Pins[pinPos];
+
+                    connectionCount = pin.GetWires().Length + compPins.Where(pinPos.Equals).Count();
+
+                    if (connectionCount != 2 && connectionCount != 0)
+                    {
+                        graphics.FillEllipse(new SolidBrush(colourScheme.GetWireColour(pin.GetStateForDisplay())), pinPos.X - 0.05F, pinPos.Y - 0.05F, 0.1F, 0.1F);
+                    }
+
+                    graphics.DrawString(pin.GetStateForDisplay().ToString(), new Font("arial", 0.1F), Brushes.Black, pinPos.X, pinPos.Y);
                 }
             }
 
@@ -631,15 +710,29 @@ namespace CircuitMaker.Basics
 
             foreach (IComponent comp in Components)
             {
-                matrix.Reset();
-                matrix.Translate(comp.GetComponentPos().X, comp.GetComponentPos().Y);
-                //matrix.Scale(0.01F, 0.01F);
+                if (comp.GetOffsetComponentBounds().IntersectsWith(bounds))
+                {
+                    /*
+                    matrix.Reset();
+                    matrix.Translate(comp.GetComponentPos().X, comp.GetComponentPos().Y);
+                    matrix.Rotate((float)comp.GetRotation());
+                    //matrix.Scale(0.01F, 0.01F);
 
-                graphics.MultiplyTransform(matrix);
-                comp.Render(graphics, colourScheme);
+                    graphics.MultiplyTransform(matrix);
+                    comp.Render(graphics, colourScheme);
 
-                matrix.Invert();
-                graphics.MultiplyTransform(matrix);
+                    matrix.Invert();
+                    graphics.MultiplyTransform(matrix);
+                    //*/
+
+                    matrix = comp.GetRenderMatrix();
+                    graphics.MultiplyTransform(matrix);
+
+                    comp.Render(graphics, colourScheme);
+
+                    matrix.Invert();
+                    graphics.MultiplyTransform(matrix);
+                }
             }
 
             /*
@@ -662,6 +755,42 @@ namespace CircuitMaker.Basics
                 //matrix.Invert();
                 //graphics.MultiplyTransform(matrix);
             }//*/
+
+            //*
+            foreach (Wire wire in GetAllWires())
+            {
+                graphics.DrawLine(new Pen(colourScheme.GetWireColour(wire.Pin1.GetStateForDisplay()), 0.01F), new Point(wire.Pos1.X, wire.Pos1.Y), new Point(wire.Pos2.X, wire.Pos2.Y));
+            }
+            //*/
+        }
+
+        public bool CheckAllowed(Rectangle bounds) // needs to consider wires too. also, doesn't exactly work <--------------------
+        {
+            foreach (IComponent comp in Components)
+            {
+                if (comp.GetOffsetComponentBounds().IntersectsWith(bounds))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public void ResetToFloating()
+        {
+            foreach (Pin pin in Pins.Values)
+            {
+                pin.SetState(Pin.State.FLOATING);
+            }
+        }
+
+        public void ResetForSimulation()
+        {
+            foreach (IComponent comp in Components)
+            {
+                comp.ResetToDefault();
+            }
         }
 
         public override string ToString()

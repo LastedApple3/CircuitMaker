@@ -1,3 +1,65 @@
-board emits layout changed - triggers pins to delete themself if no longer connected
-can they do this, or does this need to be a handwritten function in board
+right click and drag is pan always
 
+if editing:
+	if drawing wire:
+		left click puts one wire down and starts the next
+		left double click ends drawing wire
+	else if on component:
+		left click and drag is move component
+		left double click opens component settings
+	else:
+		left click starts drawing wire
+if simulating:
+	if on interactible component:
+		component.Interact
+
+states:
+	moving comp
+	drawing wire
+	panning
+	none
+
+notes:
+	add in IComponent { bool HasSettings() void OpenSettings() }
+	for drawing wire, a double click will raise MouseClick event (attach to end wire, start next) and MouseDoubleClick event (attach to discard current wire, change state)
+
+
+on MouseClick:
+	if left:
+		if simulating:
+			if on component and component is interactible:
+				component.Interact()
+		else:
+			if state == wire:
+				finish placing wire
+				start placing wire
+			else if state == none:
+				state = wire
+				start placing wire
+
+on MouseDoubleClick:
+	if left:
+		if !simulating:
+			if state == wire:
+				state = none
+			else if state == none:
+				if on component & component has settings:
+					open component settings
+
+on MouseDown:
+	if left & !simulating:
+		if state == none & on component:
+			start move comp
+			state = move
+	else if right:
+		if state == none:
+			state = pan
+
+on MouseUp:
+	if left & !simulating:
+		if state == move comp:
+			place comp
+			state = none
+	else if right:
+		if state == pan:
+			state = none
