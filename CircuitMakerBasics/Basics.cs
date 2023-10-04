@@ -310,8 +310,8 @@ namespace CircuitMaker.Basics
         string GetComponentID();
         string GetComponentDetails();
 
-        Rectangle GetComponentBounds();
-        Rectangle GetOffsetComponentBounds();
+        RectangleF GetComponentBounds();
+        RectangleF GetOffsetComponentBounds();
 
         bool HasSettings();
         void OpenSettings();
@@ -593,7 +593,7 @@ namespace CircuitMaker.Basics
 
         internal void AddComponent(IComponent comp)
         {
-            Rectangle collision = comp.GetOffsetComponentBounds();
+            RectangleF collision = comp.GetOffsetComponentBounds();
 
             foreach (IComponent otherComp in Components) // I have a function to check this. it doesn't work <----------------------------------------------------------
             {
@@ -712,49 +712,21 @@ namespace CircuitMaker.Basics
             {
                 if (comp.GetOffsetComponentBounds().IntersectsWith(bounds))
                 {
-                    /*
-                    matrix.Reset();
-                    matrix.Translate(comp.GetComponentPos().X, comp.GetComponentPos().Y);
-                    matrix.Rotate((float)comp.GetRotation());
-                    //matrix.Scale(0.01F, 0.01F);
-
-                    graphics.MultiplyTransform(matrix);
-                    comp.Render(graphics, colourScheme);
-
-                    matrix.Invert();
-                    graphics.MultiplyTransform(matrix);
-                    //*/
-
                     matrix = comp.GetRenderMatrix();
                     graphics.MultiplyTransform(matrix);
 
                     comp.Render(graphics, colourScheme);
 
+                    RectangleF compBounds = comp.GetComponentBounds();
+
+                    graphics.DrawRectangle(new Pen(Color.Red, 0.05F), compBounds.X, compBounds.Y, compBounds.Width, compBounds.Height);
+                    //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), comp.GetComponentBounds());
+                    graphics.FillEllipse(Brushes.Red, -0.05F, -0.05F, 0.1F, 0.1F);
+
                     matrix.Invert();
                     graphics.MultiplyTransform(matrix);
                 }
             }
-
-            /*
-            Brush[] colours = new Brush[]
-            {
-                Brushes.Black, Brushes.Red, Brushes.Green, Brushes.Blue, Brushes.Cyan, Brushes.Magenta, Brushes.Yellow
-            };
-
-            int idx = 0;
-
-            foreach (Wire wire in GetAllWires())
-            {
-                //matrix.Reset();
-
-                //graphics.MultiplyTransform(matrix);
-                graphics.DrawLine(new Pen(colours[idx], 0.1F), new Point(wire.Pos1.X, wire.Pos1.Y), new Point(wire.Pos2.X, wire.Pos2.Y));
-
-                idx++;
-
-                //matrix.Invert();
-                //graphics.MultiplyTransform(matrix);
-            }//*/
 
             //*
             foreach (Wire wire in GetAllWires())
@@ -764,7 +736,7 @@ namespace CircuitMaker.Basics
             //*/
         }
 
-        public bool CheckAllowed(Rectangle bounds) // needs to consider wires too. also, doesn't exactly work <--------------------
+        public bool CheckAllowed(RectangleF bounds) // needs to consider wires too. also, doesn't exactly work <--------------------
         {
             foreach (IComponent comp in Components)
             {
@@ -817,7 +789,6 @@ namespace CircuitMaker.Basics
             {
                 using (BinaryWriter bw = new BinaryWriter(file))
                 {
-                    //ReadWriteImplementation.Write(bw, this);
                     bw.Write(this);
                 }
             }

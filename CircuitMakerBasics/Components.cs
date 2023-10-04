@@ -49,8 +49,8 @@ namespace CircuitMaker.Components
         {
             Matrix matrix = new Matrix();
 
-            matrix.Translate(ComponentPos.X, ComponentPos.Y);
             matrix.Rotate((float)ComponentRotation);
+            matrix.Translate(ComponentPos.X, ComponentPos.Y);
 
             return matrix;
         }
@@ -73,7 +73,7 @@ namespace CircuitMaker.Components
         {
             if (isPlaced)
             {
-                throw new Exception("Already placed, can't place again.");
+                throw new Exception("Already placed, can't place again. This error shouldn't raise when finished.");
             }
 
             ComponentPos = pos;
@@ -117,29 +117,29 @@ namespace CircuitMaker.Components
             graphics.DrawPath(new Pen(colourScheme.ComponentEdge, 0.01F), path);
         }
 
-        public abstract Rectangle GetComponentBounds();
+        public abstract RectangleF GetComponentBounds();
 
         //*
-        protected Rectangle GetDefaultComponentBounds()
+        protected RectangleF GetDefaultComponentBounds()
         {
             Pos[] offsets = GetAllPinOffsets().Append(new Pos(0, 0)).ToArray();
 
-            return Rectangle.FromLTRB(
+            return RectangleF.FromLTRB(
                 offsets.Select(offset => offset.X).Aggregate(Math.Min),
                 offsets.Select(offset => offset.Y).Aggregate(Math.Min),
                 offsets.Select(offset => offset.X).Aggregate(Math.Max),
                 offsets.Select(offset => offset.Y).Aggregate(Math.Max));
         }//*/
 
-        public Rectangle GetOffsetComponentBounds()
+        public RectangleF GetOffsetComponentBounds()
         {
-            Rectangle rect = GetComponentBounds();
+            RectangleF rect = GetComponentBounds();
             Matrix matrix = GetRenderMatrix();
 
-            Point[] corners = new Point[] { new Point(rect.Left, rect.Top), new Point(rect.Right, rect.Bottom) };
+            PointF[] corners = { new PointF(rect.Left, rect.Top), new PointF(rect.Right, rect.Bottom) };
             matrix.TransformPoints(corners);
 
-            return Rectangle.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
+            return RectangleF.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
         }
 
         public bool HasSettings()
@@ -209,8 +209,6 @@ namespace CircuitMaker.Components
                 graphics.DrawLine(
                     new Pen(GetWireColour(inpOffset, colourScheme, comp), 0.01F), 
                     inpOffset.X, inpOffset.Y, inpOffset.X + 1.5F, inpOffset.Y);
-
-                graphics.DrawRectangle(new Pen(Color.Red, 0.1F), comp.GetComponentBounds());
             }
 
             public static void DrawOutpLine(Graphics graphics, Pos outpOffset, ColourScheme colourScheme, IComponent comp)
@@ -218,8 +216,6 @@ namespace CircuitMaker.Components
                 graphics.DrawLine(
                     new Pen(GetWireColour(outpOffset, colourScheme, comp), 0.01F),
                     outpOffset.X, outpOffset.Y, outpOffset.X - 1.5F, outpOffset.Y);
-
-                graphics.DrawRectangle(new Pen(Color.Red, 0.1F), comp.GetComponentBounds());
             }
         }
 
@@ -752,9 +748,9 @@ namespace CircuitMaker.Components
                 return Details;
             }
 
-            public override Rectangle GetComponentBounds()
+            public override RectangleF GetComponentBounds()
             {
-                Rectangle rect = GetDefaultComponentBounds();
+                RectangleF rect = GetDefaultComponentBounds();
                 rect.Inflate(0, 1);
                 return rect;
             }
@@ -1161,9 +1157,9 @@ namespace CircuitMaker.Components
             return Constructor(details);
         }
 
-        public override Rectangle GetComponentBounds()
+        public override RectangleF GetComponentBounds()
         {
-            Rectangle rect = GetDefaultComponentBounds();
+            RectangleF rect = GetDefaultComponentBounds();
             rect.Inflate(0, 1);
             rect.Offset(-1, 0);
             rect.Width++;
@@ -1445,9 +1441,9 @@ namespace CircuitMaker.Components
                 State = GetInpPin().GetStateForComponent();
             }
 
-            public override Rectangle GetComponentBounds()
+            public override RectangleF GetComponentBounds()
             {
-                Rectangle rect = GetDefaultComponentBounds();
+                RectangleF rect = GetDefaultComponentBounds();
                 rect.Inflate(0, 1);
                 rect.Width++;
                 return rect;
@@ -1562,20 +1558,20 @@ namespace CircuitMaker.Components
                 return new BoardContainerComponent(InternalBoard.Copy());
             }
 
-            public override Rectangle GetComponentBounds()
+            public override RectangleF GetComponentBounds()
             {
-                Rectangle rect = GetDefaultComponentBounds();
+                RectangleF rect = GetDefaultComponentBounds();
                 rect.Inflate(0, 1);
                 return rect;
             }
 
             public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
             {
-                Rectangle rect = GetDefaultComponentBounds();
-                rect.Inflate(-1, -1);
+                //RectangleF rect = GetDefaultComponentBounds();
+                //rect.Inflate(-1, -1);
 
-                graphics.FillRectangle(new SolidBrush(colourScheme.ComponentBackground), rect);
-                graphics.DrawRectangle(new Pen(colourScheme.ComponentEdge), rect);
+                //graphics.FillRectangle(new SolidBrush(colourScheme.ComponentBackground), rect);
+                //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), rect.X, rect.Y, rect.Width, rect.Height);
             }
         }
     } 

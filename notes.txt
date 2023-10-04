@@ -4,10 +4,13 @@ if editing:
 	if drawing wire:
 		left click puts one wire down and starts the next
 		left double click ends drawing wire
-	else if on component:
+	else if on not selected component:
+		left click is select
+	else if on selected component:
 		left click and drag is move component
 		left double click opens component settings
 	else:
+		left click deselects
 		left click starts drawing wire
 if simulating:
 	if on interactible component:
@@ -20,8 +23,15 @@ states:
 	none
 
 notes:
-	add in IComponent { bool HasSettings() void OpenSettings() }
 	for drawing wire, a double click will raise MouseClick event (attach to end wire, start next) and MouseDoubleClick event (attach to discard current wire, change state)
+
+events:
+	on MouseClick, MouseDoubleClick, MouseDown, MouseUp, MouseMove, MouseScroll
+
+	MouseDown, MouseClick, MouseUp
+	MouseDown, MouseDoubleClick, MouseUp
+
+	click and up occur together
 
 
 on MouseClick:
@@ -41,6 +51,7 @@ on MouseDoubleClick:
 	if left:
 		if !simulating:
 			if state == wire:
+				discard wire
 				state = none
 			else if state == none:
 				if on component & component has settings:

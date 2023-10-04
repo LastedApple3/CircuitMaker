@@ -31,9 +31,13 @@ namespace CircuitMaker.GUI
 
         private Point panLastMouseLocation;
 
+        //private IComponent selectedComp;
+
         private IComponent dragComp;
+        private PointF dragOffset;
         private Pos dragResetPos;
         private Rotation dragResetRot;
+        private Point dragNewPoint;
         private Rotation dragNewRot;
 
         protected Matrix transformationMatrix;
@@ -51,7 +55,7 @@ namespace CircuitMaker.GUI
             DoubleBuffered = true;
 
             transformationMatrix = new Matrix();
-            transformationMatrix.Scale(10, 10);
+            transformationMatrix.Scale(20, 20);
 
             /*
             colourScheme = new ColourScheme();
@@ -164,8 +168,6 @@ namespace CircuitMaker.GUI
         {
             base.OnPaint(e);
 
-            //Console.WriteLine(transformationMatrix.Elements.Select(f => f.ToString()).Aggregate((s1, s2) => s1 + ", " + s2));
-
             Graphics graphics = e.Graphics;
 
             graphics.ResetTransform();
@@ -179,18 +181,16 @@ namespace CircuitMaker.GUI
             DetransformPoints(corners);
 
             /*
-            int startX = corners[0].X - 1, startY = corners[0].Y - 1,
-                endX = corners[1].X + 1, endY = corners[1].Y + 1;
-
-            for (int x = startX; x <= endX; x++)
+            if (dragType == DragType.MoveComponent)
             {
-                for (int y = startY; y <= endY; y++)
-                {
-                    graphics.FillEllipse(Brushes.DarkGray, x - 0.01F, y - 0.01F, 0.02F, 0.02F);
-                }
-            }//*/
+                Matrix matrix = new Matrix();
 
-            //graphics.FillEllipse(Brushes.Green, zoomAndPan.TranslateRect(new Rectangle(-20, -10, 40, 20)));
+                matrix.Rotate((float)dragNewRot);
+                matrix.Translate(dragNewPoint.X, dragNewPoint.Y);
+
+                dragComp.Render(graphics, colourScheme);
+            }
+            //*/
 
             board.Render(graphics, Rectangle.FromLTRB(corners[0].X - 1, corners[0].Y - 1, corners[1].X + 1, corners[1].Y + 1), colourScheme);
         }
@@ -202,6 +202,128 @@ namespace CircuitMaker.GUI
             Invalidate();
         }
 
+
+        private void StartDraggingComponent(IComponent comp)
+        {
+            dragComp = comp;
+
+            dragResetPos = comp.GetComponentPos();
+            dragResetRot = comp.GetComponentRotation();
+
+            comp.Remove();
+        }
+
+        private void PutDownDraggedComponent()
+        {
+            Point newPoint = DetransformPoint(dragNewPoint);
+            Pos newPos = new Pos(newPoint.X, newPoint.Y);
+
+            Matrix matrix = new Matrix();
+
+            matrix.Rotate((float)dragComp.GetComponentRotation());
+            matrix.Translate(dragComp.GetComponentPos().X, dragComp.GetComponentPos().Y);
+
+            RectangleF bounds = dragComp.GetComponentBounds();
+            PointF[] corners = { new PointF(bounds.Left, bounds.Top), new PointF(bounds.Right, bounds.Bottom) };
+
+            matrix.TransformPoints(corners);
+
+            bounds = RectangleF.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
+
+            if (board.CheckAllowed(bounds))
+            {
+                dragComp.Place(newPos, dragNewRot, board);
+
+                dragComp = null;
+            } else
+            {
+                ResetDraggedComponent();
+            }
+
+            //dragComp.Place(newPos, dragNewRot, board);
+        }
+
+        private void ResetDraggedComponent()
+        {
+            dragComp.Place(dragResetPos, dragResetRot, board);
+
+            dragComp = null;
+        }
+
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+
+            if (e.Button == MouseButtons.Right)
+            {
+                if (dragType == DragType.None)
+                {
+                    dragType = DragType.Pan;
+
+                    panLastMouseLocation = e.Location;
+                }
+            }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+
+            if (e.Button == MouseButtons.Right)
+            {
+                if (dragType == DragType.Pan)
+                {
+                    dragType = DragType.None;
+                }
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+
+            if (dragType == DragType.Pan)
+            {
+                PointF[] locs = new PointF[] { e.Location, panLastMouseLocation };
+                DetransformPointFs(locs);
+
+                transformationMatrix.Translate(locs[0].X - locs[1].X, locs[0].Y - locs[1].Y);
+
+                panLastMouseLocation = e.Location;
+
+                Invalidate();
+            }
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+
+            if (dragType == DragType.None)
+            {
+                float scale = (Math.Sign(e.Delta) * 0.1F) + 1;
+
+                PointF loc = DetransformPointF(e.Location);
+
+                transformationMatrix.Translate(loc.X, loc.Y);
+
+                transformationMatrix.Scale(scale, scale);
+
+                float[] elements = transformationMatrix.Elements;
+
+                transformationMatrix.Scale(
+                    Math.Min(elements[0], 100F) / elements[0],
+                    Math.Min(elements[3], 100F) / elements[3]
+                );
+
+                transformationMatrix.Translate(-loc.X, -loc.Y);
+
+                Invalidate();
+            }
+        }
+
+        /*
         protected override void OnMouseClick(MouseEventArgs e) // see notes.txt <------------------------------------------------------------------- next thing to do
         {
             base.OnMouseClick(e);
@@ -269,6 +391,9 @@ namespace CircuitMaker.GUI
                     {
                         dragComp = comp;
 
+                        PointF detransformedMouse = DetransformPointF(e.Location);
+                        dragOffset = new PointF(-detransformedMouse.X + comp.GetComponentPos().X, -detransformedMouse.Y + comp.GetComponentPos().Y);
+
                         dragResetPos = comp.GetComponentPos();
                         dragResetRot = comp.GetComponentRotation();
 
@@ -292,10 +417,13 @@ namespace CircuitMaker.GUI
             {
                 dragType = DragType.None;
 
-                Point newPos = DetransformPoint(e.Location);
+                Point newPos = DetransformPoint(dragNewPoint);
 
                 Rectangle newBounds = dragComp.GetComponentBounds();
-                Matrix matrix = dragComp.GetRenderMatrix();
+                Matrix matrix = new Matrix();
+
+                matrix.Rotate((float)dragNewRot);
+                matrix.Translate(newPos.X, newPos.Y);
 
                 Point[] corners = new Point[] { new Point(newBounds.Left, newBounds.Top), new Point(newBounds.Right, newBounds.Bottom) };
                 matrix.TransformPoints(corners);
@@ -331,6 +459,9 @@ namespace CircuitMaker.GUI
                 panLastMouseLocation = e.Location;
 
                 Invalidate();
+            } else if (!Simulating && dragType == DragType.MoveComponent)
+            {
+                dragNewPoint = new Point((int)Math.Round(e.X + dragOffset.X), (int)Math.Round(e.Y + dragOffset.Y));
             }
         }
 
@@ -363,5 +494,6 @@ namespace CircuitMaker.GUI
                 dragNewRot = (Rotation)(((Math.Sign(e.Delta) * 90) + ((int)dragNewRot)) % 360);
             }
         }
+        //*/
     }
 }

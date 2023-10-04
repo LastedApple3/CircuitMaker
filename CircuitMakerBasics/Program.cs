@@ -84,14 +84,14 @@ namespace CircuitMaker
 
             Fixed.Place(new Pos(-10, -10), board);
 
-            Set.Place(new Pos(0, -2), board);
-            Reset.Place(new Pos(0, 5), board);
+            Set.Place(new Pos(4, 2), board);
+            Reset.Place(new Pos(4, 9), board);
 
-            QNor.Place(new Pos(6, 4), board);
-            QBarNor.Place(new Pos(6, -1), board);
+            QNor.Place(new Pos(10, 8), board);
+            QBarNor.Place(new Pos(10, 3), board);
 
-            Q.Place(new Pos(12, 4), board);
-            QBar.Place(new Pos(12, -1), board);
+            Q.Place(new Pos(16, 8), board);
+            QBar.Place(new Pos(16, 3), board);
 
             Wire[] wires = new Wire[]
             {
