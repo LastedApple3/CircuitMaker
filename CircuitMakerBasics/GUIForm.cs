@@ -31,10 +31,10 @@ namespace CircuitMaker.GUI
 
         private Point panLastMouseLocation;
 
-        //private IComponent selectedComp;
+        private IComponent selectedComp;
 
         private IComponent dragComp;
-        private PointF dragOffset;
+        private Point dragOffset;
         private Pos dragResetPos;
         private Rotation dragResetRot;
         private Point dragNewPoint;
@@ -155,7 +155,7 @@ namespace CircuitMaker.GUI
 
             foreach (IComponent comp in board.GetComponents())
             {
-                if (((RectangleF)comp.GetOffsetComponentBounds()).Contains(mousePos))
+                if ((comp.GetOffsetComponentBounds()).Contains(mousePos))
                 {
                     return comp;
                 }
@@ -180,7 +180,9 @@ namespace CircuitMaker.GUI
             Point[] corners = new Point[] { new Point(0, 0), new Point(Width - 1, Height - 1) };
             DetransformPoints(corners);
 
-            /*
+            board.Render(graphics, Rectangle.FromLTRB(corners[0].X - 1, corners[0].Y - 1, corners[1].X + 1, corners[1].Y + 1), colourScheme);
+
+            //*
             if (dragType == DragType.MoveComponent)
             {
                 Matrix matrix = new Matrix();
@@ -188,11 +190,21 @@ namespace CircuitMaker.GUI
                 matrix.Rotate((float)dragNewRot);
                 matrix.Translate(dragNewPoint.X, dragNewPoint.Y);
 
+                graphics.MultiplyTransform(matrix);
+
                 dragComp.Render(graphics, colourScheme);
+
+                matrix.Invert();
+                graphics.MultiplyTransform(matrix);
             }
             //*/
 
-            board.Render(graphics, Rectangle.FromLTRB(corners[0].X - 1, corners[0].Y - 1, corners[1].X + 1, corners[1].Y + 1), colourScheme);
+            if (selectedComp != null)
+            {
+                RectangleF compBounds = selectedComp.GetOffsetComponentBounds();
+
+                graphics.DrawRectangle(new Pen(Color.Red, 0.05F), compBounds.X, compBounds.Y, compBounds.Width, compBounds.Height);
+            }
         }
 
         protected override void OnLayout(LayoutEventArgs e)
@@ -203,14 +215,23 @@ namespace CircuitMaker.GUI
         }
 
 
-        private void StartDraggingComponent(IComponent comp)
+        private void StartDraggingComponent(IComponent comp, Point mouseLoc)
         {
             dragComp = comp;
 
             dragResetPos = comp.GetComponentPos();
             dragResetRot = comp.GetComponentRotation();
 
+            Point[] point = { new Point(dragResetPos.X, dragResetPos.Y) };
+
+            transformationMatrix.TransformPoints(point);
+
+            dragOffset = new Point(point[0].X - mouseLoc.X, point[0].Y - mouseLoc.Y);
+            dragNewRot = comp.GetComponentRotation();
+
             comp.Remove();
+
+            Invalidate();
         }
 
         private void PutDownDraggedComponent()
@@ -235,12 +256,12 @@ namespace CircuitMaker.GUI
                 dragComp.Place(newPos, dragNewRot, board);
 
                 dragComp = null;
+
+                Invalidate();
             } else
             {
                 ResetDraggedComponent();
             }
-
-            //dragComp.Place(newPos, dragNewRot, board);
         }
 
         private void ResetDraggedComponent()
@@ -248,8 +269,81 @@ namespace CircuitMaker.GUI
             dragComp.Place(dragResetPos, dragResetRot, board);
 
             dragComp = null;
+
+            Invalidate();
         }
 
+
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+
+            if (e.Button == MouseButtons.Left)
+            {
+                if (!Simulating)
+                {
+                    if (dragType == DragType.MoveComponent)
+                    {
+                        PutDownDraggedComponent();
+
+                        dragType = DragType.None;
+                    } else
+                    {
+                        IComponent clickedComp = GetClickedComponent(e.Location);
+
+                        if (clickedComp != null && clickedComp == selectedComp)
+                        {
+                            StartDraggingComponent(clickedComp, e.Location);
+
+                            dragType = DragType.MoveComponent;
+                        } else
+                        {
+                            selectedComp = clickedComp;
+
+                            Invalidate();
+                        }
+                    }
+                }
+            }
+        }
+
+        protected override void OnMouseDoubleClick(MouseEventArgs e)
+        {
+            base.OnMouseDoubleClick(e);
+
+            if (e.Button == MouseButtons.Left)
+            {
+                if (!Simulating)
+                {
+                    if (dragType == DragType.MoveComponent)
+                    {
+                        ResetDraggedComponent();
+
+                        dragType = DragType.None;
+                    }
+
+                    IComponent clickedComp = GetClickedComponent(e.Location);
+
+                    if (clickedComp != null && clickedComp == selectedComp)
+                    {
+                        if (clickedComp.HasSettings())
+                        {
+                            clickedComp.OpenSettings();
+                        } else
+                        {
+                            StartDraggingComponent(clickedComp, e.Location);
+
+                            dragType = DragType.MoveComponent;
+                        }
+                    } else
+                    {
+                        selectedComp = clickedComp;
+
+                        Invalidate();
+                    }
+                }
+            }
+        }
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
@@ -293,6 +387,9 @@ namespace CircuitMaker.GUI
                 panLastMouseLocation = e.Location;
 
                 Invalidate();
+            } else if (dragType == DragType.MoveComponent)
+            {
+                dragNewPoint = new Point(e.Location.X + dragOffset.X, e.Location.Y + dragOffset.Y);
             }
         }
 

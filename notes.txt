@@ -34,43 +34,25 @@ events:
 	click and up occur together
 
 
+need to rework DragType to remove panning, just use bool for panning as it can be done completely separately from any other type of dragging.
+
+for left click while editing, logic is as follows
+
 on MouseClick:
-	if left:
-		if simulating:
-			if on component and component is interactible:
-				component.Interact()
+	if moving component:
+		put down component
+	else:
+		if on selected component:
+			pick up component
+		else if on component:
+			select component
 		else:
-			if state == wire:
-				finish placing wire
-				start placing wire
-			else if state == none:
-				state = wire
-				start placing wire
+			deselect component
 
 on MouseDoubleClick:
-	if left:
-		if !simulating:
-			if state == wire:
-				discard wire
-				state = none
-			else if state == none:
-				if on component & component has settings:
-					open component settings
-
-on MouseDown:
-	if left & !simulating:
-		if state == none & on component:
-			start move comp
-			state = move
-	else if right:
-		if state == none:
-			state = pan
-
-on MouseUp:
-	if left & !simulating:
-		if state == move comp:
-			place comp
-			state = none
-	else if right:
-		if state == pan:
-			state = none
+	if moving component:
+		reset component
+	if on selected component and selected component has settings:
+		open settings
+	else:
+		raise MouseClick event? just call OnMouseClick?
