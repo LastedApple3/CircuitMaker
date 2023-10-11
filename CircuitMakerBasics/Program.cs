@@ -7,6 +7,7 @@ using CircuitMaker.Basics;
 using CircuitMaker.Components;
 using System.Windows.Forms;
 using CircuitMaker.GUI;
+using CircuitMaker.GUI.Settings;
 using System.IO;
 
 namespace CircuitMaker
@@ -68,7 +69,7 @@ namespace CircuitMaker
             board.Save();
             //*/
 
-            //*
+            /*
             Board board = new Board("SR-Nor-Latch");
 
             IComponent Fixed = new FixedStateComponent(Pin.State.LOW);
@@ -167,6 +168,15 @@ namespace CircuitMaker
             }//*/
 
             //*
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            //Application.Run(new SettingsDialog("test", new ISettingDescription[] { }));
+
+            SettingsDialog dialog = new SettingsDialog("test", new ISettingDescription[] { });
+            dialog.ShowDialog();
+            //*/
+
+            /*
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new GUIForm());

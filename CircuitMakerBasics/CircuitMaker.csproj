@@ -48,6 +48,18 @@
   <ItemGroup>
     <Compile Include="Basics.cs" />
     <Compile Include="Components.cs" />
+    <Compile Include="SettingsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SettingsForm.Designer.cs">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MenuTestForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MenuTestForm.Designer.cs">
+      <DependentUpon>MenuTestForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="GUIForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -61,6 +73,12 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="SettingsForm.resx">
+      <DependentUpon>SettingsForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MenuTestForm.resx">
+      <DependentUpon>MenuTestForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="GUIForm.resx">
       <DependentUpon>GUIForm.cs</DependentUpon>
     </EmbeddedResource>
