@@ -15,6 +15,8 @@ namespace CircuitMaker.GUI.Settings
         Label[] labels;
         Control[] inputControls;
 
+        TableLayoutPanel[] tbls;
+
         public SettingsDialog(string name, ISettingDescription[] settingDescs)
         {
             InitializeComponent();
@@ -23,15 +25,33 @@ namespace CircuitMaker.GUI.Settings
 
             labels = new Label[settingDescs.Length];
             inputControls = new Control[settingDescs.Length];
+            tbls = new TableLayoutPanel[settingDescs.Length];
 
-            for (int i = 0; i < settingDescs.Length; i++) // look at FlowLayoutPanel
+            AnchorStyles anchorStyle = AnchorStyles.Bottom | AnchorStyles.Left;
+
+            for (int i = 0; i < settingDescs.Length; i++)
             {
+                tbls[i] = new TableLayoutPanel();
+                tbls[i].Name = $"tblSetting{i}";
+                tbls[i].AutoSize = true;
+                tbls[i].ColumnCount = 1;
+                tbls[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tbls[i].RowCount = 2;
+                tbls[i].RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+                tbls[i].RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+
                 labels[i] = new Label();
+                labels[i].Name = $"lblSetting{i}";
                 labels[i].Text = settingDescs[i].GetPrompt();
-                labels[i].Location = new Point(50, 50 + (i * 50));
+                labels[i].Anchor = anchorStyle;
 
                 inputControls[i] = settingDescs[i].GetInputControl();
-                inputControls[i].Location = new Point(50, 70 + (i * 50));
+                inputControls[i].Name = $"inpSetting{i}";
+
+                tbls[i].Controls.Add(labels[i], 0, 0);
+                tbls[i].Controls.Add(inputControls[i], 0, 1);
+
+                flpSettings.Controls.Add(tbls[i]);
             }
         }
     }
@@ -46,7 +66,7 @@ namespace CircuitMaker.GUI.Settings
     {
         protected string prompt;
         protected T defaultVal;
-        protected Control inputControl;
+        //protected Control inputControl;
 
         public string GetPrompt()
         {
@@ -65,7 +85,8 @@ namespace CircuitMaker.GUI.Settings
 
     public abstract class TextBoxSettingDescription<T> : SettingDescription<T>
     {
-        protected new TextBox inputControl;
+        protected TextBox inputControl;
+        private int oldCaretIdx;
 
         public TextBoxSettingDescription(string prompt, T defaultVal) : base(prompt, defaultVal) { }
 
@@ -74,17 +95,24 @@ namespace CircuitMaker.GUI.Settings
             inputControl = new TextBox();
 
             inputControl.Text = defaultVal.ToString();
-            inputControl.TextChanged += InputControl_TextChanged;
+            inputControl.KeyPress += InputControl_KeyPress;
 
-            return new TextBox();
+            oldCaretIdx = inputControl.SelectionStart;
+
+            return inputControl;
         }
 
-        private void InputControl_TextChanged(object sender, EventArgs e)
+        private void InputControl_KeyPress(object sender, KeyPressEventArgs e)
         {
-            inputControl.Text = RestrictInput(inputControl.Text);
+            if (e.KeyChar == '\b') { return; }
+
+            if (!AllowInput(inputControl.Text, e.KeyChar, inputControl.SelectionStart))
+            {
+                e.Handled = true;
+            }
         }
 
-        public abstract string RestrictInput(string current);
+        public abstract bool AllowInput(string current, char newChar, int caretIdx);
 
         protected string StripAllBut(string from, string chars)
         {
@@ -92,19 +120,23 @@ namespace CircuitMaker.GUI.Settings
         }
     }
 
-    public class IntSettingDescription : TextBoxSettingDescription<int>
+    public class SignedIntSettingDescription : TextBoxSettingDescription<int>
     {
-        public IntSettingDescription(string prompt, int defaultVal) : base(prompt, defaultVal) { }
+        public SignedIntSettingDescription(string prompt, int defaultVal = 0) : base(prompt, defaultVal) { }
 
-        public override string RestrictInput(string current)
+        public override bool AllowInput(string current, char newChar, int caretIdx)
         {
-            string temp = StripAllBut(current, "-0123456789");
-            bool pos = temp[0] != '-';
-            temp = StripAllBut(temp, "0123456789");
+            if (newChar == '-' && caretIdx == 0 && !current.Contains('-'))
+            {
+                return true;
+            }
 
-            return (pos ? "-" : "") + temp;
+            if ("0123456789".Contains(newChar))
+            {
+                return true;
+            }
 
-            //return current.ToArray().Where("0123456789".Contains).Select(chr => chr.ToString()).Prepend("").Aggregate((str1, str2) => str1 + str2);
+            return false;
         }
 
         public override int GetValue()
@@ -113,17 +145,51 @@ namespace CircuitMaker.GUI.Settings
         }
     }
 
-    public class EnumSettingDescription<E> : SettingDescription<E> where E : Enum {
-        protected new ComboBox inputControl;
+    public class PositiveIntSettingDescription : TextBoxSettingDescription<int>
+    {
+        public PositiveIntSettingDescription(string prompt, int defaultVal = 0) : base(prompt, defaultVal) { }
 
-        public EnumSettingDescription(string prompt) : base(prompt, default) { }
+        public override bool AllowInput(string current, char newChar, int caretIdx)
+        {
+            if ("0123456789".Contains(newChar))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public override int GetValue()
+        {
+            return int.Parse(inputControl.Text);
+        }
+    }
+
+    public class NameSettingDescription : TextBoxSettingDescription<string>
+    {
+        public NameSettingDescription(string prompt, string defaultVal) : base(prompt, defaultVal) { }
+
+        public override bool AllowInput(string current, char newChar, int caretIdx)
+        {
+            return ('A' <= newChar && newChar <= 'Z') || ('a' <= newChar && newChar <= 'z');
+        }
+
+        public override string GetValue()
+        {
+            return inputControl.Text;
+        }
+    }
+
+    public class EnumSettingDescription<E> : SettingDescription<E> where E : Enum {
+        protected ComboBox inputControl;
+
+        public EnumSettingDescription(string prompt, E defaultVal = default) : base(prompt, defaultVal) { }
 
         public override Control GetInputControl()
         {
             inputControl = new ComboBox();
 
             inputControl.DropDownStyle = ComboBoxStyle.DropDownList;
-            //inputControl.Items.AddRange(Enum.GetValues(typeof(E)).OfType<E>().Select(e => e.ToString()).ToArray());
             inputControl.Items.AddRange(Enum.GetValues(typeof(E)).OfType<E>().OfType<object>().ToArray());
             inputControl.SelectedItem = defaultVal;
 

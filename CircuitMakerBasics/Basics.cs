@@ -63,7 +63,7 @@ namespace CircuitMaker.Basics
 
         public static void Write(this BinaryWriter bw, Board board)
         {
-            bw.Write(board.GetBoardName());
+            bw.Write(board.Name);
 
             IComponent[] comps = board.GetComponents();
             Wire[] wires = board.GetAllWires();
@@ -316,7 +316,7 @@ namespace CircuitMaker.Basics
         bool HasSettings();
         void OpenSettings();
 
-        void Render(Graphics graphics, ColourScheme colourScheme);
+        void Render(Graphics graphics, bool simulating, ColourScheme colourScheme);
         void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
     }
 
@@ -325,17 +325,18 @@ namespace CircuitMaker.Basics
         void Interact();
     }
 
-    interface IBoardInputComponent : IComponent
+    //*
+    interface IBoardInterfaceComponent : IComponent
     {
         string GetComponentName();
-        void SetInputState(Pin.State state);
-    }
 
-    interface IBoardOutputComponent : IComponent
-    {
-        string GetComponentName();
-        Pin.State GetOutputState();
+        void SetExternalPin(Pin pin);
+        void RemoveExternalPin();
     }
+    //*/
+
+    interface IBoardInputComponent : IBoardInterfaceComponent { }
+    interface IBoardOutputComponent : IBoardInterfaceComponent { }
 
     static class StateExtensions
     {
@@ -494,12 +495,9 @@ namespace CircuitMaker.Basics
         private Dictionary<string, IBoardInputComponent> InputComponents = new Dictionary<string, IBoardInputComponent>();
         private Dictionary<string, IBoardOutputComponent> OutputComponents = new Dictionary<string, IBoardOutputComponent>();
 
-        private string Name;
+        //private Dictionary<string, IBoardInterfaceComponent> InterfaceComponents = new Dictionary<string, IBoardInterfaceComponent>();
 
-        public string GetBoardName()
-        {
-            return Name;
-        }
+        public string Name;
 
         public Board(string name)
         {
@@ -539,6 +537,19 @@ namespace CircuitMaker.Basics
             return Components.ToArray();
         }
 
+        /*
+        public IBoardInterfaceComponent[] GetInterfaceComponents()
+        {
+            return InterfaceComponents.Values.ToArray();
+        }
+
+        public IBoardInterfaceComponent GetInterfaceComponent(string name)
+        {
+            return InterfaceComponents.ContainsKey(name) ? InterfaceComponents[name] : null;
+        }
+        //*/
+
+        //*
         public IBoardInputComponent[] GetInputComponents()
         {
             return InputComponents.Values.ToArray();
@@ -560,6 +571,7 @@ namespace CircuitMaker.Basics
             return OutputComponents.ContainsKey(name) ? OutputComponents[name] : null;
             //return OutputComponents.TryGetValue(name, out IBoardOutputComponent comp) ? comp : null;
         }
+        //*/
 
         //public bool EmitComponentUpdate()
         //{
@@ -593,11 +605,11 @@ namespace CircuitMaker.Basics
 
         internal void AddComponent(IComponent comp)
         {
-            RectangleF collision = comp.GetOffsetComponentBounds();
+            RectangleF bounds = comp.GetOffsetComponentBounds();
 
             foreach (IComponent otherComp in Components) // I have a function to check this. it doesn't work <----------------------------------------------------------
             {
-                if (otherComp.GetOffsetComponentBounds().IntersectsWith(collision))
+                if (otherComp.GetOffsetComponentBounds().IntersectsWith(bounds))
                 {
                     throw new Exception("cant place on another component. this error shouldn't be in the final product");
                 }
@@ -605,6 +617,14 @@ namespace CircuitMaker.Basics
 
             Components.Add(comp);
 
+            /*
+            if (comp is IBoardInterfaceComponent interfaceComponent)
+            {
+                InterfaceComponents.Add(interfaceComponent.GetComponentName(), interfaceComponent);
+            }
+            //*/
+
+            //*
             if (comp is IBoardInputComponent inpComponent)
             {
                 InputComponents.Add(inpComponent.GetComponentName(), inpComponent);
@@ -614,12 +634,20 @@ namespace CircuitMaker.Basics
             {
                 OutputComponents.Add(outpComponent.GetComponentName(), outpComponent);
             }
+            //*/
         }
 
         internal void RemoveComponent(IComponent comp)
         {
             Components.Remove(comp);
 
+            /*
+            if (comp is IBoardInterfaceComponent interfaceComponent) {
+                InterfaceComponents.Remove(interfaceComponent.GetComponentName());
+            }
+            //*/
+
+            //*
             if (comp is IBoardInputComponent inpComponent)
             {
                 InputComponents.Remove(inpComponent.GetComponentName());
@@ -629,6 +657,7 @@ namespace CircuitMaker.Basics
             {
                 OutputComponents.Remove(outpComponent.GetComponentName());
             }
+            //*/
         }
 
         protected void ClearUnusedPins()
@@ -669,7 +698,7 @@ namespace CircuitMaker.Basics
             //*/
         }
 
-        public void Render(Graphics graphics, Rectangle bounds, ColourScheme colourScheme)
+        public void Render(Graphics graphics, bool simulating, Rectangle bounds, ColourScheme colourScheme)
         {
             /*
             for (int x = bounds.Left; x < bounds.Right; x++)
@@ -702,7 +731,10 @@ namespace CircuitMaker.Basics
                         graphics.FillEllipse(new SolidBrush(colourScheme.GetWireColour(pin.GetStateForDisplay())), pinPos.X - 0.05F, pinPos.Y - 0.05F, 0.1F, 0.1F);
                     }
 
-                    graphics.DrawString(pin.GetStateForDisplay().ToString(), new Font("arial", 0.1F), Brushes.Black, pinPos.X, pinPos.Y);
+                    if (simulating)
+                    {
+                        graphics.DrawString(pin.GetStateForDisplay().ToString(), new Font("arial", 0.1F), Brushes.Black, pinPos.X, pinPos.Y);
+                    }
                 }
             }
 
@@ -715,7 +747,7 @@ namespace CircuitMaker.Basics
                     matrix = comp.GetRenderMatrix();
                     graphics.MultiplyTransform(matrix);
 
-                    comp.Render(graphics, colourScheme);
+                    comp.Render(graphics, simulating, colourScheme);
 
                     RectangleF compBounds = comp.GetComponentBounds();
 
@@ -731,7 +763,7 @@ namespace CircuitMaker.Basics
             //*
             foreach (Wire wire in GetAllWires())
             {
-                graphics.DrawLine(new Pen(colourScheme.GetWireColour(wire.Pin1.GetStateForDisplay()), 0.01F), new Point(wire.Pos1.X, wire.Pos1.Y), new Point(wire.Pos2.X, wire.Pos2.Y));
+                graphics.DrawLine(new Pen(simulating ? colourScheme.GetWireColour(wire.Pin1.GetStateForDisplay()) : colourScheme.Wire, 0.01F), new Point(wire.Pos1.X, wire.Pos1.Y), new Point(wire.Pos2.X, wire.Pos2.Y));
             }
             //*/
         }

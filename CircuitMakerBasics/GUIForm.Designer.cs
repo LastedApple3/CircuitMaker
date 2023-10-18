@@ -34,7 +34,7 @@
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tblWholePage = new System.Windows.Forms.TableLayoutPanel();
-            this.builder = new Builder();
+            this.builder = Builder.LoadBoard("SR-Nor-Latch"); // change this for final <---------------------------------------------------------------------
             this.btnSimulate = new System.Windows.Forms.Button();
             this.tblSelector = new System.Windows.Forms.TableLayoutPanel();
             this.menuStrip.SuspendLayout();

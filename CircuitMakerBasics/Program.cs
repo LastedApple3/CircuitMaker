@@ -14,28 +14,6 @@ namespace CircuitMaker
 {
     internal class Program
     {
-        static void RenderComponents(Board board, int recurseLevel = 0)
-        {
-            foreach (IComponent comp in board.GetComponents())
-            {
-                Console.WriteLine(comp);
-
-                foreach (Pos pos in comp.GetAllPinPositions())
-                {
-                    Console.WriteLine(board[pos].GetStateForDisplay());
-                }
-
-                if (recurseLevel != 0 && comp is BoardContainerComponents.BoardContainerComponent boardComp)
-                {
-                    Console.WriteLine("\nRendering Internal Board Components:");
-                    RenderComponents(boardComp.InternalBoard, recurseLevel - 1);
-                    Console.WriteLine("Ending Rendering Internal Board Components");
-                }
-
-                Console.WriteLine();
-            }
-        }
-
         [STAThread]
         static void Main(string[] args)
         {
@@ -69,10 +47,10 @@ namespace CircuitMaker
             board.Save();
             //*/
 
-            /*
+            //*
             Board board = new Board("SR-Nor-Latch");
 
-            IComponent Fixed = new FixedStateComponent(Pin.State.LOW);
+            IBoardInterfaceComponent Bidir = new BoardContainerComponents.BoardBidirComponent("B", Pin.State.FLOATING);
 
             IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH);
             IBoardInputComponent Reset = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW);
@@ -83,7 +61,7 @@ namespace CircuitMaker
             IBoardOutputComponent Q = new BoardContainerComponents.BoardOutputComponent("Q");
             IBoardOutputComponent QBar = new BoardContainerComponents.BoardOutputComponent("QBAR");
 
-            Fixed.Place(new Pos(-10, -10), board);
+            Bidir.Place(new Pos(-10, -10), board);
 
             Set.Place(new Pos(4, 2), board);
             Reset.Place(new Pos(4, 9), board);
@@ -167,16 +145,19 @@ namespace CircuitMaker
                 Console.Clear();
             }//*/
 
-            //*
+            /*
+            EnumSettingDescription<Pin.State> enumSettingDescription = new EnumSettingDescription<Pin.State>("state:");
+            IntSettingDescription intSettingDescription = new IntSettingDescription("int:");
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             //Application.Run(new SettingsDialog("test", new ISettingDescription[] { }));
 
-            SettingsDialog dialog = new SettingsDialog("test", new ISettingDescription[] { });
+            SettingsDialog dialog = new SettingsDialog("test", new ISettingDescription[] { enumSettingDescription, intSettingDescription });
             dialog.ShowDialog();
             //*/
 
-            /*
+            //*
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new GUIForm());

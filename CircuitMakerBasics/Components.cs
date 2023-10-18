@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CircuitMaker.Basics;
+using CircuitMaker.GUI.Settings;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 
@@ -25,6 +26,7 @@ namespace CircuitMaker.Components
 
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardInputComponent.ID, BoardContainerComponents.BoardInputComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardOutputComponent.ID, BoardContainerComponents.BoardOutputComponent.Constructor);
+            ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardBidirComponent.ID, BoardContainerComponents.BoardBidirComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardContainerComponent.ID, BoardContainerComponents.BoardContainerComponent.Constructor);
         }
     }
@@ -107,7 +109,7 @@ namespace CircuitMaker.Components
 
         public abstract IComponent NonStaticConstructor(string details);
 
-        public abstract void Render(Graphics graphics, ColourScheme colourScheme);
+        public abstract void Render(Graphics graphics, bool simulating, ColourScheme colourScheme);
 
         public abstract void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
 
@@ -142,12 +144,31 @@ namespace CircuitMaker.Components
             return RectangleF.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
         }
 
-        public bool HasSettings()
+        public virtual bool HasSettings() { return false; }
+
+        public void OpenSettings() // this function is calling BaseComponent's version of the surrounding functions, when it should call its current class's version
         {
-            return false;
+            Console.WriteLine("opening settings");
+            Console.WriteLine(this);
+
+            //*
+            if (!HasSettings())
+            {
+                Console.WriteLine("didn't have settings, canceling");
+                return;
+            }
+            //*/
+
+            Console.WriteLine(GetSettingDescriptions().Length);
+
+            SettingsDialog settingsDialog = new SettingsDialog($"{GetComponentID()} Settings", GetSettingDescriptions());
+            settingsDialog.ShowDialog();
+
+            ApplySettings();
         }
 
-        public void OpenSettings() { }
+        public virtual ISettingDescription[] GetSettingDescriptions() { return new ISettingDescription[0]; }
+        public virtual void ApplySettings() { }
 
         public IComponent Copy()
         {
@@ -162,7 +183,7 @@ namespace CircuitMaker.Components
 
     abstract class InpOutpBaseComponents
     {
-        private abstract class InpOutpTools
+        public abstract class InpOutpTools
         {
             public static Pos[] GetMultPositions(IComponent comp, Pos[] MultOffsets)
             {
@@ -195,8 +216,13 @@ namespace CircuitMaker.Components
             }
 
 
-            public static Color GetWireColour(Pos offset, ColourScheme colourScheme, IComponent comp)
+            public static Color GetWireColour(bool simulating, Pos offset, ColourScheme colourScheme, IComponent comp)
             {
+                if (!simulating)
+                {
+                    return colourScheme.Wire;
+                }
+
                 if (comp.IsPlaced())
                 {
                     return colourScheme.GetWireColour(comp.GetComponentBoard()[offset.Add(comp.GetComponentPos())].GetStateForDisplay());
@@ -204,18 +230,28 @@ namespace CircuitMaker.Components
                 return colourScheme.Wire;
             }
 
-            public static void DrawInpLine(Graphics graphics, Pos inpOffset, ColourScheme colourScheme, IComponent comp)
+            public static void DrawInpOutpLine(Graphics graphics, bool simulating, Pos offset1, PointF offset2, ColourScheme colourScheme, IComponent comp)
             {
                 graphics.DrawLine(
-                    new Pen(GetWireColour(inpOffset, colourScheme, comp), 0.01F), 
-                    inpOffset.X, inpOffset.Y, inpOffset.X + 1.5F, inpOffset.Y);
+                    new Pen(GetWireColour(simulating, offset1, colourScheme, comp), 0.01F),
+                    offset1.X, offset1.Y, offset2.X, offset2.Y);
+                    //offset1.X, offset1.Y, offset2.X, offset2.Y);
             }
 
-            public static void DrawOutpLine(Graphics graphics, Pos outpOffset, ColourScheme colourScheme, IComponent comp)
+            public static void DrawInpLine(Graphics graphics, bool simulating, Pos inpOffset, ColourScheme colourScheme, IComponent comp)
             {
-                graphics.DrawLine(
-                    new Pen(GetWireColour(outpOffset, colourScheme, comp), 0.01F),
-                    outpOffset.X, outpOffset.Y, outpOffset.X - 1.5F, outpOffset.Y);
+                DrawInpOutpLine(graphics, simulating, inpOffset, new PointF(inpOffset.X + 1.5F, inpOffset.Y), colourScheme, comp);
+                //graphics.DrawLine(
+                //    new Pen(GetWireColour(inpOffset, colourScheme, comp), 0.01F), 
+                //    inpOffset.X, inpOffset.Y, inpOffset.X + 1.5F, inpOffset.Y);
+            }
+
+            public static void DrawOutpLine(Graphics graphics, bool simulating, Pos outpOffset, ColourScheme colourScheme, IComponent comp)
+            {
+                DrawInpOutpLine(graphics, simulating, outpOffset, new PointF(outpOffset.X - 1.5F, outpOffset.Y), colourScheme, comp);
+                //graphics.DrawLine(
+                //    new Pen(GetWireColour(outpOffset, colourScheme, comp), 0.01F),
+                //    outpOffset.X, outpOffset.Y, outpOffset.X - 1.5F, outpOffset.Y);
             }
         }
 
@@ -290,9 +326,9 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
-                InpOutpTools.DrawInpLine(graphics, GetInpOffset(), colourScheme, this);
+                InpOutpTools.DrawInpLine(graphics, simulating, GetInpOffset(), colourScheme, this);
 
                 RenderMainShape(graphics, colourScheme);
             }
@@ -331,11 +367,11 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 foreach (Pos inpOffset in GetInpOffsets())
                 {
-                    InpOutpTools.DrawInpLine(graphics, inpOffset, colourScheme, this);
+                    InpOutpTools.DrawInpLine(graphics, simulating, inpOffset, colourScheme, this);
                 }
 
                 RenderMainShape(graphics, colourScheme);
@@ -375,9 +411,9 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
-                InpOutpTools.DrawOutpLine(graphics, GetOutpOffset(), colourScheme, this);
+                InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
                 RenderMainShape(graphics, colourScheme);
             }
@@ -416,11 +452,11 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 foreach (Pos outpOffset in GetOutpOffsets())
                 {
-                    InpOutpTools.DrawOutpLine(graphics, outpOffset, colourScheme, this);
+                    InpOutpTools.DrawOutpLine(graphics, simulating, outpOffset, colourScheme, this);
                 }
 
                 RenderMainShape(graphics, colourScheme);
@@ -480,11 +516,11 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
-                InpOutpTools.DrawInpLine(graphics, GetInpOffset(), colourScheme, this);
+                InpOutpTools.DrawInpLine(graphics, simulating, GetInpOffset(), colourScheme, this);
 
-                InpOutpTools.DrawOutpLine(graphics, GetOutpOffset(), colourScheme, this);
+                InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
                 RenderMainShape(graphics, colourScheme);
             }
@@ -542,13 +578,13 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
-                InpOutpTools.DrawInpLine(graphics, GetInpOffset(), colourScheme, this);
+                InpOutpTools.DrawInpLine(graphics, simulating, GetInpOffset(), colourScheme, this);
 
                 foreach (Pos outpOffset in GetOutpOffsets())
                 {
-                    InpOutpTools.DrawOutpLine(graphics, outpOffset, colourScheme, this);
+                    InpOutpTools.DrawOutpLine(graphics, simulating, outpOffset, colourScheme, this);
                 }
 
                 RenderMainShape(graphics, colourScheme);
@@ -607,14 +643,14 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 foreach (Pos inpOffset in GetInpOffsets())
                 {
-                    InpOutpTools.DrawInpLine(graphics, inpOffset, colourScheme, this);
+                    InpOutpTools.DrawInpLine(graphics, simulating, inpOffset, colourScheme, this);
                 }
 
-                InpOutpTools.DrawOutpLine(graphics, GetOutpOffset(), colourScheme, this);
+                InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
                 RenderMainShape(graphics, colourScheme);
             }
@@ -672,16 +708,16 @@ namespace CircuitMaker.Components
 
 
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 foreach (Pos inpOffset in GetInpOffsets())
                 {
-                    InpOutpTools.DrawInpLine(graphics, inpOffset, colourScheme, this);
+                    InpOutpTools.DrawInpLine(graphics, simulating, inpOffset, colourScheme, this);
                 }
 
                 foreach (Pos outpOffset in GetOutpOffsets())
                 {
-                    InpOutpTools.DrawOutpLine(graphics, outpOffset, colourScheme, this);
+                    InpOutpTools.DrawOutpLine(graphics, simulating, outpOffset, colourScheme, this);
                 }
 
                 RenderMainShape(graphics, colourScheme);
@@ -699,6 +735,8 @@ namespace CircuitMaker.Components
             private Pos OutpOffset;
 
             private string Details;
+
+            private PositiveIntSettingDescription inputSettingDesc;
 
             public override Pos[] GetInpOffsets()
             {
@@ -755,16 +793,21 @@ namespace CircuitMaker.Components
                 return rect;
             }
 
-            public new bool HasSettings()
+            public override bool HasSettings()
             {
                 return true;
             }
 
-            public new void OpenSettings() // <-------------------------------------------------------------------------------------------------------------------------
+            public override ISettingDescription[] GetSettingDescriptions()
             {
-                Console.Write("Enter how many inputs you want it to have: ");
+                inputSettingDesc = new PositiveIntSettingDescription("How many inputs should this component have?", InpCount);
 
-                int.TryParse(Console.ReadLine(), out InpCount);
+                return new ISettingDescription[] { inputSettingDesc };
+            }
+
+            public override void ApplySettings()
+            {
+                InpCount = inputSettingDesc.GetValue();
 
                 DefineInpOffsets();
             }
@@ -1113,6 +1156,9 @@ namespace CircuitMaker.Components
     {
         protected Pin.State OutputState;
 
+        protected string stateDescriptor = "output";
+        private EnumSettingDescription<Pin.State> stateSettingDesc;
+
         public override Pos GetOutpOffset()
         {
             return new Pos(2, 0);
@@ -1166,32 +1212,21 @@ namespace CircuitMaker.Components
             return rect;
         }
 
-        public new bool HasSettings()
+        public override bool HasSettings()
         {
             return true;
         }
 
-        public new void OpenSettings() // <-----------------------------------------------------------------------------------------------------------------------------
+        public override ISettingDescription[] GetSettingDescriptions()
         {
-            Console.WriteLine("Enter what you want this state to be: ");
-            char stateChar = Console.ReadLine()[0];
+            stateSettingDesc = new EnumSettingDescription<Pin.State>("What is the output state for this component?", OutputState);
 
-            if (stateChar == 'L')
-            {
-                OutputState = Pin.State.LOW;
-            }
-            else if (stateChar == 'H')
-            {
-                OutputState = Pin.State.HIGH;
-            }
-            else if (stateChar == 'I')
-            {
-                OutputState = Pin.State.ILLEGAL;
-            }
-            else
-            {
-                OutputState = Pin.State.FLOATING;
-            }
+            return new ISettingDescription[] { stateSettingDesc };
+        }
+
+        public override void ApplySettings()
+        {
+            OutputState = stateSettingDesc.GetValue();
         }
 
         public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
@@ -1208,6 +1243,8 @@ namespace CircuitMaker.Components
     class UserToggleInpComponent : FixedStateComponent, IInteractibleComponent
     {
         protected Pin.State DefaultState;
+
+        protected new string stateDescriptor = "default";
 
         public UserToggleInpComponent(Pin.State startState) : base(startState)
         {
@@ -1247,29 +1284,6 @@ namespace CircuitMaker.Components
         {
             return Constructor(details);
         }
-
-        public new void OpenSettings() // <-----------------------------------------------------------------------------------------------------------------------------
-        {
-            Console.WriteLine("Enter what you want the default state to be: ");
-            char stateChar = Console.ReadLine()[0];
-
-            if (stateChar == 'L')
-            {
-                OutputState = Pin.State.LOW;
-            }
-            else if (stateChar == 'H')
-            {
-                OutputState = Pin.State.HIGH;
-            }
-            else if (stateChar == 'I')
-            {
-                OutputState = Pin.State.ILLEGAL;
-            }
-            else
-            {
-                OutputState = Pin.State.FLOATING;
-            }
-        }
     }
 
     abstract class BoardContainerComponents
@@ -1277,6 +1291,9 @@ namespace CircuitMaker.Components
         public class BoardInputComponent : UserToggleInpComponent, IBoardInputComponent
         {
             private string ComponentName;
+            private Pin externalPin = null;
+
+            private NameSettingDescription nameSettingDesc;
 
             public override Pos GetOutpOffset()
             {
@@ -1324,6 +1341,26 @@ namespace CircuitMaker.Components
                 return ComponentName + ',' + stateChar;
             }
 
+            public void SetExternalPin(Pin pin)
+            {
+                externalPin = pin;
+            }
+
+            public void RemoveExternalPin()
+            {
+                externalPin = null;
+            }
+
+            public override void Tick()
+            {
+                if (externalPin != null)
+                {
+                    OutputState = externalPin.GetStateForComponent();
+                }
+
+                base.Tick();
+            }
+
             public new static BoardInputComponent Constructor(string details)
             {
                 char stateChar = details[details.Length - 1];
@@ -1351,29 +1388,37 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public void SetInputState(Pin.State state)
-            {
-                OutputState = state;
-            }
-
             public new void ResetToDefault()
             {
                 OutputState = DefaultState;
             }
 
-            /*
-            public override Rectangle GetComponentBounds()
+            public new ISettingDescription[] GetSettingDescriptions()
             {
-                Rectangle rect = GetDefaultComponentBounds();
-                rect.Inflate(0, 1);
-                rect.Offset(-1, 0);
+                nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
+
+                return base.GetSettingDescriptions().Append(nameSettingDesc).ToArray();
+            }
+
+            public new void ApplySettings()
+            {
+                base.ApplySettings();
+
+                ComponentName = nameSettingDesc.GetValue();
+            }
+
+            //*
+            public override RectangleF GetComponentBounds()
+            {
+                RectangleF rect = base.GetComponentBounds();
                 rect.Width++;
+                rect.X--;
                 return rect;
             }//*/
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
-                base.Render(graphics, colourScheme);
+                base.Render(graphics, simulating, colourScheme);
 
                 graphics.DrawString(ComponentName, new Font("arial", 0.5F), Brushes.Black, -1, -0.25F);
             }
@@ -1389,10 +1434,13 @@ namespace CircuitMaker.Components
             }
         }
 
-        public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent
+        public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent // create a probe component and inherit it here.
         {
             private string ComponentName;
             protected Pin.State State;
+            private Pin externalPin = null;
+
+            private NameSettingDescription nameSettingDesc;
 
             public override Pos GetInpOffset()
             {
@@ -1431,6 +1479,16 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
+            public void SetExternalPin(Pin pin)
+            {
+                externalPin = pin;
+            }
+
+            public void RemoveExternalPin()
+            {
+                externalPin = null;
+            }
+
             public Pin.State GetOutputState()
             {
                 return State;
@@ -1439,19 +1497,36 @@ namespace CircuitMaker.Components
             public override void Tick()
             {
                 State = GetInpPin().GetStateForComponent();
+
+                if (externalPin != null)
+                {
+                    externalPin.SetState(State);
+                }
+            }
+
+            public new ISettingDescription[] GetSettingDescriptions()
+            {
+                nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
+
+                return new ISettingDescription[] { nameSettingDesc };
+            }
+
+            public new void ApplySettings()
+            {
+                ComponentName = nameSettingDesc.GetValue();
             }
 
             public override RectangleF GetComponentBounds()
             {
                 RectangleF rect = GetDefaultComponentBounds();
-                rect.Inflate(0, 1);
-                rect.Width++;
+                rect.Inflate(1, 1);
+                rect.X++;
                 return rect;
             }
 
-            public override void Render(Graphics graphics, ColourScheme colourScheme)
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
-                base.Render(graphics, colourScheme);
+                base.Render(graphics, simulating, colourScheme);
 
                 graphics.DrawString(ComponentName, new Font("arial", 0.5F), Brushes.Black, -0.5F, -0.25F);
             }
@@ -1461,6 +1536,166 @@ namespace CircuitMaker.Components
                 GraphicsPath path = new GraphicsPath();
 
                 path.AddLines(new PointF[] { new PointF(1.5F, -0.5F), new PointF(-0.5F, -0.5F), new PointF(-1, 0), new PointF(-0.5F, 0.5F), new PointF(1.5F, 0.5F) });
+                path.CloseFigure();
+
+                DrawComponentFromPath(graphics, path, colourScheme);
+            }
+        }
+
+        public class BoardBidirComponent : InpOutpBaseComponents.SingInpSingOutpBaseComponent, IBoardInputComponent, IBoardOutputComponent
+        {
+            private string ComponentName;
+            private Pin.State DefaultExternalState;
+            private Pin externalPin = null;
+
+            private NameSettingDescription nameSettingDesc;
+
+            private readonly Pos offset = new Pos(0, 2);
+
+            public override Pos GetInpOffset()
+            {
+                return offset;
+            }
+
+            public override Pos GetOutpOffset()
+            {
+                return offset;
+            }
+
+            public string GetComponentName()
+            {
+                return ComponentName;
+            }
+
+            public BoardBidirComponent(string name, Pin.State defaultState)
+            {
+                ComponentName = name;
+
+                DefaultExternalState = defaultState;
+            }
+
+            public static string ID = "BIDIR";
+
+            public override string GetComponentID()
+            {
+                return ID;
+            }
+
+            public override string GetComponentDetails()
+            {
+                char stateChar;
+
+                if (DefaultExternalState == Pin.State.LOW)
+                {
+                    stateChar = 'L';
+                }
+                else if (DefaultExternalState == Pin.State.HIGH)
+                {
+                    stateChar = 'H';
+                }
+                else if (DefaultExternalState == Pin.State.ILLEGAL)
+                {
+                    stateChar = 'I';
+                }
+                else
+                {
+                    stateChar = 'F';
+                }
+
+                return ComponentName + ',' + stateChar;
+            }
+
+            public void SetExternalPin(Pin pin)
+            {
+                externalPin = pin;
+            }
+
+            public void RemoveExternalPin()
+            {
+                externalPin = null;
+            }
+
+            public override void Tick()
+            {
+                if (externalPin == null)
+                {
+                    GetOutpPin().SetState(GetInpPin().GetStateForWire().WireJoin(DefaultExternalState));
+                } else
+                {
+                    Pin.State state = GetInpPin().GetStateForWire().WireJoin(externalPin.GetStateForWire());
+
+                    GetOutpPin().SetState(state);
+                    externalPin.SetState(state);
+                }
+            }
+
+            public static BoardBidirComponent Constructor(string details)
+            {
+                char stateChar = details[details.Length - 1];
+                Pin.State state;
+
+                if (stateChar == 'L')
+                {
+                    state = Pin.State.LOW;
+                }
+                else if (stateChar == 'H')
+                {
+                    state = Pin.State.HIGH;
+                }
+                else if (stateChar == 'I')
+                {
+                    state = Pin.State.ILLEGAL;
+                }
+                else
+                {
+                    state = Pin.State.FLOATING;
+                }
+
+                return new BoardBidirComponent(details.Substring(0, details.Length - 2), state);
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
+
+            public new ISettingDescription[] GetSettingDescriptions()
+            {
+                nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
+
+                return new ISettingDescription[] { nameSettingDesc };
+            }
+
+            public new void ApplySettings()
+            {
+                ComponentName = nameSettingDesc.GetValue();
+            }
+
+            public override RectangleF GetComponentBounds()
+            {
+                RectangleF rect = GetDefaultComponentBounds();
+                rect.Inflate(1, 1);
+                //rect.Width++;
+                //rect.X -= 0.5F;
+                //rect.Y -= 0.5F;
+                rect.Y--;
+                return rect;
+            }
+
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
+            {
+                InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, offset, new PointF(offset.X, offset.Y - 1.5F), colourScheme, this);
+
+                RenderMainShape(graphics, colourScheme);
+
+                graphics.DrawString(ComponentName, new Font("arial", 0.5F), Brushes.Black, -1, -0.25F);
+            }
+
+            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            {
+                GraphicsPath path = new GraphicsPath();
+
+                path.AddLines(new PointF[] { new PointF(-0.5F, -1.5F), new PointF(-0.5F, 0.5F), new PointF(0, 1), new PointF(0.5F, 0.5F), new PointF(0.5F, -1.5F) });
                 path.CloseFigure();
 
                 DrawComponentFromPath(graphics, path, colourScheme);
@@ -1523,22 +1758,54 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return InternalBoard.GetBoardName();
+                return InternalBoard.Name;
             }
 
-            public override void Tick()
+            public new void Place(Pos pos, Rotation rotation, Board board)
             {
+                base.Place(pos, rotation, board);
+
                 Pin[] inpPins = GetInpPins();
                 for (int i = 0; i < InpNames.Length; i++)
                 {
-                    InternalBoard.GetInputComponent(InpNames[i]).SetInputState(inpPins[i].GetStateForComponent());
+                    InternalBoard.GetInputComponent(InpNames[i]).SetExternalPin(inpPins[i]);
                 }
 
                 Pin[] outpPins = GetOutpPins();
                 for (int i = 0; i < OutpNames.Length; i++)
                 {
-                    outpPins[i].SetState(InternalBoard.GetOutputComponent(OutpNames[i]).GetOutputState());
+                    InternalBoard.GetOutputComponent(OutpNames[i]).SetExternalPin(outpPins[i]);
                 }
+            }
+
+            public new void Remove()
+            {
+                base.Remove();
+
+                foreach (IBoardInputComponent inpComp in InternalBoard.GetInputComponents())
+                {
+                    inpComp.RemoveExternalPin();
+                }
+
+                foreach (IBoardOutputComponent outpComp in InternalBoard.GetOutputComponents())
+                {
+                    outpComp.RemoveExternalPin();
+                }
+            }
+
+            public override void Tick()
+            {
+                //Pin[] inpPins = GetInpPins();
+                //for (int i = 0; i < InpNames.Length; i++)
+                //{
+                //    InternalBoard.GetInputComponent(InpNames[i]).SetInputState(inpPins[i].GetStateForComponent());
+                //}
+
+                //Pin[] outpPins = GetOutpPins();
+                //for (int i = 0; i < OutpNames.Length; i++)
+                //{
+                //    outpPins[i].SetState(InternalBoard.GetOutputComponent(OutpNames[i]).GetOutputState());
+                //}
 
                 InternalBoard.Tick();
             }
