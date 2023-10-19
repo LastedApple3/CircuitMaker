@@ -97,9 +97,8 @@ namespace CircuitMaker.Components
             isPlaced = false;
         }
 
-        public void ResetToDefault() { }
-
         public abstract void Tick();
+        public void ResetToDefault() { }
 
         public abstract Pos[] GetAllPinOffsets();
         public abstract Pos[] GetAllPinPositions();
@@ -144,6 +143,7 @@ namespace CircuitMaker.Components
             return RectangleF.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
         }
 
+        /*
         public virtual bool HasSettings() { return false; }
 
         public void OpenSettings() // this function is calling BaseComponent's version of the surrounding functions, when it should call its current class's version
@@ -151,13 +151,11 @@ namespace CircuitMaker.Components
             Console.WriteLine("opening settings");
             Console.WriteLine(this);
 
-            //*
             if (!HasSettings())
             {
                 Console.WriteLine("didn't have settings, canceling");
                 return;
             }
-            //*/
 
             Console.WriteLine(GetSettingDescriptions().Length);
 
@@ -169,6 +167,7 @@ namespace CircuitMaker.Components
 
         public virtual ISettingDescription[] GetSettingDescriptions() { return new ISettingDescription[0]; }
         public virtual void ApplySettings() { }
+        //*/
 
         public IComponent Copy()
         {
@@ -727,7 +726,7 @@ namespace CircuitMaker.Components
 
     abstract class VarInpComponents
     {
-        public abstract class BaseVarInpComponent : InpOutpBaseComponents.MultInpSingOutpBaseComponent
+        public abstract class BaseVarInpComponent : InpOutpBaseComponents.MultInpSingOutpBaseComponent, ISettingsComponent
         {
             private int InpCount;
 
@@ -793,19 +792,14 @@ namespace CircuitMaker.Components
                 return rect;
             }
 
-            public override bool HasSettings()
-            {
-                return true;
-            }
-
-            public override ISettingDescription[] GetSettingDescriptions()
+            public ISettingDescription[] GetSettingDescriptions()
             {
                 inputSettingDesc = new PositiveIntSettingDescription("How many inputs should this component have?", InpCount);
 
                 return new ISettingDescription[] { inputSettingDesc };
             }
 
-            public override void ApplySettings()
+            public void ApplySettings()
             {
                 InpCount = inputSettingDesc.GetValue();
 
@@ -1152,12 +1146,12 @@ namespace CircuitMaker.Components
         }
     }
 
-    class FixedStateComponent : InpOutpBaseComponents.NoneInpSingOutpBaseComponent
+    class FixedStateComponent : InpOutpBaseComponents.NoneInpSingOutpBaseComponent, ISettingsComponent
     {
         protected Pin.State OutputState;
 
         protected string stateDescriptor = "output";
-        private EnumSettingDescription<Pin.State> stateSettingDesc;
+        protected EnumSettingDescription<Pin.State> stateSettingDesc;
 
         public override Pos GetOutpOffset()
         {
@@ -1212,19 +1206,14 @@ namespace CircuitMaker.Components
             return rect;
         }
 
-        public override bool HasSettings()
-        {
-            return true;
-        }
-
-        public override ISettingDescription[] GetSettingDescriptions()
+        public ISettingDescription[] GetSettingDescriptions()
         {
             stateSettingDesc = new EnumSettingDescription<Pin.State>("What is the output state for this component?", OutputState);
 
             return new ISettingDescription[] { stateSettingDesc };
         }
 
-        public override void ApplySettings()
+        public void ApplySettings()
         {
             OutputState = stateSettingDesc.GetValue();
         }
@@ -1283,6 +1272,16 @@ namespace CircuitMaker.Components
         public override IComponent NonStaticConstructor(string details)
         {
             return Constructor(details);
+        }
+
+        public new void ApplySettings()
+        {
+            DefaultState = stateSettingDesc.GetValue();
+        }
+
+        public new void ResetToDefault()
+        {
+            OutputState = DefaultState;
         }
     }
 
@@ -1388,10 +1387,12 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
+            /*
             public new void ResetToDefault()
             {
                 OutputState = DefaultState;
             }
+            //*/
 
             public new ISettingDescription[] GetSettingDescriptions()
             {
@@ -1434,7 +1435,7 @@ namespace CircuitMaker.Components
             }
         }
 
-        public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent // create a probe component and inherit it here.
+        public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent, ISettingsComponent // create a probe component and inherit it here.
         {
             private string ComponentName;
             protected Pin.State State;
@@ -1504,14 +1505,14 @@ namespace CircuitMaker.Components
                 }
             }
 
-            public new ISettingDescription[] GetSettingDescriptions()
+            public ISettingDescription[] GetSettingDescriptions()
             {
                 nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
 
                 return new ISettingDescription[] { nameSettingDesc };
             }
 
-            public new void ApplySettings()
+            public void ApplySettings()
             {
                 ComponentName = nameSettingDesc.GetValue();
             }
@@ -1542,7 +1543,7 @@ namespace CircuitMaker.Components
             }
         }
 
-        public class BoardBidirComponent : InpOutpBaseComponents.SingInpSingOutpBaseComponent, IBoardInputComponent, IBoardOutputComponent
+        public class BoardBidirComponent : InpOutpBaseComponents.SingInpSingOutpBaseComponent, IBoardInputComponent, IBoardOutputComponent, ISettingsComponent
         {
             private string ComponentName;
             private Pin.State DefaultExternalState;
@@ -1659,14 +1660,14 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public new ISettingDescription[] GetSettingDescriptions()
+            public ISettingDescription[] GetSettingDescriptions()
             {
                 nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
 
                 return new ISettingDescription[] { nameSettingDesc };
             }
 
-            public new void ApplySettings()
+            public void ApplySettings()
             {
                 ComponentName = nameSettingDesc.GetValue();
             }

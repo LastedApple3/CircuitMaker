@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using CircuitMaker.Basics;
+using CircuitMaker.GUI.Settings;
 
 namespace CircuitMaker.GUI
 {
@@ -40,6 +41,9 @@ namespace CircuitMaker.GUI
         private Rotation dragResetRot;
         private Point dragNewPoint;
         private Rotation dragNewRot;
+
+        private Pos wireStart;
+        private Pos wireEnd;
 
         protected Matrix transformationMatrix;
 
@@ -320,16 +324,43 @@ namespace CircuitMaker.GUI
                     {
                         IComponent clickedComp = GetClickedComponent(e.Location);
 
-                        if (clickedComp != null && clickedComp == selectedComp)
+                        if (clickedComp == null)
                         {
-                            StartDraggingComponent(clickedComp, e.Location);
+                            selectedComp = null;
 
-                            dragType = DragType.MoveComponent;
-                        } else
-                        {
-                            selectedComp = clickedComp;
+                            if (dragType == DragType.DrawWire)
+                            {
+                                if (!wireStart.Equals(wireEnd))
+                                {
+                                    new Wire(wireStart, wireEnd, board);
+                                }
+
+                                wireStart = wireEnd;
+                            } else
+                            {
+                                dragType = DragType.DrawWire;
+
+                                Point mouseLoc = DetransformPoint(e.Location);
+                                wireStart = new Pos(mouseLoc.X, mouseLoc.Y);
+
+                                // test this
+                            }
 
                             Invalidate();
+                        } else
+                        {
+                            if (clickedComp == selectedComp)
+                            {
+                                StartDraggingComponent(clickedComp, e.Location);
+
+                                dragType = DragType.MoveComponent;
+                            }
+                            else
+                            {
+                                selectedComp = clickedComp;
+
+                                Invalidate();
+                            }
                         }
                     }
                 }
@@ -355,9 +386,9 @@ namespace CircuitMaker.GUI
 
                     if (clickedComp != null && clickedComp == selectedComp)
                     {
-                        if (clickedComp.HasSettings())
+                        if (clickedComp is ISettingsComponent settingsComp)
                         {
-                            clickedComp.OpenSettings();
+                            settingsComp.OpenSettings();
 
                             Invalidate();
                         } else
@@ -461,178 +492,5 @@ namespace CircuitMaker.GUI
                 Invalidate();
             }
         }
-
-        /*
-        protected override void OnMouseClick(MouseEventArgs e) // see notes.txt <------------------------------------------------------------------- next thing to do
-        {
-            base.OnMouseClick(e);
-
-            if (e.Button == MouseButtons.Left)
-            {
-                if (Simulating)
-                {
-                    IComponent comp = GetClickedComponent(e.Location);
-
-                    Console.WriteLine(comp == null ? "NONE" : comp.ToString());
-
-                    if (comp != null)
-                    {
-                        if (comp is IInteractibleComponent intComp)
-                        {
-                            Console.WriteLine("interacting");
-
-                            intComp.Interact();
-
-                            Invalidate();
-                        }
-                    }
-                } else
-                {
-                    if (dragType == DragType.DrawWire)
-                    {
-                        // finish current wire
-                        // start new wire
-                    } else if (dragType == DragType.None && GetClickedComponent(e.Location) == null)
-                    {
-                        dragType = DragType.DrawWire;
-                        // start new wire
-                    }
-                }
-            }
-        }
-
-        protected override void OnMouseDoubleClick(MouseEventArgs e)
-        {
-            base.OnMouseDoubleClick(e);
-
-            if (e.Button == MouseButtons.Left && !Simulating)
-            {
-                if (dragType == DragType.DrawWire)
-                {
-                    dragType = DragType.None;
-                }
-            }
-        }
-
-        protected override void OnMouseDown(MouseEventArgs e)
-        {
-            base.OnMouseDown(e);
-
-            if (dragType == DragType.None)
-            {
-                if (e.Button == MouseButtons.Left && !Simulating)
-                {
-                    dragType = DragType.MoveComponent;
-
-                    IComponent comp = GetClickedComponent(e.Location);
-
-                    if (comp != null)
-                    {
-                        dragComp = comp;
-
-                        PointF detransformedMouse = DetransformPointF(e.Location);
-                        dragOffset = new PointF(-detransformedMouse.X + comp.GetComponentPos().X, -detransformedMouse.Y + comp.GetComponentPos().Y);
-
-                        dragResetPos = comp.GetComponentPos();
-                        dragResetRot = comp.GetComponentRotation();
-
-                        comp.Remove();
-
-                        Invalidate();
-                    }
-                } else if (e.Button == MouseButtons.Right)
-                {
-                    dragType = DragType.Pan;
-
-                    panLastMouseLocation = e.Location;
-                }
-            }
-        }
-
-        protected override void OnMouseUp(MouseEventArgs e)
-        {
-            base.OnMouseUp(e);
-            if (e.Button == MouseButtons.Left && dragType == DragType.MoveComponent && !Simulating)
-            {
-                dragType = DragType.None;
-
-                Point newPos = DetransformPoint(dragNewPoint);
-
-                Rectangle newBounds = dragComp.GetComponentBounds();
-                Matrix matrix = new Matrix();
-
-                matrix.Rotate((float)dragNewRot);
-                matrix.Translate(newPos.X, newPos.Y);
-
-                Point[] corners = new Point[] { new Point(newBounds.Left, newBounds.Top), new Point(newBounds.Right, newBounds.Bottom) };
-                matrix.TransformPoints(corners);
-
-                newBounds = Rectangle.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
-
-                if (board.CheckAllowed(newBounds))
-                {
-                    dragComp.Place(new Pos(newPos.X, newPos.Y), dragNewRot, board);
-                } else
-                {
-                    dragComp.Place(dragResetPos, dragResetRot, board);
-                }
-
-                Invalidate();
-            } else if (e.Button == MouseButtons.Right && dragType == DragType.Pan)
-            {
-                dragType = DragType.None;
-            }
-        }
-
-        protected override void OnMouseMove(MouseEventArgs e)
-        {
-            base.OnMouseMove(e);
-
-            if (dragType == DragType.Pan)
-            {
-                PointF[] locs = new PointF[] { e.Location, panLastMouseLocation };
-                DetransformPointFs(locs);
-
-                transformationMatrix.Translate(locs[0].X - locs[1].X, locs[0].Y - locs[1].Y);
-
-                panLastMouseLocation = e.Location;
-
-                Invalidate();
-            } else if (!Simulating && dragType == DragType.MoveComponent)
-            {
-                dragNewPoint = new Point((int)Math.Round(e.X + dragOffset.X), (int)Math.Round(e.Y + dragOffset.Y));
-            }
-        }
-
-        protected override void OnMouseWheel(MouseEventArgs e)
-        {
-            base.OnMouseWheel(e);
-
-            if (dragType == DragType.None)
-            {
-                float scale = (Math.Sign(e.Delta) * 0.1F) + 1;
-
-                PointF loc = DetransformPointF(e.Location);
-
-                transformationMatrix.Translate(loc.X, loc.Y);
-
-                transformationMatrix.Scale(scale, scale);
-
-                float[] elements = transformationMatrix.Elements;
-
-                transformationMatrix.Scale(
-                    Math.Min(elements[0], 100F) / elements[0],
-                    Math.Min(elements[3], 100F) / elements[3]
-                );
-
-                transformationMatrix.Translate(-loc.X, -loc.Y);
-
-                Invalidate();
-            } else if (dragType == DragType.MoveComponent)
-            {
-                dragNewRot = (Rotation)(((Math.Sign(e.Delta) * 90) + ((int)dragNewRot)) % 360);
-            }
-        }
-        //*/
     }
 }

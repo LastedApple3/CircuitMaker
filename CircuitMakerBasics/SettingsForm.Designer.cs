@@ -109,7 +109,9 @@
             this.tblMain.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tblMain.Controls.Add(this.tblResults, 0, 1);
             this.tblMain.Controls.Add(this.flpSettings, 0, 0);
+            this.tblMain.GrowStyle = System.Windows.Forms.TableLayoutPanelGrowStyle.FixedSize;
             this.tblMain.Location = new System.Drawing.Point(10, 10);
+            this.tblMain.Margin = new System.Windows.Forms.Padding(0);
             this.tblMain.Name = "tblMain";
             this.tblMain.RowCount = 2;
             this.tblMain.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
@@ -125,13 +127,12 @@
             this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(284, 261);
             this.Controls.Add(this.tblMain);
             this.KeyPreview = true;
             this.Name = "SettingsDialog";
             this.Padding = new System.Windows.Forms.Padding(10);
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.Text = "Form1";
             this.flpSettings.ResumeLayout(false);
             this.flpSettings.PerformLayout();
             this.tblResults.ResumeLayout(false);

@@ -12,6 +12,7 @@ using System.IO;
 
 namespace CircuitMaker
 {
+
     internal class Program
     {
         [STAThread]
@@ -47,7 +48,7 @@ namespace CircuitMaker
             board.Save();
             //*/
 
-            //*
+            //* <-------------------------------------------------------------------------------------------------------------------------------------
             Board board = new Board("SR-Nor-Latch");
 
             IBoardInterfaceComponent Bidir = new BoardContainerComponents.BoardBidirComponent("B", Pin.State.FLOATING);

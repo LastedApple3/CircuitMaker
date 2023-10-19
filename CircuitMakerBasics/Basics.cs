@@ -293,9 +293,9 @@ namespace CircuitMaker.Basics
         void Remove();
         bool IsPlaced();
 
+        void Tick();
         void ResetToDefault();
 
-        void Tick();
 
         Pos[] GetAllPinOffsets();
         Pos[] GetAllPinPositions();
@@ -313,8 +313,10 @@ namespace CircuitMaker.Basics
         RectangleF GetComponentBounds();
         RectangleF GetOffsetComponentBounds();
 
+        /*
         bool HasSettings();
         void OpenSettings();
+        //*/
 
         void Render(Graphics graphics, bool simulating, ColourScheme colourScheme);
         void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
@@ -587,6 +589,7 @@ namespace CircuitMaker.Basics
 
         public void Tick()
         {
+
             foreach (Pin pin in Pins.Values)
             {
                 pin.ResetStateChanged();
@@ -597,7 +600,6 @@ namespace CircuitMaker.Basics
                 comp.Tick();
             }
 
-            //while (EmitComponentUpdate()) { }
             while (EmitWireUpdate()) { }
         }
 
@@ -607,7 +609,7 @@ namespace CircuitMaker.Basics
         {
             RectangleF bounds = comp.GetOffsetComponentBounds();
 
-            foreach (IComponent otherComp in Components) // I have a function to check this. it doesn't work <----------------------------------------------------------
+            foreach (IComponent otherComp in Components)
             {
                 if (otherComp.GetOffsetComponentBounds().IntersectsWith(bounds))
                 {
@@ -617,14 +619,6 @@ namespace CircuitMaker.Basics
 
             Components.Add(comp);
 
-            /*
-            if (comp is IBoardInterfaceComponent interfaceComponent)
-            {
-                InterfaceComponents.Add(interfaceComponent.GetComponentName(), interfaceComponent);
-            }
-            //*/
-
-            //*
             if (comp is IBoardInputComponent inpComponent)
             {
                 InputComponents.Add(inpComponent.GetComponentName(), inpComponent);
@@ -634,7 +628,6 @@ namespace CircuitMaker.Basics
             {
                 OutputComponents.Add(outpComponent.GetComponentName(), outpComponent);
             }
-            //*/
         }
 
         internal void RemoveComponent(IComponent comp)

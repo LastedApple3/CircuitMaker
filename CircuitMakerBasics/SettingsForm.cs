@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+//using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CircuitMaker.Basics;
 
 namespace CircuitMaker.GUI.Settings
 {
@@ -34,6 +35,7 @@ namespace CircuitMaker.GUI.Settings
                 tbls[i] = new TableLayoutPanel();
                 tbls[i].Name = $"tblSetting{i}";
                 tbls[i].AutoSize = true;
+                tbls[i].AutoSizeMode = AutoSizeMode.GrowAndShrink;
                 tbls[i].ColumnCount = 1;
                 tbls[i].ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
                 tbls[i].RowCount = 2;
@@ -60,6 +62,23 @@ namespace CircuitMaker.GUI.Settings
     {
         string GetPrompt();
         Control GetInputControl();
+    }
+
+    interface ISettingsComponent : IComponent
+    {
+        ISettingDescription[] GetSettingDescriptions();
+        void ApplySettings();
+    }
+
+    static class SettingsComponentExtensions
+    {
+        public static void OpenSettings<T>(this T comp) where T : ISettingsComponent
+        {
+            SettingsDialog settingsDialog = new SettingsDialog($"{comp.GetComponentID()} Settings", comp.GetSettingDescriptions());
+            settingsDialog.ShowDialog();
+
+            comp.ApplySettings();
+        }
     }
 
     public abstract class SettingDescription<T> : ISettingDescription
