@@ -177,6 +177,16 @@ namespace CircuitMaker.Basics
                 return this;
             }
         }
+
+        public Point ToPoint()
+        {
+            return new Point(X, Y);
+        }
+
+        public static Pos FromPoint(Point point)
+        {
+            return new Pos(point.X, point.Y);
+        }
     }
 
     public enum Rotation
@@ -234,6 +244,8 @@ namespace CircuitMaker.Basics
 
             Pin1.WireUpdate += OnWireUpdate;
             Pin2.WireUpdate += OnWireUpdate;
+
+            board.AddWire(this);
         }
 
         public void OnWireUpdate()
@@ -248,17 +260,57 @@ namespace CircuitMaker.Basics
         {
             Pin1.WireUpdate -= OnWireUpdate;
             Pin2.WireUpdate -= OnWireUpdate;
+
+            board.RemoveWire(this);
         }
 
         public override string ToString()
         {
             return $"[{Pos1}, {Pos2}]";
         }
+
+        public Rectangle Bounds()
+        {
+            return Rectangle.FromLTRB(
+                Math.Min(Pos1.X, Pos2.X), 
+                Math.Min(Pos1.Y, Pos2.Y),
+                Math.Max(Pos1.X, Pos2.X),
+                Math.Max(Pos1.Y, Pos2.Y));
+        }
+
+        public bool IsVert()
+        {
+            return Pos1.X == Pos2.X;
+        }
+
+        public bool IsHori()
+        {
+            return Pos1.Y == Pos2.Y;
+        }
+
+        public bool Collision(Pos pos)
+        {
+            Rectangle bounds = Bounds();
+
+            if (IsVert())
+            {
+                return bounds.Top < pos.Y && pos.Y < bounds.Bottom && pos.X == Pos1.X;
+            }
+
+            if (IsHori())
+            {
+                return bounds.Left < pos.X && pos.X < bounds.Right && pos.Y == Pos1.Y;
+            }
+            
+            // do angled lines?
+
+            return false;
+        }
     }
 
     struct ColourScheme
     {
-        public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WireHigh, WireIllegal;
+        public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WireHigh, WireIllegal, Grid;
 
         public Color GetWireColour(Pin.State state)
         {
@@ -492,6 +544,8 @@ namespace CircuitMaker.Basics
     {
         private DefaultDictionary<Pos, Pin> Pins = new DefaultDictionary<Pos, Pin>(() => new Pin());
 
+        private HashSet<Wire> Wires = new HashSet<Wire>();
+
         private HashSet<IComponent> Components = new HashSet<IComponent>();
 
         private Dictionary<string, IBoardInputComponent> InputComponents = new Dictionary<string, IBoardInputComponent>();
@@ -520,18 +574,19 @@ namespace CircuitMaker.Basics
             return returnVal;
         }
 
+        public void AddWire(Wire wire)
+        {
+            Wires.Add(wire);
+        }
+
+        public void RemoveWire(Wire wire)
+        {
+            Wires.Remove(wire);
+        }
+
         public Wire[] GetAllWires()
         {
-            HashSet<Wire> wires = new HashSet<Wire>();
-
-            //ClearUnusedPins();
-
-            foreach (Pin pin in Pins.Values)
-            {
-                wires.UnionWith(pin.GetWires());
-            }
-
-            return wires.ToArray();
+            return Wires.ToArray();
         }
 
         public IComponent[] GetComponents()
@@ -662,7 +717,7 @@ namespace CircuitMaker.Basics
                 keepPinPositions.UnionWith(comp.GetAllPinPositions());
             }
 
-            foreach (Wire wire in GetAllWires())
+            foreach (Wire wire in Wires)
             {
                 keepPinPositions.Add(wire.Pos1);
                 keepPinPositions.Add(wire.Pos2);
@@ -698,9 +753,21 @@ namespace CircuitMaker.Basics
             {
                 for (int y = bounds.Top; y < bounds.Bottom; y++)
                 {
-                    graphics.FillEllipse(Brushes.Gray, x - 0.05F, y - 0.05F, 0.1F, 0.1F); // should make this better
+                    /graphics.FillEllipse(Brushes.Black, x - 0.005F, y - 0.005F, 0.01F, 0.01F); // should make this better
                 }
             }//*/
+
+            //*
+            for (int x = bounds.Left; x <= bounds.Right; x++)
+            {
+                graphics.DrawLine(new Pen(colourScheme.Grid, 0.005F), x, bounds.Top, x, bounds.Bottom);
+            }
+
+            for (int y = bounds.Top; y <= bounds.Bottom; y++)
+            {
+                graphics.DrawLine(new Pen(colourScheme.Grid, 0.005F), bounds.Left, y, bounds.Right, y);
+            }
+            //*/
 
             Pin pin;
             int connectionCount;
@@ -754,7 +821,7 @@ namespace CircuitMaker.Basics
             }
 
             //*
-            foreach (Wire wire in GetAllWires())
+            foreach (Wire wire in Wires)
             {
                 graphics.DrawLine(new Pen(simulating ? colourScheme.GetWireColour(wire.Pin1.GetStateForDisplay()) : colourScheme.Wire, 0.01F), new Point(wire.Pos1.X, wire.Pos1.Y), new Point(wire.Pos2.X, wire.Pos2.Y));
             }
@@ -798,7 +865,7 @@ namespace CircuitMaker.Basics
 
             sb.Append(Components.Select(comp => comp.ToString()).Aggregate(listBuilder));
             sb.Append(", wires: ");
-            sb.Append(GetAllWires().Select(wire => wire.ToString()).Aggregate(listBuilder));
+            sb.Append(Wires.Select(wire => wire.ToString()).Aggregate(listBuilder));
 
             return sb.ToString();
         }
@@ -839,7 +906,7 @@ namespace CircuitMaker.Basics
                 comp.Copy().Place(comp.GetComponentPos(), copy);
             }
 
-            foreach (Wire wire in GetAllWires())
+            foreach (Wire wire in Wires)
             {
                 new Wire(wire.Pos1, wire.Pos2, copy);
             }

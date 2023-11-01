@@ -1,58 +1,18 @@
-right click and drag is pan always
+start drawing wire only if clicking on a pin which is displayed.
+select wires, double clicking a selected wire also starts drawing wire.
+drawing wire means that clicking on a comp doesn't select, but simply does nothing.
 
-if editing:
-	if drawing wire:
-		left click puts one wire down and starts the next
-		left double click ends drawing wire
-	else if on not selected component:
-		left click is select
-	else if on selected component:
-		left click and drag is move component
-		left double click opens component settings
-	else:
-		left click deselects
-		left click starts drawing wire
-if simulating:
-	if on interactible component:
-		component.Interact
+redo interaction for a third time? complete redesign? i think so.
 
-states:
-	moving comp
-	drawing wire
-	panning
-	none
+all the things that need to be done:
+	move component
+	select component
+	edit component
+	copy component
+	delete component
+	create component
+	create wire
+	delete wire
+	select wire?
 
-notes:
-	for drawing wire, a double click will raise MouseClick event (attach to end wire, start next) and MouseDoubleClick event (attach to discard current wire, change state)
-
-events:
-	on MouseClick, MouseDoubleClick, MouseDown, MouseUp, MouseMove, MouseScroll
-
-	MouseDown, MouseClick, MouseUp
-	MouseDown, MouseDoubleClick, MouseUp
-
-	click and up occur together
-
-
-need to rework DragType to remove panning, just use bool for panning as it can be done completely separately from any other type of dragging.
-
-for left click while editing, logic is as follows
-
-on MouseClick:
-	if moving component:
-		put down component
-	else:
-		if on selected component:
-			pick up component
-		else if on component:
-			select component
-		else:
-			deselect component
-
-on MouseDoubleClick:
-	if moving component:
-		reset component
-	if on selected component and selected component has settings:
-		open settings
-	else:
-		raise MouseClick event? just call OnMouseClick?
+attach settings to right click? use right click menu (ContextMenu)?

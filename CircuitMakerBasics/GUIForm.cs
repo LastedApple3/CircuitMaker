@@ -37,6 +37,7 @@ namespace CircuitMaker.GUI
 
         private IComponent dragComp;
         private Point dragOffset;
+        private bool dragResetIsDel;
         private Pos dragResetPos;
         private Rotation dragResetRot;
         private Point dragNewPoint;
@@ -94,7 +95,8 @@ namespace CircuitMaker.GUI
                 WireFloating = Color.Gray,
                 WireLow = Color.DarkBlue,
                 WireHigh = Color.Blue,
-                WireIllegal = Color.Red
+                WireIllegal = Color.Red,
+                Grid = Color.FromArgb(63, Color.Black)
             };
             //*/
 
@@ -206,10 +208,8 @@ namespace CircuitMaker.GUI
 
             Matrix matrix = new Matrix();
 
-            //*
             if (dragType == DragType.MoveComponent)
             {
-
                 matrix.Reset();
                 Point newPoint = DetransformPoint(dragNewPoint);
                 matrix.Translate(newPoint.X, newPoint.Y);
@@ -222,7 +222,11 @@ namespace CircuitMaker.GUI
                 matrix.Invert();
                 graphics.MultiplyTransform(matrix);
             }
-            //*/
+
+            if (dragType == DragType.DrawWire)
+            {
+                graphics.DrawLine(new Pen(colourScheme.Wire, 0.05F), wireStart.ToPoint(), wireEnd.ToPoint());
+            }
 
             graphics.ResetTransform();
 
@@ -236,15 +240,56 @@ namespace CircuitMaker.GUI
             Invalidate();
         }
 
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            base.OnKeyDown(e);
 
-        private void StartDraggingComponent(IComponent comp, Point mouseLoc)
+            if (!Simulating)
+            {
+                if (selectedComp == null)
+                {
+                    if (e.KeyCode == Keys.Delete)
+                    {
+                        foreach (Wire wire in board.GetAllWires())
+                        {
+                            if (wire.Collision(Pos.FromPoint(DetransformPoint(MousePosition))))
+                            {
+                                wire.Remove();
+                            }
+                        }
+                    }
+                } else
+                {
+                    if (e.KeyCode == Keys.Delete)
+                    {
+                        selectedComp.Remove();
+                        selectedComp = null;
+                    } else if (e.KeyCode == (Keys.Control | Keys.C))
+                    {
+                        if (dragType == DragType.None)
+                        {
+                            selectedComp = selectedComp.Copy();
+
+                            dragType = DragType.MoveComponent;
+
+                            StartDraggingComponent(selectedComp, DetransformPoint(MousePosition));
+                        }
+                    }
+                }
+            }
+        }
+
+
+        private void StartDraggingComponent(IComponent comp, Point mouseLoc, bool resetIsDel = false)
         {
             dragComp = comp;
+
+            dragResetIsDel = resetIsDel;
 
             dragResetPos = comp.GetComponentPos();
             dragResetRot = comp.GetComponentRotation();
 
-            Point[] point = { new Point(dragResetPos.X, dragResetPos.Y) };
+            Point[] point = { /* new Point(dragResetPos.X, dragResetPos.Y) */ dragResetPos.ToPoint() };
 
             transformationMatrix.TransformPoints(point);
 
@@ -260,7 +305,7 @@ namespace CircuitMaker.GUI
         private void PutDownDraggedComponent()
         {
             Point newPoint = DetransformPoint(dragNewPoint);
-            Pos newPos = new Pos(newPoint.X, newPoint.Y);
+            Pos newPos = Pos.FromPoint(newPoint); //new Pos(newPoint.X, newPoint.Y);
 
             Matrix matrix = new Matrix();
 
@@ -289,11 +334,50 @@ namespace CircuitMaker.GUI
 
         private void ResetDraggedComponent()
         {
-            dragComp.Place(dragResetPos, dragResetRot, board);
+            if (!dragResetIsDel)
+            {
+                dragComp.Place(dragResetPos, dragResetRot, board);
+            }
 
             dragComp = null;
 
             Invalidate();
+        }
+
+
+        private void StartWire(Pos pos)
+        {
+            Rectangle bounds;
+
+            HashSet<Wire> removeWires = new HashSet<Wire>();
+            HashSet<(Pos, Pos)> addWires = new HashSet<(Pos, Pos)>();
+
+            foreach (Wire wire in board.GetAllWires())
+            {
+                bounds = wire.Bounds();
+
+                if (wire.Collision(pos))
+                {
+                    removeWires.Add(wire);
+
+                    addWires.Add((wire.Pos1, pos));
+                    addWires.Add((wire.Pos2, pos));
+                }
+            }
+
+            foreach (Wire wire in removeWires)
+            {
+                wire.Remove();
+            }
+
+            foreach ((Pos, Pos) wire in addWires)
+            {
+                new Wire(wire.Item1, wire.Item2, board);
+            }
+
+            //board.SimplifyWires(); // <-------------------------------------------------------------------------------------------------------------------------------
+
+            wireStart = pos;
         }
 
 
@@ -335,16 +419,15 @@ namespace CircuitMaker.GUI
                                     new Wire(wireStart, wireEnd, board);
                                 }
 
-                                wireStart = wireEnd;
+                                StartWire(wireEnd);
                             } else
                             {
                                 dragType = DragType.DrawWire;
 
-                                Point mouseLoc = DetransformPoint(e.Location);
-                                wireStart = new Pos(mouseLoc.X, mouseLoc.Y);
-
-                                // test this
+                                StartWire(Pos.FromPoint(DetransformPoint(e.Location)));
                             }
+
+                            Console.WriteLine(wireStart);
 
                             Invalidate();
                         } else
@@ -382,26 +465,34 @@ namespace CircuitMaker.GUI
                         dragType = DragType.None;
                     }
 
-                    IComponent clickedComp = GetClickedComponent(e.Location);
-
-                    if (clickedComp != null && clickedComp == selectedComp)
+                    if (dragType == DragType.DrawWire)
                     {
-                        if (clickedComp is ISettingsComponent settingsComp)
-                        {
-                            settingsComp.OpenSettings();
-
-                            Invalidate();
-                        } else
-                        {
-                            StartDraggingComponent(clickedComp, e.Location);
-
-                            dragType = DragType.MoveComponent;
-                        }
+                        dragType = DragType.None;
                     } else
                     {
-                        selectedComp = clickedComp;
+                        IComponent clickedComp = GetClickedComponent(e.Location);
 
-                        Invalidate();
+                        if (clickedComp != null && clickedComp == selectedComp)
+                        {
+                            if (clickedComp is ISettingsComponent settingsComp)
+                            {
+                                settingsComp.OpenSettings();
+
+                                Invalidate();
+                            }
+                            else
+                            {
+                                StartDraggingComponent(clickedComp, e.Location);
+
+                                dragType = DragType.MoveComponent;
+                            }
+                        }
+                        else
+                        {
+                            selectedComp = clickedComp;
+
+                            Invalidate();
+                        }
                     }
                 }
             }
@@ -411,7 +502,7 @@ namespace CircuitMaker.GUI
         {
             base.OnMouseDown(e);
 
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Middle)
             {
                 if (!panning /* dragType == DragType.None */)
                 {
@@ -427,7 +518,7 @@ namespace CircuitMaker.GUI
         {
             base.OnMouseUp(e);
 
-            if (e.Button == MouseButtons.Right)
+            if (e.Button == MouseButtons.Middle)
             {
                 if (panning /* dragType == DragType.Pan */)
                 {
@@ -457,6 +548,24 @@ namespace CircuitMaker.GUI
             {
                 dragNewPoint = new Point(e.Location.X + dragOffset.X, e.Location.Y + dragOffset.Y);
                 //Console.WriteLine(dragNewPoint);
+
+                Invalidate();
+            }
+
+            if (dragType == DragType.DrawWire)
+            {
+                wireEnd = Pos.FromPoint(DetransformPoint(e.Location));
+
+                if (wireStart.X != wireEnd.X && wireStart.Y != wireEnd.Y)
+                {
+                    if (Math.Abs(wireEnd.X - wireStart.X) > Math.Abs(wireEnd.Y - wireStart.Y))
+                    {
+                        wireEnd = new Pos(wireEnd.X, wireStart.Y);
+                    } else
+                    {
+                        wireEnd = new Pos(wireStart.X, wireEnd.Y);
+                    }
+                }
 
                 Invalidate();
             }

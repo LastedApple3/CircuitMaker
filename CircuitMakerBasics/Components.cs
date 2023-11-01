@@ -29,6 +29,11 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardBidirComponent.ID, BoardContainerComponents.BoardBidirComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardContainerComponent.ID, BoardContainerComponents.BoardContainerComponent.Constructor);
         }
+
+        /* More Components: 
+         * TristateBuffer
+         * Not
+         */
     }
 
     abstract class BaseComponent : IComponent
@@ -788,7 +793,7 @@ namespace CircuitMaker.Components
             public override RectangleF GetComponentBounds()
             {
                 RectangleF rect = GetDefaultComponentBounds();
-                rect.Inflate(0, 1);
+                rect.Inflate(0, 0.5F);
                 return rect;
             }
 
@@ -1200,9 +1205,9 @@ namespace CircuitMaker.Components
         public override RectangleF GetComponentBounds()
         {
             RectangleF rect = GetDefaultComponentBounds();
-            rect.Inflate(0, 1);
-            rect.Offset(-1, 0);
-            rect.Width++;
+            rect.Inflate(0, 0.5F);
+            rect.X -= 0.5F;
+            rect.Width += 0.5F;
             return rect;
         }
 
@@ -1520,7 +1525,8 @@ namespace CircuitMaker.Components
             public override RectangleF GetComponentBounds()
             {
                 RectangleF rect = GetDefaultComponentBounds();
-                rect.Inflate(1, 1);
+                rect.Inflate(1, 0.5F);
+                rect.Width -= 0.5F;
                 rect.X++;
                 return rect;
             }
@@ -1675,11 +1681,12 @@ namespace CircuitMaker.Components
             public override RectangleF GetComponentBounds()
             {
                 RectangleF rect = GetDefaultComponentBounds();
-                rect.Inflate(1, 1);
+                rect.Inflate(0.5F, 1);
                 //rect.Width++;
                 //rect.X -= 0.5F;
                 //rect.Y -= 0.5F;
-                rect.Y--;
+                rect.Height -= 0.5F;
+                rect.Y -= 0.5F;
                 return rect;
             }
 
