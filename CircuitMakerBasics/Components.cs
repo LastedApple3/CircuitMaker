@@ -33,6 +33,8 @@ namespace CircuitMaker.Components
         /* More Components: 
          * TristateBuffer
          * Not
+         * VisualDisplay (need better name. the most basic form of graphical interaction that boards will inherit)
+         * SevenSeg
          */
     }
 
@@ -1290,7 +1292,7 @@ namespace CircuitMaker.Components
         }
     }
 
-    abstract class BoardContainerComponents
+    abstract class BoardContainerComponents // io components should also contain (and save) a pos and direction for its pin
     {
         public class BoardInputComponent : UserToggleInpComponent, IBoardInputComponent
         {

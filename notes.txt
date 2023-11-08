@@ -1,3 +1,5 @@
+planning for third iteration of interaction code, previous two deleted
+
 start drawing wire only if clicking on a pin which is displayed.
 select wires, double clicking a selected wire also starts drawing wire.
 drawing wire means that clicking on a comp doesn't select, but simply does nothing.
@@ -8,11 +10,63 @@ all the things that need to be done:
 	move component
 	select component
 	edit component
-	copy component
-	delete component
-	create component
+	copy component <- ContextMenu
+	delete component <- ContextMenu
+	create component <- ContextMenu
 	create wire
-	delete wire
-	select wire?
+	delete wire <- ContextMenu
+	select wire
 
 attach settings to right click? use right click menu (ContextMenu)?
+
+on left click:
+	if dragging:
+		place
+	else:
+		if on comp:
+			if comp is selected comp:
+				drag comp
+			else:
+				select comp
+		else if on wire:
+			if wire is selected wire:
+				start wire
+			else:
+				select wire
+		else:
+			deselect
+
+on double left click:
+	if dragging:
+		reset comp
+	if on comp:
+		if comp is selected comp:
+			open comp settings
+
+on right click:
+	if on comp:
+		select comp
+		open comp ContextMenu
+	else:
+		open generic ContextMenu
+
+on key press:
+	if delete:
+		delete selected object
+
+comp ContextMenu:
+	Open Settings (if has settings)
+	Move Component
+	Copy Component
+	Delete Component
+
+generic ContextMenu:
+	Start Simulation
+	Create Component (opens dialog)
+
+
+
+
+thoughts further:
+	Selection has the ability to take an Action<ComponentOrWire> that will be run on all it's members.
+	ComponentOrWire has a static func that takes an Action<IComponent> and an Action<Wire> and returns the relevant Action<ComponentOrWire>

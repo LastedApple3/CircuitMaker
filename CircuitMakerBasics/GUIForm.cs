@@ -28,12 +28,54 @@ namespace CircuitMaker.GUI
             None, /* Pan, */ MoveComponent, DrawWire
         }
 
+        private struct Selection // at some point, allow for multiple selections, containing a list of ComponentOrWire instead of just one.
+        {
+            public struct ComponentOrWire
+            {
+                private IComponent comp;
+                private Wire wire;
+
+                public bool Exists() { return IsComp() || IsWire(); }
+
+                public bool IsComp() { return comp != null; }
+
+                public bool IsWire() { return wire != null; }
+
+                public IComponent Comp() { return comp; }
+                public Wire Wire() { return wire; }
+
+                public void Set(IComponent comp) { this.comp = comp; wire = null; }
+                public void Set(Wire wire) { comp = null; this.wire = wire; }
+                public void Reset() { comp = null; wire = null; }
+            }
+
+            public ComponentOrWire SelectedObject;
+
+            public IComponent SelectedComp { get { return SelectedObject.Comp(); } }
+            public Wire SelectedWire { get { return SelectedObject.Wire(); } }
+
+            public bool HasObject() { return SelectedObject.Exists(); }
+
+            public bool HasComp() { return SelectedObject.IsComp(); }
+
+            public bool HasWire() { return SelectedObject.IsWire(); }
+
+            public void Deselect() { SelectedObject.Reset(); }
+
+            public void Select(IComponent comp) { SelectedObject.Set(comp); }
+            public void Select(Wire wire) { SelectedObject.Set(wire); }
+        }
+
+        private ContextMenuStrip genericMenu, componentMenu;
+        private ToolStripMenuItem startSimMenuItem, pasteCompMenuItem, createCompMenuItem, openSettingsMenuItem, moveCompMenuItem, copyCompMenuItem, deleteCompMenuItem;
+        private ToolStripSeparator componentMenuSep;
+
         private DragType dragType = DragType.None;
 
         private bool panning;
         private Point panLastMouseLocation;
 
-        private IComponent selectedComp;
+        private Selection selection;
 
         private IComponent dragComp;
         private Point dragOffset;
@@ -72,20 +114,6 @@ namespace CircuitMaker.GUI
             transformationMatrix = new Matrix();
             transformationMatrix.Scale(20, 20);
 
-            /*
-            colourScheme = new ColourScheme();
-
-            colourScheme.Background = Color.White;
-            colourScheme.ComponentEdge = Color.Black;
-            colourScheme.ComponentBackground = Color.LightYellow;
-            colourScheme.Wire = Color.Black;
-            colourScheme.WireFloating = Color.Gray;
-            colourScheme.WireLow = Color.DarkBlue;
-            colourScheme.WireHigh = Color.Blue;
-            colourScheme.WireIllegal = Color.Red;
-            //*/
-
-            //*
             colourScheme = new ColourScheme
             {
                 Background = Color.White,
@@ -98,16 +126,116 @@ namespace CircuitMaker.GUI
                 WireIllegal = Color.Red,
                 Grid = Color.FromArgb(63, Color.Black)
             };
-            //*/
 
             simulationTimer = new Timer
             {
-                Interval = 100,
+                Interval = (int)Math.Round((double)(1000 / 10)), // 10 t/s
                 Enabled = false
             };
             simulationTimer.Tick += SimulationTick;
 
             this.board = board;
+
+            startSimMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiStartSim",
+                Text = "Start Simulation"
+            };
+            startSimMenuItem.Click += StartSimMenuItem_Click;
+
+            pasteCompMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiPasteComp",
+                Text = "Paste Component"
+            };
+            pasteCompMenuItem.Click += PasteCompMenuItem_Click;
+
+            createCompMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiCreateComp",
+                Text = "Create Component"
+            };
+            createCompMenuItem.Click += CreateCompMenuItem_Click;
+
+            genericMenu = new ContextMenuStrip
+            {
+                Name = "cmsGeneric"
+            };
+            genericMenu.Items.AddRange(new ToolStripItem[] { startSimMenuItem, pasteCompMenuItem, createCompMenuItem });
+
+            openSettingsMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiOpenSettings",
+                Text = "Open Settings"
+            };
+            openSettingsMenuItem.Click += OpenSettingsMenuItem_Click;
+
+            componentMenuSep = new ToolStripSeparator
+            {
+                Name = "tssCompMenu"
+            };
+
+            moveCompMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiMoveComp",
+                Text = "Move Component"
+            };
+            moveCompMenuItem.Click += MoveCompMenuItem_Click;
+
+            copyCompMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiCopyComp",
+                Text = "Copy Component"
+            };
+            copyCompMenuItem.Click += CopyCompMenuItem_Click;
+
+            deleteCompMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiDeleteComp",
+                Text = "Delete Component"
+            };
+            deleteCompMenuItem.Click += DeleteCompMenuItem_Click;
+
+            componentMenu = new ContextMenuStrip
+            {
+                Name = "cmsSettingsComponent"
+            };
+            componentMenu.Items.AddRange(new ToolStripItem[] { moveCompMenuItem, copyCompMenuItem, deleteCompMenuItem });
+        }
+
+        private void StartSimMenuItem_Click(object sender, EventArgs e)
+        {
+            SetSimulation(true);
+        }
+
+        private void PasteCompMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void CreateCompMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void OpenSettingsMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void MoveCompMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void CopyCompMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void DeleteCompMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         public void SetSimulation(bool simulate)
@@ -119,16 +247,21 @@ namespace CircuitMaker.GUI
 
                 if (Simulating)
                 {
-                    selectedComp = null;
+                    //selectedComp = null;
+                    selection.Deselect();
 
                     board.ResetForSimulation();
                 } else {
                     board.ResetToFloating();
                 }
 
+                SimulatingChange.Invoke(simulate);
+
                 Invalidate();
             }
         }
+
+        public event Action<bool> SimulatingChange;
 
         private void SimulationTick(object sender, EventArgs e)
         {
@@ -174,9 +307,24 @@ namespace CircuitMaker.GUI
 
             foreach (IComponent comp in board.GetComponents())
             {
-                if ((comp.GetOffsetComponentBounds()).Contains(mousePos))
+                if (comp.GetOffsetComponentBounds().Contains(mousePos))
                 {
                     return comp;
+                }
+            }
+
+            return null;
+        }
+
+        private Wire GetClickedWire(Point mouseLoc)
+        {
+            PointF mousePos = DetransformPointF(mouseLoc);
+
+            foreach (Wire wire in board.GetAllWires())
+            {
+                if (wire.InflatedBounds().Contains(mousePos))
+                {
+                    return wire;
                 }
             }
 
@@ -199,11 +347,20 @@ namespace CircuitMaker.GUI
 
             board.Render(graphics, Simulating, Rectangle.FromLTRB(corners[0].X - 1, corners[0].Y - 1, corners[1].X + 1, corners[1].Y + 1), colourScheme);
 
-            if (selectedComp != null)
+            if (selection.HasObject())
             {
-                RectangleF compBounds = selectedComp.GetOffsetComponentBounds();
+                RectangleF bounds = new RectangleF();
+                
+                if (selection.HasComp())
+                {
+                    bounds = selection.SelectedComp.GetOffsetComponentBounds();
+                }
+                else if (selection.HasWire())
+                {
+                    bounds = selection.SelectedWire.InflatedBounds();
+                }
 
-                graphics.DrawRectangle(new Pen(Color.Red, 0.05F), compBounds.X, compBounds.Y, compBounds.Width, compBounds.Height);
+                graphics.DrawRectangle(new Pen(Color.Red, 0.05F), bounds.X, bounds.Y, bounds.Width, bounds.Height);
             }
 
             Matrix matrix = new Matrix();
@@ -246,7 +403,29 @@ namespace CircuitMaker.GUI
 
             if (!Simulating)
             {
-                if (selectedComp == null)
+                if (selection.HasObject())
+                {
+                    if (selection.HasComp()) // <---------------------------------------------------------------------- selected wire not dealt with
+                    {
+                        if (e.KeyCode == Keys.Delete)
+                        {
+                            selection.SelectedComp.Remove();
+                            selection.Deselect();
+                        }
+
+                        else if (e.KeyCode == (Keys.Control | Keys.C))
+                        {
+                            if (dragType == DragType.None)
+                            {
+                                selection.Select(selection.SelectedComp.Copy());
+
+                                dragType = DragType.MoveComponent;
+
+                                StartDraggingComponent(selection.SelectedComp, DetransformPoint(MousePosition));
+                            }
+                        }
+                    }
+                } else
                 {
                     if (e.KeyCode == Keys.Delete)
                     {
@@ -256,23 +435,6 @@ namespace CircuitMaker.GUI
                             {
                                 wire.Remove();
                             }
-                        }
-                    }
-                } else
-                {
-                    if (e.KeyCode == Keys.Delete)
-                    {
-                        selectedComp.Remove();
-                        selectedComp = null;
-                    } else if (e.KeyCode == (Keys.Control | Keys.C))
-                    {
-                        if (dragType == DragType.None)
-                        {
-                            selectedComp = selectedComp.Copy();
-
-                            dragType = DragType.MoveComponent;
-
-                            StartDraggingComponent(selectedComp, DetransformPoint(MousePosition));
                         }
                     }
                 }
@@ -375,7 +537,7 @@ namespace CircuitMaker.GUI
                 new Wire(wire.Item1, wire.Item2, board);
             }
 
-            //board.SimplifyWires(); // <-------------------------------------------------------------------------------------------------------------------------------
+            board.SimplifyWires();
 
             wireStart = pos;
         }
@@ -404,50 +566,84 @@ namespace CircuitMaker.GUI
                         PutDownDraggedComponent();
 
                         dragType = DragType.None;
+                    } else if (dragType == DragType.DrawWire)
+                    {
+                        if (!wireStart.Equals(wireEnd))
+                        {
+                            new Wire(wireStart, wireEnd, board);
+                        }
+
+                        StartWire(wireEnd);
                     } else
                     {
                         IComponent clickedComp = GetClickedComponent(e.Location);
+                        Wire clickedWire = GetClickedWire(e.Location);
 
-                        if (clickedComp == null)
+                        if (clickedComp != null)
                         {
-                            selectedComp = null;
-
-                            if (dragType == DragType.DrawWire)
-                            {
-                                if (!wireStart.Equals(wireEnd))
-                                {
-                                    new Wire(wireStart, wireEnd, board);
-                                }
-
-                                StartWire(wireEnd);
-                            } else
-                            {
-                                dragType = DragType.DrawWire;
-
-                                StartWire(Pos.FromPoint(DetransformPoint(e.Location)));
-                            }
-
-                            Console.WriteLine(wireStart);
-
-                            Invalidate();
-                        } else
-                        {
-                            if (clickedComp == selectedComp)
+                            if (clickedComp == selection.SelectedComp)
                             {
                                 StartDraggingComponent(clickedComp, e.Location);
 
                                 dragType = DragType.MoveComponent;
-                            }
-                            else
+                            } else
                             {
-                                selectedComp = clickedComp;
-
-                                Invalidate();
+                                selection.Select(clickedComp);
                             }
+                        } else if (clickedWire != null)
+                        {
+                            if (clickedWire == selection.SelectedWire)
+                            {
+                                StartWire(Pos.FromPoint(DetransformPoint(e.Location)));
+
+                                dragType = DragType.DrawWire;
+                            } else
+                            {
+                                selection.Select(clickedWire);
+                            }
+                        } else
+                        {
+                            selection.Deselect();
                         }
                     }
                 }
+            } else if (e.Button == MouseButtons.Right)
+            {
+                if (!Simulating)
+                {
+                    IComponent clickedComp = GetClickedComponent(e.Location);
+
+                    ContextMenuStrip contextMenuStrip;
+
+                    if (clickedComp != null)
+                    {
+                        selection.Select(clickedComp);
+
+                        contextMenuStrip = componentMenu;
+
+                        if (clickedComp is ISettingsComponent)
+                        {
+                            contextMenuStrip.Items.Insert(0, openSettingsMenuItem);
+                            contextMenuStrip.Items.Insert(1, componentMenuSep);
+                        } else
+                        {
+                            contextMenuStrip.Items.Remove(openSettingsMenuItem);
+                            contextMenuStrip.Items.Remove(componentMenuSep);
+                        }
+                    }
+                    else
+                    {
+                        contextMenuStrip = genericMenu;
+                    }
+
+                    contextMenuStrip.Show(Cursor.Position);
+
+                    //contextMenuStrip.Items.Remove(openSettingsMenuItem);
+                    //contextMenuStrip.Items.Remove(componentMenuSep);
+                }
             }
+
+            Invalidate();
         }
 
         protected override void OnMouseDoubleClick(MouseEventArgs e)
@@ -472,13 +668,11 @@ namespace CircuitMaker.GUI
                     {
                         IComponent clickedComp = GetClickedComponent(e.Location);
 
-                        if (clickedComp != null && clickedComp == selectedComp)
+                        if (clickedComp != null && clickedComp == selection.SelectedComp)
                         {
                             if (clickedComp is ISettingsComponent settingsComp)
                             {
                                 settingsComp.OpenSettings();
-
-                                Invalidate();
                             }
                             else
                             {
@@ -489,13 +683,13 @@ namespace CircuitMaker.GUI
                         }
                         else
                         {
-                            selectedComp = clickedComp;
-
-                            Invalidate();
+                            selection.Select(clickedComp);
                         }
                     }
                 }
             }
+
+            Invalidate();
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -504,9 +698,8 @@ namespace CircuitMaker.GUI
 
             if (e.Button == MouseButtons.Middle)
             {
-                if (!panning /* dragType == DragType.None */)
+                if (!panning)
                 {
-                    //dragType = DragType.Pan;
                     panning = true;
 
                     panLastMouseLocation = e.Location;
@@ -520,9 +713,8 @@ namespace CircuitMaker.GUI
 
             if (e.Button == MouseButtons.Middle)
             {
-                if (panning /* dragType == DragType.Pan */)
+                if (panning)
                 {
-                    //dragType = DragType.None;
                     panning = false;
                 }
             }
@@ -576,7 +768,7 @@ namespace CircuitMaker.GUI
             base.OnMouseWheel(e);
             if (dragType == DragType.MoveComponent) 
             {
-                dragNewRot = dragNewRot + (90 * Math.Sign(e.Delta));
+                dragNewRot += (90 * Math.Sign(e.Delta));
 
                 Invalidate();
             } else 
@@ -592,8 +784,8 @@ namespace CircuitMaker.GUI
                 float[] elements = transformationMatrix.Elements;
 
                 transformationMatrix.Scale(
-                    Math.Min(elements[0], 100F) / elements[0],
-                    Math.Min(elements[3], 100F) / elements[3]
+                    Math.Max(Math.Min(elements[0], 100F), 10F) / elements[0],
+                    Math.Max(Math.Min(elements[3], 100F), 10F) / elements[3]
                 );
 
                 transformationMatrix.Translate(-loc.X, -loc.Y);

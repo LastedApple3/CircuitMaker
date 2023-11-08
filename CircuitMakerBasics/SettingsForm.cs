@@ -105,7 +105,6 @@ namespace CircuitMaker.GUI.Settings
     public abstract class TextBoxSettingDescription<T> : SettingDescription<T>
     {
         protected TextBox inputControl;
-        private int oldCaretIdx;
 
         public TextBoxSettingDescription(string prompt, T defaultVal) : base(prompt, defaultVal) { }
 
@@ -115,8 +114,6 @@ namespace CircuitMaker.GUI.Settings
 
             inputControl.Text = defaultVal.ToString();
             inputControl.KeyPress += InputControl_KeyPress;
-
-            oldCaretIdx = inputControl.SelectionStart;
 
             return inputControl;
         }

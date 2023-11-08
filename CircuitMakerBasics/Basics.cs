@@ -45,9 +45,7 @@ namespace CircuitMaker.Basics
 
         static IComponent ReadComponent(this BinaryReader br, Board board)
         {
-            Func<string, IComponent> compFunc;
-
-            if (Constructors.TryGetValue(br.ReadString(), out compFunc))
+            if (Constructors.TryGetValue(br.ReadString(), out Func<string, IComponent> compFunc))
             {
                 IComponent comp = compFunc(br.ReadString());
                 comp.Place(br.ReadPos(), board);
@@ -276,6 +274,15 @@ namespace CircuitMaker.Basics
                 Math.Min(Pos1.Y, Pos2.Y),
                 Math.Max(Pos1.X, Pos2.X),
                 Math.Max(Pos1.Y, Pos2.Y));
+        }
+
+        public RectangleF InflatedBounds()
+        {
+            RectangleF bounds = Bounds();
+
+            bounds.Inflate(0.25F, 0.25F);
+
+            return bounds;
         }
 
         public bool IsVert()
@@ -851,9 +858,41 @@ namespace CircuitMaker.Basics
 
         public void ResetForSimulation()
         {
+            ResetToFloating();
+
             foreach (IComponent comp in Components)
             {
                 comp.ResetToDefault();
+            }
+        }
+
+        public void SimplifyWires()
+        {
+            Wire[] wires;
+
+            foreach (Pin pin in Pins.Values)
+            {
+                wires = pin.GetWires();
+
+                if (wires.Length == 2 && wires[0].IsHori() == wires[1].IsHori() && wires[0].IsVert() == wires[1].IsVert() && (wires[0].IsHori() || wires[0].IsVert()))
+                {
+                    if (wires[0].Pos1.Equals(wires[1].Pos1) && !wires[0].Pos2.Equals(wires[1].Pos2))
+                    {
+                        new Wire(wires[0].Pos2, wires[1].Pos2, this);
+                    } else if (wires[0].Pos2.Equals(wires[1].Pos1) && !wires[0].Pos1.Equals(wires[1].Pos2))
+                    {
+                        new Wire(wires[0].Pos1, wires[1].Pos2, this);
+                    } else if (wires[0].Pos1.Equals(wires[1].Pos2) && !wires[0].Pos2.Equals(wires[1].Pos1))
+                    {
+                        new Wire(wires[0].Pos2, wires[1].Pos1, this);
+                    } else if (wires[0].Pos2.Equals(wires[1].Pos2) && !wires[0].Pos1.Equals(wires[1].Pos1))
+                    {
+                        new Wire(wires[0].Pos1, wires[1].Pos1, this);
+                    }
+
+                    wires[0].Remove();
+                    wires[1].Remove();
+                }
             }
         }
 

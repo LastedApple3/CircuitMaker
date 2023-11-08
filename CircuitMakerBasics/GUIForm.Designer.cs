@@ -104,6 +104,7 @@
             this.builder.Name = "builder";
             this.builder.Size = new System.Drawing.Size(794, 370);
             this.builder.TabIndex = 0;
+            this.builder.SimulatingChange += BtnSimulate_UpdateText;
             // 
             // btnSimulate
             // 
@@ -149,10 +150,24 @@
         {
             builder.SetSimulation(!builder.Simulating);
 
+            /*
             if (builder.Simulating)
             {
                 btnSimulate.Text = "Stop Simulation";
-            } else
+            }
+            else
+            {
+                btnSimulate.Text = "Start Simulation";
+            }//*/
+        }
+
+        private void BtnSimulate_UpdateText(bool simulating)
+        {
+            if (simulating)
+            {
+                btnSimulate.Text = "Stop Simulation";
+            }
+            else
             {
                 btnSimulate.Text = "Start Simulation";
             }
