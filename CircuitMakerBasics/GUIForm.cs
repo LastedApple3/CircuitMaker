@@ -19,13 +19,92 @@ namespace CircuitMaker.GUI
         {
             InitializeComponent();
         }
+
+        private void newBoardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //builder = Builder.NewBoard("newBoard");
+            builder.OpenNewBoard("new board");
+        }
+
+        private void openBoardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+            //builder.OpenLoadBoard() // <---------------------------------------- need function that uses a dialog to 
+        }
+
+        private void saveBoardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void saveBoardAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void undoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void redoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void cutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void editExternalAppearanceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void insertComponentToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void insertFromBoardToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void BtnSimulate_Click(object sender, System.EventArgs e)
+        {
+            builder.SetSimulation(!builder.Simulating);
+        }
+
+        private void BtnSimulate_UpdateText(bool simulating)
+        {
+            if (simulating)
+            {
+                btnSimulate.Text = "Stop Simulation";
+            }
+            else
+            {
+                btnSimulate.Text = "Start Simulation";
+            }
+        }
     }
 
     public class Builder : UserControl
     {
         private enum DragType
         {
-            None, /* Pan, */ MoveComponent, DrawWire
+            None, MoveComponent, DrawWire
         }
 
         private struct Selection // at some point, allow for multiple selections, containing a list of ComponentOrWire instead of just one.
@@ -77,6 +156,11 @@ namespace CircuitMaker.GUI
 
         private Selection selection;
 
+        private IComponent rightClickedComp;
+        private Point rightClickMouseLoc;
+
+        private IComponent clipboardComp;
+
         private IComponent dragComp;
         private Point dragOffset;
         private bool dragResetIsDel;
@@ -107,9 +191,21 @@ namespace CircuitMaker.GUI
             return new Builder(new Board(name));
         }
 
+        public void OpenLoadBoard(string name)
+        {
+            board = Board.Load(name);
+        }
+
+        public void OpenNewBoard(string name)
+        {
+            board = new Board(name);
+        }
+
         private Builder(Board board)
         {
             DoubleBuffered = true;
+
+            clipboardComp = null;
 
             transformationMatrix = new Matrix();
             transformationMatrix.Scale(20, 20);
@@ -210,32 +306,60 @@ namespace CircuitMaker.GUI
 
         private void PasteCompMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            if (clipboardComp != null)
+            {
+                if (dragType == DragType.None)
+                {
+                    StartDraggingComponent(clipboardComp.Copy(), rightClickMouseLoc, true, true);
+
+                    dragType = DragType.MoveComponent;
+                }
+            }
         }
 
         private void CreateCompMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException(); // <-------------------------------------------------------------------------------------------------------------------
         }
 
         private void OpenSettingsMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            if (rightClickedComp is ISettingsComponent settingsComp) {
+                settingsComp.OpenSettings();
+
+                Invalidate();
+            }
         }
 
         private void MoveCompMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            Console.Write("moving: ");
+            Console.WriteLine(rightClickedComp);
+
+            if (rightClickedComp != null)
+            {
+                StartDraggingComponent(rightClickedComp, rightClickMouseLoc, true);
+
+                dragType = DragType.MoveComponent;
+            }
         }
 
         private void CopyCompMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            if (rightClickedComp != null)
+            {
+                clipboardComp = rightClickedComp.Copy();
+            }
         }
 
         private void DeleteCompMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            if (rightClickedComp != null)
+            {
+                rightClickedComp.Remove();
+
+                Invalidate();
+            }
         }
 
         public void SetSimulation(bool simulate)
@@ -442,7 +566,7 @@ namespace CircuitMaker.GUI
         }
 
 
-        private void StartDraggingComponent(IComponent comp, Point mouseLoc, bool resetIsDel = false)
+        private void StartDraggingComponent(IComponent comp, Point mouseLoc, bool offsetIsZero = false, bool resetIsDel = false)
         {
             dragComp = comp;
 
@@ -451,11 +575,11 @@ namespace CircuitMaker.GUI
             dragResetPos = comp.GetComponentPos();
             dragResetRot = comp.GetComponentRotation();
 
-            Point[] point = { /* new Point(dragResetPos.X, dragResetPos.Y) */ dragResetPos.ToPoint() };
+            Point[] point = { dragResetPos.ToPoint() };
 
             transformationMatrix.TransformPoints(point);
 
-            dragOffset = new Point(point[0].X - mouseLoc.X, point[0].Y - mouseLoc.Y);
+            dragOffset = offsetIsZero ? new Point(0, 0) : new Point(point[0].X - mouseLoc.X, point[0].Y - mouseLoc.Y);
             dragNewRot = comp.GetComponentRotation();
             dragNewPoint = new Point(mouseLoc.X + dragOffset.X, mouseLoc.Y + dragOffset.Y);
 
@@ -484,6 +608,8 @@ namespace CircuitMaker.GUI
             if (board.CheckAllowed(bounds))
             {
                 dragComp.Place(newPos, dragNewRot, board);
+
+                Console.WriteLine(newPos);
 
                 dragComp = null;
 
@@ -636,10 +762,10 @@ namespace CircuitMaker.GUI
                         contextMenuStrip = genericMenu;
                     }
 
-                    contextMenuStrip.Show(Cursor.Position);
+                    rightClickedComp = clickedComp;
+                    rightClickMouseLoc = e.Location;
 
-                    //contextMenuStrip.Items.Remove(openSettingsMenuItem);
-                    //contextMenuStrip.Items.Remove(componentMenuSep);
+                    contextMenuStrip.Show(Cursor.Position);
                 }
             }
 

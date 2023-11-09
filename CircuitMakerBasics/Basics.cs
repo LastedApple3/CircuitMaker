@@ -390,6 +390,7 @@ namespace CircuitMaker.Basics
     interface IBoardInterfaceComponent : IComponent
     {
         string GetComponentName();
+        void SetComponentName(string compName);
 
         void SetExternalPin(Pin pin);
         void RemoveExternalPin();
@@ -667,6 +668,23 @@ namespace CircuitMaker.Basics
 
         public Pin this[Pos pos] => Pins[pos];
 
+        private string GuaranteeUniqueName(string current, string[] existing)
+        {
+            string baseName = current.TrimEnd("0123456789".ToArray());
+            string baseNumberString = current.Substring(baseName.Length);
+
+            int baseNumber = 0;
+            int.TryParse(baseNumberString, out baseNumber);
+
+            while (existing.Contains(current))
+            {
+                baseNumber++;
+                current = baseName + baseNumber.ToString();
+            }
+
+            return current;
+        }
+
         internal void AddComponent(IComponent comp)
         {
             RectangleF bounds = comp.GetOffsetComponentBounds();
@@ -681,14 +699,18 @@ namespace CircuitMaker.Basics
 
             Components.Add(comp);
 
-            if (comp is IBoardInputComponent inpComponent)
+            if (comp is IBoardInputComponent inpComp)
             {
-                InputComponents.Add(inpComponent.GetComponentName(), inpComponent);
+                inpComp.SetComponentName(GuaranteeUniqueName(inpComp.GetComponentName(), InputComponents.Keys.ToArray()));
+
+                InputComponents.Add(inpComp.GetComponentName(), inpComp);
             }
 
-            if (comp is IBoardOutputComponent outpComponent)
+            if (comp is IBoardOutputComponent outpComp)
             {
-                OutputComponents.Add(outpComponent.GetComponentName(), outpComponent);
+                outpComp.SetComponentName(GuaranteeUniqueName(outpComp.GetComponentName(), OutputComponents.Keys.ToArray()));
+
+                OutputComponents.Add(outpComp.GetComponentName(), outpComp);
             }
         }
 

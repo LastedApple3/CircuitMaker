@@ -1213,14 +1213,14 @@ namespace CircuitMaker.Components
             return rect;
         }
 
-        public ISettingDescription[] GetSettingDescriptions()
+        public virtual ISettingDescription[] GetSettingDescriptions()
         {
             stateSettingDesc = new EnumSettingDescription<Pin.State>("What is the output state for this component?", OutputState);
 
             return new ISettingDescription[] { stateSettingDesc };
         }
 
-        public void ApplySettings()
+        public virtual void ApplySettings()
         {
             OutputState = stateSettingDesc.GetValue();
         }
@@ -1281,7 +1281,7 @@ namespace CircuitMaker.Components
             return Constructor(details);
         }
 
-        public new void ApplySettings()
+        public override void ApplySettings()
         {
             DefaultState = stateSettingDesc.GetValue();
         }
@@ -1309,6 +1309,11 @@ namespace CircuitMaker.Components
             public string GetComponentName()
             {
                 return ComponentName;
+            }
+
+            public void SetComponentName(string compName)
+            {
+                ComponentName = compName;
             }
 
             public BoardInputComponent(string name, Pin.State defaultState) : base(defaultState)
@@ -1401,14 +1406,16 @@ namespace CircuitMaker.Components
             }
             //*/
 
-            public new ISettingDescription[] GetSettingDescriptions()
+            public override ISettingDescription[] GetSettingDescriptions() // this is not being called, instead the base is being called.
             {
                 nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
 
-                return base.GetSettingDescriptions().Append(nameSettingDesc).ToArray();
+                //Console.WriteLine((new ISettingDescription[] { nameSettingDesc }).Concat(base.GetSettingDescriptions()).ToArray());
+
+                return (new ISettingDescription[] { nameSettingDesc }).Concat(base.GetSettingDescriptions()).ToArray();
             }
 
-            public new void ApplySettings()
+            public override void ApplySettings()
             {
                 base.ApplySettings();
 
@@ -1458,6 +1465,11 @@ namespace CircuitMaker.Components
             public string GetComponentName()
             {
                 return ComponentName;
+            }
+
+            public void SetComponentName(string compName)
+            {
+                ComponentName = compName;
             }
 
             public BoardOutputComponent(string name)
@@ -1574,6 +1586,11 @@ namespace CircuitMaker.Components
             public string GetComponentName()
             {
                 return ComponentName;
+            }
+
+            public void SetComponentName(string compName)
+            {
+                ComponentName = compName;
             }
 
             public BoardBidirComponent(string name, Pin.State defaultState)

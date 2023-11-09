@@ -161,7 +161,8 @@ namespace CircuitMaker
             //*
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new GUIForm());
+            //Application.Run(new GUIForm());
+            Application.Run(new MenuTestForm());
             //*/
         }
     }
