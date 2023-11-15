@@ -10,40 +10,40 @@ using System.Drawing.Drawing2D;
 namespace CircuitMaker.Basics
 {
     //*
-    static class ReadWriteImplementation
+    public static class ReadWriteImplementation
     {
-        static void Write(this BinaryWriter bw, Pos pos)
+        public static void Write(this BinaryWriter bw, Pos pos)
         {
             bw.Write(pos.X);
             bw.Write(pos.Y);
         }
 
-        static Pos ReadPos(this BinaryReader br)
+        public static Pos ReadPos(this BinaryReader br)
         {
             return new Pos(br.ReadInt32(), br.ReadInt32());
         }
 
 
-        static void Write(this BinaryWriter bw, Wire wire)
+        public static void Write(this BinaryWriter bw, Wire wire)
         {
             bw.Write(wire.Pos1);
             bw.Write(wire.Pos2);
         }
 
-        static Wire ReadWire(this BinaryReader br, Board board)
+        public static Wire ReadWire(this BinaryReader br, Board board)
         {
             return new Wire(br.ReadPos(), br.ReadPos(), board);
         }
 
 
-        static void Write(this BinaryWriter bw, IComponent comp)
+        public static void Write(this BinaryWriter bw, IComponent comp)
         {
             bw.Write(comp.GetComponentID());
             bw.Write(comp.GetComponentDetails());
             bw.Write(comp.GetComponentPos());
         }
 
-        static IComponent ReadComponent(this BinaryReader br, Board board)
+        public static IComponent ReadComponent(this BinaryReader br, Board board)
         {
             if (Constructors.TryGetValue(br.ReadString(), out Func<string, IComponent> compFunc))
             {
@@ -102,6 +102,7 @@ namespace CircuitMaker.Basics
 
 
         public static Dictionary<string, Func<string, IComponent>> Constructors = new Dictionary<string, Func<string, IComponent>>();
+        public static Dictionary<string, string> DefaultDetails = new Dictionary<string, string>();
     }//*/
 
     class DefaultDictionary<TKey, TValue> : Dictionary<TKey, TValue>
@@ -128,7 +129,7 @@ namespace CircuitMaker.Basics
         }
     }
 
-    readonly struct Pos : IEquatable<Pos>
+    public readonly struct Pos : IEquatable<Pos>
     {
         public readonly int X;
         public readonly int Y;
@@ -216,7 +217,7 @@ namespace CircuitMaker.Basics
         }
     }//*/
 
-    class Wire
+    public class Wire
     {
         public readonly Pos Pos1;
         public readonly Pos Pos2;
@@ -315,7 +316,7 @@ namespace CircuitMaker.Basics
         }
     }
 
-    struct ColourScheme
+    public struct ColourScheme
     {
         public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WireHigh, WireIllegal, Grid;
 
@@ -345,7 +346,7 @@ namespace CircuitMaker.Basics
         }
     }
 
-    interface IComponent
+    public interface IComponent
     {
         void Place(Pos pos, Board board);
         void Place(Pos pos, Rotation rotation, Board board);
@@ -381,13 +382,13 @@ namespace CircuitMaker.Basics
         void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
     }
 
-    interface IInteractibleComponent : IComponent
+    public interface IInteractibleComponent : IComponent
     {
         void Interact();
     }
 
     //*
-    interface IBoardInterfaceComponent : IComponent
+    public interface IBoardInterfaceComponent : IComponent
     {
         string GetComponentName();
         void SetComponentName(string compName);
@@ -397,8 +398,8 @@ namespace CircuitMaker.Basics
     }
     //*/
 
-    interface IBoardInputComponent : IBoardInterfaceComponent { }
-    interface IBoardOutputComponent : IBoardInterfaceComponent { }
+    public interface IBoardInputComponent : IBoardInterfaceComponent { }
+    public interface IBoardOutputComponent : IBoardInterfaceComponent { }
 
     static class StateExtensions
     {
@@ -469,7 +470,7 @@ namespace CircuitMaker.Basics
         }
     }
 
-    class Pin
+    public class Pin
     {
         [Flags]
         public enum State : byte
@@ -548,7 +549,7 @@ namespace CircuitMaker.Basics
         }
     }
 
-    class Board
+    public class Board
     {
         private DefaultDictionary<Pos, Pin> Pins = new DefaultDictionary<Pos, Pin>(() => new Pin());
 
@@ -936,9 +937,9 @@ namespace CircuitMaker.Basics
             return $"Boards/{boardname}.brd";
         }
 
-        public void Save()
+        public void Save(string filename)
         {
-            using (FileStream file = File.Open(GetFilename(Name), FileMode.Create))
+            using (FileStream file = File.Open(filename, FileMode.Create))
             {
                 using (BinaryWriter bw = new BinaryWriter(file))
                 {
@@ -947,9 +948,9 @@ namespace CircuitMaker.Basics
             }
         }
 
-        public static Board Load(string boardname)
+        public static Board Load(string filename)
         {
-            using (FileStream file = File.Open(GetFilename(boardname), FileMode.Open))
+            using (FileStream file = File.Open(filename, FileMode.Open))
             {
                 using (BinaryReader br = new BinaryReader(file))
                 {

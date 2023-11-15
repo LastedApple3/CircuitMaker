@@ -45,6 +45,7 @@ namespace CircuitMaker.GUI.Settings
                 labels[i] = new Label();
                 labels[i].Name = $"lblSetting{i}";
                 labels[i].Text = settingDescs[i].GetPrompt();
+                labels[i].AutoSize = true;
                 labels[i].Anchor = anchorStyle;
 
                 inputControls[i] = settingDescs[i].GetInputControl();

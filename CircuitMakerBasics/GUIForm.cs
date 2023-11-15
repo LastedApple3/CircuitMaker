@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
 using CircuitMaker.Basics;
+using CircuitMaker.Components;
 using CircuitMaker.GUI.Settings;
 
 namespace CircuitMaker.GUI
@@ -28,18 +29,38 @@ namespace CircuitMaker.GUI
 
         private void openBoardToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
-            //builder.OpenLoadBoard() // <---------------------------------------- need function that uses a dialog to 
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Boards (*.brd)|*.brd|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 0;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    builder.OpenLoadBoard(openFileDialog.FileName);
+                }
+            }
         }
 
         private void saveBoardToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            builder.SaveBoard();
         }
 
         private void saveBoardAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            // use SaveFileDialog
+
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.Filter = "Boards (*.brd)|*.brd|All files (*.*)|*.*";
+                saveFileDialog.FilterIndex = 0;
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    builder.SaveBoard(saveFileDialog.FileName);
+                }
+            }
         }
 
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
@@ -54,17 +75,17 @@ namespace CircuitMaker.GUI
 
         private void cutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            builder.CutSelection();
         }
 
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            builder.CopySelection();
         }
 
         private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            builder.PasteSelection();
         }
 
         private void editExternalAppearanceToolStripMenuItem_Click(object sender, EventArgs e)
@@ -72,14 +93,14 @@ namespace CircuitMaker.GUI
             throw new NotImplementedException();
         }
 
-        private void insertComponentToolStripMenuItem_Click(object sender, EventArgs e)
+        private void insertBuiltinComponentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            builder.CreateBuiltinComponent();
         }
 
-        private void insertFromBoardToolStripMenuItem_Click(object sender, EventArgs e)
+        private void insertBoardComponentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            builder.CreateBoardComponent();
         }
 
         private void BtnSimulate_Click(object sender, System.EventArgs e)
@@ -146,7 +167,7 @@ namespace CircuitMaker.GUI
         }
 
         private ContextMenuStrip genericMenu, componentMenu;
-        private ToolStripMenuItem startSimMenuItem, pasteCompMenuItem, createCompMenuItem, openSettingsMenuItem, moveCompMenuItem, copyCompMenuItem, deleteCompMenuItem;
+        private ToolStripMenuItem startSimMenuItem, pasteCompMenuItem, createBuiltinCompMenuItem, createBoardCompMenuItem, openSettingsMenuItem, moveCompMenuItem, copyCompMenuItem, deleteCompMenuItem;
         private ToolStripSeparator componentMenuSep;
 
         private DragType dragType = DragType.None;
@@ -175,6 +196,7 @@ namespace CircuitMaker.GUI
         protected Matrix transformationMatrix;
 
         private Board board;
+        private string storedFilename;
 
         private ColourScheme colourScheme;
 
@@ -182,27 +204,41 @@ namespace CircuitMaker.GUI
 
         private Timer simulationTimer;
 
-        public static Builder LoadBoard(string name)
+        private static string ConstructDefaultFilename(string boardName) // <----------------------------------------------------- change to use saved default directory
         {
-            return new Builder(Board.Load(name));
+            return $"Boards/{boardName}.brd";
+        }
+
+        public static Builder LoadBoard(string filename)
+        {
+            return new Builder(Board.Load(filename), filename);
         }
 
         public static Builder NewBoard(string name) {
-            return new Builder(new Board(name));
+            return new Builder(new Board(name), ConstructDefaultFilename(name));
         }
 
-        public void OpenLoadBoard(string name)
+        public void OpenLoadBoard(string filename)
         {
-            board = Board.Load(name);
+            board = Board.Load(filename);
         }
 
         public void OpenNewBoard(string name)
         {
             board = new Board(name);
+            storedFilename = ConstructDefaultFilename(name);
         }
 
-        private Builder(Board board)
+        public void SaveBoard(string filename = null)
         {
+            storedFilename = filename ?? storedFilename;
+            board.Save(storedFilename);
+        }
+
+        private Builder(Board board, string filename)
+        {
+            storedFilename = filename;
+
             DoubleBuffered = true;
 
             clipboardComp = null;
@@ -246,18 +282,25 @@ namespace CircuitMaker.GUI
             };
             pasteCompMenuItem.Click += PasteCompMenuItem_Click;
 
-            createCompMenuItem = new ToolStripMenuItem
+            createBuiltinCompMenuItem = new ToolStripMenuItem
             {
-                Name = "tsmiCreateComp",
-                Text = "Create Component"
+                Name = "tsmiCreateBuiltinComp",
+                Text = "Create Builtin Component"
             };
-            createCompMenuItem.Click += CreateCompMenuItem_Click;
+            createBuiltinCompMenuItem.Click += CreateBuiltinCompMenuItem_Click;
+
+            createBoardCompMenuItem = new ToolStripMenuItem
+            {
+                Name = "tsmiCreateBoardComp",
+                Text = "Create Board Component"
+            };
+            createBoardCompMenuItem.Click += CreateBoardCompMenuItem_Click;
 
             genericMenu = new ContextMenuStrip
             {
                 Name = "cmsGeneric"
             };
-            genericMenu.Items.AddRange(new ToolStripItem[] { startSimMenuItem, pasteCompMenuItem, createCompMenuItem });
+            genericMenu.Items.AddRange(new ToolStripItem[] { startSimMenuItem, pasteCompMenuItem, createBuiltinCompMenuItem, createBoardCompMenuItem });
 
             openSettingsMenuItem = new ToolStripMenuItem
             {
@@ -317,9 +360,14 @@ namespace CircuitMaker.GUI
             }
         }
 
-        private void CreateCompMenuItem_Click(object sender, EventArgs e)
+        private void CreateBuiltinCompMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException(); // <-------------------------------------------------------------------------------------------------------------------
+            CreateBuiltinComponent();
+        }
+
+        private void CreateBoardCompMenuItem_Click(object sender, EventArgs e)
+        {
+            CreateBoardComponent();
         }
 
         private void OpenSettingsMenuItem_Click(object sender, EventArgs e)
@@ -359,6 +407,62 @@ namespace CircuitMaker.GUI
                 rightClickedComp.Remove();
 
                 Invalidate();
+            }
+        }
+
+        public void CreateBuiltinComponent()
+        {
+            ComponentSelectionForm form = new ComponentSelectionForm();
+
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                StartDraggingComponent(form.GetComponent(), new Point(), true, true);
+            }
+        }
+
+        public void CreateBoardComponent()
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Boards (*.brd)|*.brd|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 0;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    StartDraggingComponent(new BoardContainerComponents.BoardContainerComponent(Board.Load(openFileDialog.FileName)), new Point(), true, true);
+
+                    dragType = DragType.MoveComponent;
+                }
+            }
+        }
+
+        public void CopySelection()
+        {
+            if (selection.HasComp())
+            {
+                clipboardComp = selection.SelectedComp.Copy();
+            }
+        }
+
+        public void CutSelection()
+        {
+            if (selection.HasComp())
+            {
+                clipboardComp = selection.SelectedComp;
+                clipboardComp.Remove();
+            }
+        }
+
+        public void PasteSelection()
+        {
+            if (clipboardComp != null)
+            {
+                if (dragType == DragType.None)
+                {
+                    StartDraggingComponent(clipboardComp.Copy(), new Point(), true, true);
+
+                    dragType = DragType.MoveComponent;
+                }
             }
         }
 

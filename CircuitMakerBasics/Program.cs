@@ -91,7 +91,7 @@ namespace CircuitMaker
                 new Wire(QBarNor.GetAllPinPositions()[2], QBar.GetAllPinPositions()[0], board),
             };
 
-            board.Save();
+            board.Save("Boards/test.brd");
             //*/
 
             /*
@@ -158,11 +158,22 @@ namespace CircuitMaker
             dialog.ShowDialog();
             //*/
 
+            /*
+            ComponentSelectionForm form = new ComponentSelectionForm();
+
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                Console.WriteLine(form.GetConstructor());
+                Console.ReadLine();
+            }
+            //*/
+
             //*
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new GUIForm());
-            Application.Run(new MenuTestForm());
+            Application.Run(new GUIForm());
+            //Application.Run(new ComponentSelectionForm());
+            //Application.Run(new MenuTestForm());
             //*/
         }
     }

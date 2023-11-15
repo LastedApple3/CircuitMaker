@@ -39,18 +39,18 @@
             this.undoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.redoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.cutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.editExternalAppearanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.insertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.insertComponentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.insertFromBoardToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.insertBuiltinComponentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.insertBoardComponentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip.SuspendLayout();
 
             this.tblWholePage = new System.Windows.Forms.TableLayoutPanel();
-            this.builder = Builder.LoadBoard("SR-Nor-Latch"); // change this for final <---------------------------------------------------------------------
+            this.builder = Builder.LoadBoard("Boards/SR-Nor-Latch.brd"); // change this for final <---------------------------------------------------------------------
             this.btnSimulate = new System.Windows.Forms.Button();
             this.tblSelector = new System.Windows.Forms.TableLayoutPanel();
             this.tblWholePage.SuspendLayout();
@@ -120,8 +120,8 @@
             this.undoToolStripMenuItem,
             this.redoToolStripMenuItem,
             this.toolStripSeparator1,
-            this.cutToolStripMenuItem,
             this.copyToolStripMenuItem,
+            this.cutToolStripMenuItem,
             this.pasteToolStripMenuItem,
             this.toolStripSeparator3,
             this.editExternalAppearanceToolStripMenuItem});
@@ -148,19 +148,19 @@
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(202, 6);
             // 
-            // cutToolStripMenuItem
-            // 
-            this.cutToolStripMenuItem.Name = "cutToolStripMenuItem";
-            this.cutToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
-            this.cutToolStripMenuItem.Text = "Cut";
-            this.cutToolStripMenuItem.Click += new System.EventHandler(this.cutToolStripMenuItem_Click);
-            // 
             // copyToolStripMenuItem
             // 
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
             this.copyToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.copyToolStripMenuItem.Text = "Copy";
             this.copyToolStripMenuItem.Click += new System.EventHandler(this.copyToolStripMenuItem_Click);
+            // 
+            // cutToolStripMenuItem
+            // 
+            this.cutToolStripMenuItem.Name = "cutToolStripMenuItem";
+            this.cutToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.cutToolStripMenuItem.Text = "Cut";
+            this.cutToolStripMenuItem.Click += new System.EventHandler(this.cutToolStripMenuItem_Click);
             // 
             // pasteToolStripMenuItem
             // 
@@ -184,25 +184,25 @@
             // insertToolStripMenuItem
             // 
             this.insertToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.insertComponentToolStripMenuItem,
-            this.insertFromBoardToolStripMenuItem});
+            this.insertBuiltinComponentToolStripMenuItem,
+            this.insertBoardComponentToolStripMenuItem});
             this.insertToolStripMenuItem.Name = "insertToolStripMenuItem";
             this.insertToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.insertToolStripMenuItem.Text = "Insert";
             // 
             // insertComponentToolStripMenuItem
             // 
-            this.insertComponentToolStripMenuItem.Name = "insertComponentToolStripMenuItem";
-            this.insertComponentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.insertComponentToolStripMenuItem.Text = "Insert Component";
-            this.insertComponentToolStripMenuItem.Click += new System.EventHandler(this.insertComponentToolStripMenuItem_Click);
+            this.insertBuiltinComponentToolStripMenuItem.Name = "insertComponentToolStripMenuItem";
+            this.insertBuiltinComponentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.insertBuiltinComponentToolStripMenuItem.Text = "Insert Builtin Component";
+            this.insertBuiltinComponentToolStripMenuItem.Click += new System.EventHandler(this.insertBuiltinComponentToolStripMenuItem_Click);
             // 
             // insertFromBoardToolStripMenuItem
             // 
-            this.insertFromBoardToolStripMenuItem.Name = "insertFromBoardToolStripMenuItem";
-            this.insertFromBoardToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.insertFromBoardToolStripMenuItem.Text = "Insert From Board";
-            this.insertFromBoardToolStripMenuItem.Click += new System.EventHandler(this.insertFromBoardToolStripMenuItem_Click);
+            this.insertBoardComponentToolStripMenuItem.Name = "insertFromBoardToolStripMenuItem";
+            this.insertBoardComponentToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.insertBoardComponentToolStripMenuItem.Text = "Insert Board Component";
+            this.insertBoardComponentToolStripMenuItem.Click += new System.EventHandler(this.insertBoardComponentToolStripMenuItem_Click);
             // 
             // tblWholePage
             // 
@@ -281,16 +281,16 @@
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem undoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem redoToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem cutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem copyToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cutToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripMenuItem editExternalAppearanceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem insertToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem insertComponentToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem insertFromBoardToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem insertBuiltinComponentToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem insertBoardComponentToolStripMenuItem;
         private System.Windows.Forms.TableLayoutPanel tblWholePage;
         private Builder builder;
         private System.Windows.Forms.Button btnSimulate;

@@ -7,6 +7,7 @@ using CircuitMaker.Basics;
 using CircuitMaker.GUI.Settings;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 
 namespace CircuitMaker.Components
 {
@@ -28,6 +29,9 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardOutputComponent.ID, BoardContainerComponents.BoardOutputComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardBidirComponent.ID, BoardContainerComponents.BoardBidirComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardContainerComponent.ID, BoardContainerComponents.BoardContainerComponent.Constructor);
+
+
+            ReadWriteImplementation.DefaultDetails.Add(VarInpComponents.VarInpAndComponent.ID, VarInpComponents.VarInpAndComponent.DefaultDetails);
         }
 
         /* More Components: 
@@ -925,17 +929,18 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "AND";
+            public static string DefaultDetails = "2";
 
             public override string GetComponentID()
             {
                 return ID;
             }
 
-            public static IComponent Constructor(string Details)
+            public static IComponent Constructor(string details)
             {
                 int inpCount;
 
-                if (int.TryParse(Details, out inpCount))
+                if (int.TryParse(details, out inpCount))
                 {
                     return new VarInpAndComponent(inpCount);
                 }
@@ -964,6 +969,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "OR";
+            public static string DefaultDetails = "2";
 
             public override string GetComponentID()
             {
@@ -1003,6 +1009,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "XOR";
+            public static string DefaultDetails = "2";
 
             public override string GetComponentID()
             {
@@ -1042,6 +1049,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "NAND";
+            public static string DefaultDetails = "2";
 
             public override string GetComponentID()
             {
@@ -1082,6 +1090,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "NOR";
+            public static string DefaultDetails = "2";
 
             public override string GetComponentID()
             {
@@ -1122,6 +1131,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "XNOR";
+            public static string DefaultDetails = "2";
 
             public override string GetComponentID()
             {
@@ -1176,6 +1186,7 @@ namespace CircuitMaker.Components
         }
 
         public static string ID = "FIXED";
+        public static string DefaultDetails = "L";
 
         public override string GetComponentID()
         {
@@ -1322,6 +1333,7 @@ namespace CircuitMaker.Components
             }
 
             public new static string ID = "INPUT";
+            public new static string DefaultDetails = "INPUT,L";
 
             public override string GetComponentID()
             {
@@ -1478,6 +1490,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "OUTPUT";
+            public static string DefaultDetails = "OUTPUT";
 
             public override string GetComponentID()
             {
@@ -1601,6 +1614,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "BIDIR";
+            public static string DefaultDetails = "BIDIR";
 
             public override string GetComponentID()
             {
@@ -1785,7 +1799,20 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return InternalBoard.Name;
+                using (Stream stream = new MemoryStream())
+                {
+                    using (BinaryWriter bw = new BinaryWriter(stream))
+                    {
+                        bw.Write(InternalBoard);
+                    }
+
+                    using (StreamReader sr = new StreamReader(stream))
+                    {
+                        return sr.ReadToEnd();
+                    }
+                }
+
+                //return InternalBoard.Name; // return the file form of the board instead
             }
 
             public new void Place(Pos pos, Rotation rotation, Board board)
@@ -1839,7 +1866,15 @@ namespace CircuitMaker.Components
 
             public static BoardContainerComponent Constructor(string details)
             {
-                return new BoardContainerComponent(Board.Load(details));
+                using (Stream stream = new MemoryStream(details.Cast<byte>().ToArray()))
+                {
+                    using (BinaryReader br = new BinaryReader(stream))
+                    {
+                        return new BoardContainerComponent(br.ReadBoard());
+                    }
+                }
+
+                //return new BoardContainerComponent(Board.Load(details));
             }
 
             public override IComponent NonStaticConstructor(string details)

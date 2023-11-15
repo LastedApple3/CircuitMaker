@@ -48,23 +48,17 @@
   <ItemGroup>
     <Compile Include="Basics.cs" />
     <Compile Include="Components.cs" />
-    <Compile Include="Form1.cs">
+    <Compile Include="ComponentSelectionForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="ComponentSelectionForm.Designer.cs">
+      <DependentUpon>ComponentSelectionForm.cs</DependentUpon>
     </Compile>
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="SettingsForm.Designer.cs">
       <DependentUpon>SettingsForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="MenuTestForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="MenuTestForm.Designer.cs">
-      <DependentUpon>MenuTestForm.cs</DependentUpon>
     </Compile>
     <Compile Include="GUIForm.cs">
       <SubType>Form</SubType>
@@ -79,14 +73,11 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Form1.resx">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <EmbeddedResource Include="ComponentSelectionForm.resx">
+      <DependentUpon>ComponentSelectionForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="MenuTestForm.resx">
-      <DependentUpon>MenuTestForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="GUIForm.resx">
       <DependentUpon>GUIForm.cs</DependentUpon>
