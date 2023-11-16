@@ -91,7 +91,7 @@ namespace CircuitMaker
                 new Wire(QBarNor.GetAllPinPositions()[2], QBar.GetAllPinPositions()[0], board),
             };
 
-            board.Save("Boards/test.brd");
+            board.Save("Boards/SR-Nor-Latch.brd");
             //*/
 
             /*

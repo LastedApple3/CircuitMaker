@@ -417,6 +417,8 @@ namespace CircuitMaker.GUI
             if (form.ShowDialog() == DialogResult.OK)
             {
                 StartDraggingComponent(form.GetComponent(), new Point(), true, true);
+
+                dragType = DragType.MoveComponent;
             }
         }
 

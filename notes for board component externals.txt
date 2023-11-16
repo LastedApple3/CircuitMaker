@@ -1,0 +1,5 @@
+need to store shape (use Rectangle)
+need to store location of every boardinterfacecomponent
+need to prevent shrinking it beyond capacity
+
+will also need functionality of rendering <- need to do this first.

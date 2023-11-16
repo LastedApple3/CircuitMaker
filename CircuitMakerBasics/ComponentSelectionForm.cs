@@ -20,7 +20,7 @@ namespace CircuitMaker
             lstComponents.Items.AddRange(ReadWriteImplementation.Constructors.Keys.Where(id => id != "BOARD").ToArray());
         }
 
-        public Func<string, IComponent> GetConstructor()
+        public IComponent GetComponent()
         {
             return ReadWriteImplementation.Constructors[(string)lstComponents.SelectedItem](ReadWriteImplementation.DefaultDetails[(string)lstComponents.SelectedItem]);
         }
