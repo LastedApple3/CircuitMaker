@@ -25,6 +25,8 @@ namespace CircuitMaker.GUI
         {
             //builder = Builder.NewBoard("newBoard");
             builder.OpenNewBoard("new board");
+
+            Invalidate();
         }
 
         private void openBoardToolStripMenuItem_Click(object sender, EventArgs e)
@@ -39,6 +41,8 @@ namespace CircuitMaker.GUI
                     builder.OpenLoadBoard(openFileDialog.FileName);
                 }
             }
+
+            Invalidate();
         }
 
         private void saveBoardToolStripMenuItem_Click(object sender, EventArgs e)
@@ -61,6 +65,8 @@ namespace CircuitMaker.GUI
                     builder.SaveBoard(saveFileDialog.FileName);
                 }
             }
+
+            Invalidate();
         }
 
         private void undoToolStripMenuItem_Click(object sender, EventArgs e)
@@ -76,16 +82,19 @@ namespace CircuitMaker.GUI
         private void cutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             builder.CutSelection();
+            Invalidate();
         }
 
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             builder.CopySelection();
+            Invalidate();
         }
 
         private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             builder.PasteSelection();
+            Invalidate();
         }
 
         private void editExternalAppearanceToolStripMenuItem_Click(object sender, EventArgs e)
@@ -215,18 +224,22 @@ namespace CircuitMaker.GUI
         }
 
         public static Builder NewBoard(string name) {
-            return new Builder(new Board(name), ConstructDefaultFilename(name));
+            return new Builder(new Board(name, new Size(2, 2)), ConstructDefaultFilename(name));
         }
 
         public void OpenLoadBoard(string filename)
         {
             board = Board.Load(filename);
+
+            Invalidate();
         }
 
         public void OpenNewBoard(string name)
         {
-            board = new Board(name);
+            board = new Board(name, new Size(2, 2));
             storedFilename = ConstructDefaultFilename(name);
+
+            Invalidate();
         }
 
         public void SaveBoard(string filename = null)
@@ -363,11 +376,13 @@ namespace CircuitMaker.GUI
         private void CreateBuiltinCompMenuItem_Click(object sender, EventArgs e)
         {
             CreateBuiltinComponent();
+            Invalidate();
         }
 
         private void CreateBoardCompMenuItem_Click(object sender, EventArgs e)
         {
             CreateBoardComponent();
+            Invalidate();
         }
 
         private void OpenSettingsMenuItem_Click(object sender, EventArgs e)
@@ -381,8 +396,8 @@ namespace CircuitMaker.GUI
 
         private void MoveCompMenuItem_Click(object sender, EventArgs e)
         {
-            Console.Write("moving: ");
-            Console.WriteLine(rightClickedComp);
+            //Console.Write("moving: ");
+            //Console.WriteLine(rightClickedComp);
 
             if (rightClickedComp != null)
             {
@@ -715,7 +730,7 @@ namespace CircuitMaker.GUI
             {
                 dragComp.Place(newPos, dragNewRot, board);
 
-                Console.WriteLine(newPos);
+                //Console.WriteLine(newPos);
 
                 dragComp = null;
 

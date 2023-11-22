@@ -3,3 +3,6 @@ need to store location of every boardinterfacecomponent
 need to prevent shrinking it beyond capacity
 
 will also need functionality of rendering <- need to do this first.
+
+Each interface component has a Board.InterfaceLocation
+Each graphical component has a PointF

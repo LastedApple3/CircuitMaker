@@ -54,7 +54,7 @@ namespace CircuitMaker.GUI
             this.menuStrip.SuspendLayout();
 
             this.tblWholePage = new TableLayoutPanel();
-            this.builder = Builder.LoadBoard("Boards/SR-Nor-Latch.brd"); // change this for final <---------------------------------------------------------------------
+            this.builder = Builder.NewBoard("untitled"); // change this for final <---------------------------------------------------------------------
             this.btnSimulate = new Button();
             this.tblSelector = new TableLayoutPanel();
             this.tblWholePage.SuspendLayout();

@@ -62,6 +62,8 @@ namespace CircuitMaker.Basics
         public static void Write(this BinaryWriter bw, Board board)
         {
             bw.Write(board.Name);
+            bw.Write(board.ExternalSize.Width);
+            bw.Write(board.ExternalSize.Height);
 
             IComponent[] comps = board.GetComponents();
             Wire[] wires = board.GetAllWires();
@@ -81,7 +83,7 @@ namespace CircuitMaker.Basics
 
         public static Board ReadBoard(this BinaryReader br)
         {
-            Board board = new Board(br.ReadString());
+            Board board = new Board(br.ReadString(), new Size(br.ReadInt32(), br.ReadInt32()));
 
             int compCount = br.ReadInt32();
 
@@ -394,6 +396,9 @@ namespace CircuitMaker.Basics
 
         void SetExternalPin(Pin pin);
         void RemoveExternalPin();
+
+        Board.InterfaceLocation GetInterfaceLocation();
+        void SetInterfaceLocation(Board.InterfaceLocation location);
     }
 
     public interface IBoardInputComponent : IBoardInterfaceComponent { }
@@ -403,6 +408,8 @@ namespace CircuitMaker.Basics
     {
         void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme);
         SizeF GetGraphicalElementBounds();
+        PointF GetGraphicalElementLocation();
+        void SetGraphicalElementLocation(PointF location);
     }
 
     static class StateExtensions
@@ -557,10 +564,51 @@ namespace CircuitMaker.Basics
     {
         public struct InterfaceLocation
         {
-            public enum Side { Top, Left, Bottom, Right }
+            //public enum Side { Top, Left, Bottom, Right }
+            [Flags]
+            public enum Side : byte { 
+                LeftRight = 0b010, 
+                BottomRight = 0b001,
+                IsSide = 0b100,
+
+                Top = IsSide,
+                Bottom = IsSide | BottomRight,
+                Left = IsSide | LeftRight,
+                Right = IsSide | LeftRight | BottomRight,
+                //Top = 0b100, Left = 0b110, Bottom = 0b101, Right = 0b111
+            }
 
             public Side side;
             public int distance;
+
+            public InterfaceLocation(Side side, int distance)
+            {
+                this.side = side;
+                this.distance = distance;
+            }
+
+            public override string ToString()
+            {
+                return $"({side},{distance})";
+            }
+        }
+
+        private class InterfaceComponentDictionary<T> : Dictionary<string, T> where T : IBoardInterfaceComponent
+        {
+            public void Add(T component)
+            {
+                Add(component.GetComponentName(), component);
+            }
+
+            public bool Remove(T component)
+            {
+                return Remove(component.GetComponentName());
+            }
+
+            public new bool ContainsValue(T component)
+            {
+                return ContainsKey(component.GetComponentName());
+            }
         }
 
         private DefaultDictionary<Pos, Pin> Pins = new DefaultDictionary<Pos, Pin>(() => new Pin());
@@ -569,16 +617,37 @@ namespace CircuitMaker.Basics
 
         private HashSet<IComponent> Components = new HashSet<IComponent>();
 
-        private Dictionary<string, InterfaceLocation> InterfaceLocations = new Dictionary<string, InterfaceLocation>();
-        private Dictionary<string, IBoardInputComponent> InputComponents = new Dictionary<string, IBoardInputComponent>();
-        private Dictionary<string, IBoardOutputComponent> OutputComponents = new Dictionary<string, IBoardOutputComponent>();
+        //private Dictionary<string, InterfaceLocation> InterfaceLocations = new Dictionary<string, InterfaceLocation>();
+        //private Dictionary<string, IBoardInterfaceComponent> InterfaceComponents = new Dictionary<string, IBoardInterfaceComponent>();
+        //private Dictionary<string, IBoardInputComponent> InputComponents = new Dictionary<string, IBoardInputComponent>();
+        //private Dictionary<string, IBoardOutputComponent> OutputComponents = new Dictionary<string, IBoardOutputComponent>();
+        private InterfaceComponentDictionary<IBoardInterfaceComponent> InterfaceComponents = new InterfaceComponentDictionary<IBoardInterfaceComponent>();
+        private InterfaceComponentDictionary<IBoardInputComponent> InputComponents = new InterfaceComponentDictionary<IBoardInputComponent>();
+        private InterfaceComponentDictionary<IBoardOutputComponent> OutputComponents = new InterfaceComponentDictionary<IBoardOutputComponent>();
         private List<IGraphicalComponent> GraphicalComponents = new List<IGraphicalComponent>();
+
+        private Size externalSize;
+        public Size ExternalSize
+        {
+            get
+            {
+                return externalSize;
+            }
+            set
+            {
+                externalSize = value;
+                //SizeChanged.Invoke();
+            }
+        }
+
+        //public event Action SizeChanged; 
 
         public string Name;
 
-        public Board(string name)
+        public Board(string name, Size externalSize)
         {
             Name = name;
+            ExternalSize = externalSize;
         }
 
         public bool EmitWireUpdate()
@@ -615,14 +684,14 @@ namespace CircuitMaker.Basics
             return Components.ToArray();
         }
 
-        public InterfaceLocation[] GetInterfaceLocations()
+        public IBoardInterfaceComponent[] GetInterfaceComponents()
         {
-            return InterfaceLocations.Values.ToArray();
+            return InterfaceComponents.Values.ToArray();
         }
 
-        public InterfaceLocation? GetInterfaceLocation(string name)
+        public IBoardInterfaceComponent GetInterfaceComponent(string name)
         {
-            return InterfaceLocations.ContainsKey(name) ? InterfaceLocations[name] : (InterfaceLocation?)null;
+            return InterfaceComponents.ContainsKey(name) ? InterfaceComponents[name] : null;
         }
 
         public IGraphicalComponent[] GetGraphicalComponents()
@@ -655,13 +724,28 @@ namespace CircuitMaker.Basics
             return OutputComponents.ContainsKey(name) ? OutputComponents[name] : null;
         }
 
-        public InterfaceLocation NextEmptyInterfaceLocation()
+        /*
+        public InterfaceLocation? NextEmptyInterfaceLocation()
         {
-            foreach (InterfaceLocation.Side side in Enum.GetValues(typeof(InterfaceLocation.Side)))
+            foreach (InterfaceLocation.Side side in new InterfaceLocation.Side[] { 
+                InterfaceLocation.Side.Left,
+                InterfaceLocation.Side.Right,
+                InterfaceLocation.Side.Top,
+                InterfaceLocation.Side.Bottom
+            })
             {
-
+                int max = (side & InterfaceLocation.Side.LeftRight) == InterfaceLocation.Side.LeftRight ? ExternalSize.Height : ExternalSize.Width;
+                
+                for (int val = 0; val == max; val++)
+                {
+                    InterfaceLocation interfaceLocation = new InterfaceLocation(side, max);
+                    return interfaceLocation; // incomplete
+                }
             }
+
+            return null;
         }
+        */
 
         public void Tick()
         {
@@ -721,16 +805,35 @@ namespace CircuitMaker.Basics
             {
                 interfaceComp.SetComponentName(GuaranteeUniqueName(interfaceComp.GetComponentName(), InputComponents.Keys.Concat(OutputComponents.Keys).ToArray()));
 
-                InterfaceLocations.Add(interfaceComp.GetComponentName(), NextEmptyInterfaceLocation());
+                //InterfaceComponents.Add(interfaceComp.GetComponentName(), interfaceComp);
+                InterfaceComponents.Add(interfaceComp);
+
+                /*
+                InterfaceLocation? interfaceLocation;
+
+                do
+                {
+                    interfaceLocation = NextEmptyInterfaceLocation();
+
+                    if (!interfaceLocation.HasValue)
+                    {
+                        ExternalSize.Width++;
+                    }
+                } while (!interfaceLocation.HasValue);
+
+                InterfaceLocations.Add(interfaceComp.GetComponentName(), interfaceLocation.Value);
+                */
 
                 if (comp is IBoardInputComponent inpComp)
                 {
-                    InputComponents.Add(inpComp.GetComponentName(), inpComp);
+                    //InputComponents.Add(inpComp.GetComponentName(), inpComp);
+                    InputComponents.Add(inpComp);
                 }
 
                 if (comp is IBoardOutputComponent outpComp)
                 {
-                    OutputComponents.Add(outpComp.GetComponentName(), outpComp);
+                    //OutputComponents.Add(outpComp.GetComponentName(), outpComp);
+                    OutputComponents.Add(outpComp);
                 }
             }
         }
@@ -749,6 +852,11 @@ namespace CircuitMaker.Basics
             if (comp is IGraphicalComponent grapicalComp)
             {
                 GraphicalComponents.Remove(grapicalComp);
+            }
+
+            if (comp is IBoardInterfaceComponent interfaceComp)
+            {
+                InterfaceComponents.Remove(interfaceComp);
             }
 
             if (comp is IBoardInputComponent inpComponent)
@@ -991,7 +1099,7 @@ namespace CircuitMaker.Basics
 
         public Board Copy(string copyName = null)
         {
-            Board copy = new Board(copyName ?? Name + " - Copy");
+            Board copy = new Board(copyName ?? Name + " - Copy", new Size(ExternalSize.Width, ExternalSize.Height));
 
             foreach (IComponent comp in Components)
             {
