@@ -981,7 +981,7 @@ namespace CircuitMaker.Basics
 
                     //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), compBounds.X, compBounds.Y, compBounds.Width, compBounds.Height);
                     //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), comp.GetComponentBounds());
-                    graphics.FillEllipse(Brushes.Red, -0.05F, -0.05F, 0.1F, 0.1F);
+                    //graphics.FillEllipse(Brushes.Red, -0.05F, -0.05F, 0.1F, 0.1F);
 
                     matrix.Invert();
                     graphics.MultiplyTransform(matrix);

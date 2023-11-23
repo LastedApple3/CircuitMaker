@@ -99,7 +99,7 @@ namespace CircuitMaker.Components
             Place(pos, Rotation.ZERO, board);
         }
 
-        public void Place(Pos pos, Rotation rotation, Board board)
+        public virtual void Place(Pos pos, Rotation rotation, Board board)
         {
             if (isPlaced)
             {
@@ -115,7 +115,7 @@ namespace CircuitMaker.Components
             isPlaced = true;
         }
 
-        public void Remove() // can be removed if not placed
+        public virtual void Remove() // can be removed if not placed
         {
             if (isPlaced)
             {
@@ -1332,14 +1332,42 @@ namespace CircuitMaker.Components
             return new Pos(-2, 0);
         }
 
-        public LogicProbeComponent() { }
+        static LogicProbeComponent()
+        {
+            using (Stream stream = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(stream))
+                {
+                    bw.Write(0F);
+                    bw.Write(0F);
+
+                    stream.Position = 0;
+
+                    using (StreamReader sr = new StreamReader(stream))
+                    {
+                        DefaultDetails = sr.ReadToEnd();
+                    }
+                }
+            }
+        }
+
+        public LogicProbeComponent(PointF graphicalLocation)
+        {
+            GraphicalLocation = graphicalLocation;
+
+            DisplayFormat = new StringFormat();
+            DisplayFormat.Alignment = StringAlignment.Center;
+            DisplayFormat.LineAlignment = StringAlignment.Center;
+        }
 
         public override void Tick() { }
 
         public static string ID = "PROBE";
-        public static string DefaultDetails = "";
+        public static string DefaultDetails;
 
-        private PointF GraphicalLocation; // needs to be saved
+        private PointF GraphicalLocation;
+
+        private StringFormat DisplayFormat;
 
         public PointF GetGraphicalElementLocation()
         {
@@ -1358,17 +1386,37 @@ namespace CircuitMaker.Components
 
         public override string GetComponentDetails()
         {
-            return "";
+            using (Stream stream = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(stream))
+                {
+                    bw.Write(GraphicalLocation.X);
+                    bw.Write(GraphicalLocation.Y);
+
+                    stream.Position = 0;
+
+                    using (StreamReader sr = new StreamReader(stream))
+                    {
+                        return sr.ReadToEnd();
+                    }
+                }
+            }
         }
 
         public static LogicProbeComponent Constructor(string details)
         {
-            return new LogicProbeComponent();
+            using (Stream stream = new MemoryStream(Encoding.ASCII.GetBytes(details)))
+            {
+                using (BinaryReader br = new BinaryReader(stream))
+                {
+                    return new LogicProbeComponent(new PointF(br.ReadSingle(), br.ReadSingle()));
+                }
+            }
         }
 
         public override IComponent NonStaticConstructor(string details)
         {
-            return new LogicProbeComponent();
+            return Constructor(details);
         }
 
         public override RectangleF GetComponentBounds()
@@ -1384,7 +1432,7 @@ namespace CircuitMaker.Components
         {
             GraphicsPath path = new GraphicsPath();
 
-            path.AddLines(new PointF[] { new PointF(1.5F, -0.5F), new PointF(-0.5F, -0.5F), new PointF(-1, 0), new PointF(-0.5F, 0.5F), new PointF(1.5F, 0.5F) });
+            path.AddLines(new PointF[] { new PointF(0.5F, -0.5F), new PointF(-0.5F, -0.5F), new PointF(-1, 0), new PointF(-0.5F, 0.5F), new PointF(0.5F, 0.5F) });
             path.CloseFigure();
 
             DrawComponentFromPath(graphics, path, colourScheme);
@@ -1392,14 +1440,24 @@ namespace CircuitMaker.Components
 
         public void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme)
         {
+            string display;
+            Color colour;
+
             if (simulating)
             {
                 Pin.State state = GetInpPin().GetStateForDisplay();
-                graphics.DrawString($"{state.ToString()[0]}", new Font("arial", 0.75F), new SolidBrush(colourScheme.GetWireColour(state)), 0, -0.5F);
+
+                display = $"{state.ToString()[0]}";
+                colour = colourScheme.GetWireColour(state);
+                //graphics.DrawString($"{state.ToString()[0]}", new Font("arial", 0.5F), new SolidBrush(colourScheme.GetWireColour(state)), 0, -0.5F);
             } else
             {
-                graphics.DrawString("?", new Font("arial", 0.75F), new SolidBrush(colourScheme.Wire), 0, -0.5F);
+                display = "?";
+                colour = colourScheme.Wire;
+                //graphics.DrawString("?", new Font("arial", 0.5F), new SolidBrush(colourScheme.Wire), 0, -0.5F);
             }
+
+            graphics.DrawString(display, new Font("arial", 0.5F), new SolidBrush(colour), 0, 0, DisplayFormat);
         }
 
         public SizeF GetGraphicalElementBounds()
@@ -1408,7 +1466,7 @@ namespace CircuitMaker.Components
         }
     }
 
-    abstract class BoardContainerComponents // io components should also contain (and save) a pos and direction for its pin
+    abstract class BoardContainerComponents
     {
         public class BoardInputComponent : UserToggleInpComponent, IBoardInputComponent
         {
@@ -1482,8 +1540,6 @@ namespace CircuitMaker.Components
                 }
 
                 base.Tick();
-
-                Console.WriteLine($"INPUT: {OutputState}, {GetOutpPin().GetStateForDisplay()}");
             }
 
             public new static BoardInputComponent Constructor(string details)
@@ -1648,8 +1704,6 @@ namespace CircuitMaker.Components
                 {
                     externalPin.SetState(State);
                 }
-
-                Console.WriteLine($"OUTPUT: {State}, {(externalPin != null ? (Pin.State?)externalPin.GetStateForDisplay() : null)}"); // does not have an external pin <-------------------------------------------------------------------
             }
 
             public ISettingDescription[] GetSettingDescriptions()
@@ -1843,7 +1897,7 @@ namespace CircuitMaker.Components
             }
         }
 
-        public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent
+        public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent//, IGraphicalComponent
         {
             public Board InternalBoard;
 
@@ -1855,6 +1909,9 @@ namespace CircuitMaker.Components
             private Pos[] OutpOffsets;
             private string[] OutpNames;
 
+            private static StringFormat LeftStringFormat,  RightStringFormat,  TopStringFormat, BottomStringFormat;
+            private static Dictionary<Board.InterfaceLocation.Side, StringFormat> StringFormats;
+
             public override Pos[] GetInpOffsets()
             {
                 return InpOffsets.ToArray();
@@ -1863,6 +1920,32 @@ namespace CircuitMaker.Components
             public override Pos[] GetOutpOffsets()
             {
                 return OutpOffsets.ToArray();
+            }
+
+            static BoardContainerComponent()
+            {
+                LeftStringFormat = new StringFormat();
+                RightStringFormat = new StringFormat();
+                TopStringFormat = new StringFormat();
+                BottomStringFormat = new StringFormat();
+
+                LeftStringFormat.Alignment = StringAlignment.Near;
+                TopStringFormat.Alignment = StringAlignment.Center;
+                BottomStringFormat.Alignment = StringAlignment.Center;
+                RightStringFormat.Alignment = StringAlignment.Far;
+
+                TopStringFormat.LineAlignment = StringAlignment.Near;
+                LeftStringFormat.LineAlignment = StringAlignment.Center;
+                RightStringFormat.LineAlignment = StringAlignment.Center;
+                BottomStringFormat.LineAlignment = StringAlignment.Far;
+
+                StringFormats = new Dictionary<Board.InterfaceLocation.Side, StringFormat>
+                {
+                    { Board.InterfaceLocation.Side.Left, LeftStringFormat },
+                    { Board.InterfaceLocation.Side.Right, RightStringFormat },
+                    { Board.InterfaceLocation.Side.Top, TopStringFormat },
+                    { Board.InterfaceLocation.Side.Bottom, BottomStringFormat }
+                };
             }
 
             public BoardContainerComponent(Board internalBoard)
@@ -1884,21 +1967,6 @@ namespace CircuitMaker.Components
                 {
                     interfaceLocation = interfaceComp.GetInterfaceLocation();
 
-                    /*
-                    Console.WriteLine($"{interfaceComp.GetComponentName()}: {interfaceLocation}");
-                    Action<Board.InterfaceLocation.Side> func = side =>
-                    {
-                        Console.WriteLine(side);
-                        Console.WriteLine((byte)side);
-                        Console.WriteLine($"{(byte)side}");
-                        Console.WriteLine((byte)$"{(byte)side}"[0]);
-                        //return (Board.InterfaceLocation.Side)(byte)$"{(byte)side}"[0];
-                    };
-                    func(Board.InterfaceLocation.Side.Top);
-                    //Console.WriteLine($"TOP: {func(Board.InterfaceLocation.Side.Top)}, BOTTOM: {Board.InterfaceLocation.Side.Bottom}, LEFT: {Board.InterfaceLocation.Side.Left}, RIGHT: {Board.InterfaceLocation.Side.Right}");
-                    //*/
-                    
-
                     offsetInfo = GetOffset(interfaceLocation);
                     offset = offsetInfo.Item1.Add(offsetInfo.Item2);
 
@@ -1919,30 +1987,6 @@ namespace CircuitMaker.Components
                 InpNames = inpNameList.ToArray();
                 OutpOffsets = outpOffsetList.ToArray();
                 OutpNames = outpNameList.ToArray();
-
-                /*
-                IBoardInputComponent[] inpComps = internalBoard.GetInputComponents();
-                int inputCount = inpComps.Length;
-                InpOffsets = new Pos[inputCount];
-                InpNames = new string[inputCount];
-
-                for (int i = 0; i < inputCount; i++)
-                {
-                    InpOffsets[i] = new Pos(-5, (2 * i) - inputCount);
-                    InpNames[i] = inpComps[i].GetComponentName();
-                }
-
-                IBoardOutputComponent[] outpComps = internalBoard.GetOutputComponents();
-                int outputCount = inpComps.Length;
-                OutpOffsets = new Pos[outputCount];
-                OutpNames = new string[outputCount];
-
-                for (int i = 0; i < outputCount; i++)
-                {
-                    OutpOffsets[i] = new Pos(5, (2 * i) - outputCount);
-                    OutpNames[i] = outpComps[i].GetComponentName();
-                }
-                //*/
             }
 
             public static string ID = "BOARD";
@@ -1994,7 +2038,7 @@ namespace CircuitMaker.Components
                 return (new Pos(), new Pos());
             }
 
-            public new void Place(Pos pos, Rotation rotation, Board board)
+            public override void Place(Pos pos, Rotation rotation, Board board)
             {
                 base.Place(pos, rotation, board);
 
@@ -2011,7 +2055,7 @@ namespace CircuitMaker.Components
                 }
             }
 
-            public new void Remove()
+            public override void Remove()
             {
                 base.Remove();
 
@@ -2092,9 +2136,10 @@ namespace CircuitMaker.Components
 
                 foreach (IBoardInterfaceComponent interfaceComp in InternalBoard.GetInterfaceComponents())
                 {
-                    offsetInfo = GetOffset(interfaceComp.GetInterfaceLocation());
+                    Board.InterfaceLocation interfaceLocation = interfaceComp.GetInterfaceLocation();
+                    offsetInfo = GetOffset(interfaceLocation);
 
-                    graphics.DrawString(interfaceComp.GetComponentName(), new Font("arial", 0.1F), Brushes.Black, new Point(offsetInfo.Item1.X, offsetInfo.Item1.Y));
+                    graphics.DrawString(interfaceComp.GetComponentName(), new Font("arial", 0.25F), Brushes.Black, new Point(offsetInfo.Item1.X, offsetInfo.Item1.Y), StringFormats[interfaceLocation.side]);
                 }
 
                 //RectangleF rect = GetDefaultComponentBounds();

@@ -48,10 +48,10 @@ namespace CircuitMaker
             board.Save();
             //*/
 
-            //* <-------------------------------------------------------------------------------------------------------------------------------------
+            /* <-------------------------------------------------------------------------------------------------------------------------------------
             Board board = new Board("SR-Nor-Latch", new System.Drawing.Size(4, 4));
 
-            IBoardInterfaceComponent Bidir = new BoardContainerComponents.BoardBidirComponent("B", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.Side.Top, 2));
+            //IBoardInterfaceComponent Bidir = new BoardContainerComponents.BoardBidirComponent("B", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.Side.Top, 2));
 
             IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.Side.Left, 1));
             IBoardInputComponent Reset = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.Side.Left, 3));
@@ -62,7 +62,7 @@ namespace CircuitMaker
             IBoardOutputComponent Q = new BoardContainerComponents.BoardOutputComponent("Q", new Board.InterfaceLocation(Board.InterfaceLocation.Side.Right, 1));
             IBoardOutputComponent QBar = new BoardContainerComponents.BoardOutputComponent("QBAR", new Board.InterfaceLocation(Board.InterfaceLocation.Side.Right, 3));
 
-            Bidir.Place(new Pos(-10, -10), board);
+            //Bidir.Place(new Pos(-10, -10), board);
 
             Set.Place(new Pos(4, 2), board);
             Reset.Place(new Pos(4, 9), board);
