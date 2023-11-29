@@ -6,3 +6,22 @@ will also need functionality of rendering <- need to do this first.
 
 Each interface component has a Board.InterfaceLocation
 Each graphical component has a PointF
+
+
+
+
+
+Designing the interaction form
+
+
+Board has GraphicalComponents & InterfaceComponents
+
+Editor gets Component with Board
+
+Save each thing that will be edited
+Dictionary<string(InterfaceComponent.ComponentName), InterfaceLocation> interfaceLocationSaves
+Dictionary<GraphicalComponent, PointF> graphicsLocationSaves
+
+GUI live updates it
+
+ResetChanges just loads these back up.

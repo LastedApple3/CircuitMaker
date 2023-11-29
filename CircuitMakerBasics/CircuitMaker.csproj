@@ -54,6 +54,18 @@
     <Compile Include="ComponentSelectionForm.Designer.cs">
       <DependentUpon>ComponentSelectionForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ExtAppEditor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ExtAppEditor.Designer.cs">
+      <DependentUpon>ExtAppEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ExtAppEditorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ExtAppEditorForm.Designer.cs">
+      <DependentUpon>ExtAppEditorForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -75,6 +87,12 @@
   <ItemGroup>
     <EmbeddedResource Include="ComponentSelectionForm.resx">
       <DependentUpon>ComponentSelectionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ExtAppEditor.resx">
+      <DependentUpon>ExtAppEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ExtAppEditorForm.resx">
+      <DependentUpon>ExtAppEditorForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>

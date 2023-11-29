@@ -8,6 +8,7 @@ using CircuitMaker.Components;
 using System.Windows.Forms;
 using CircuitMaker.GUI;
 using CircuitMaker.GUI.Settings;
+using CircuitMaker.GUI.ExtApp;
 using System.IO;
 
 namespace CircuitMaker
@@ -174,6 +175,7 @@ namespace CircuitMaker
             Application.Run(new GUIForm());
             //Application.Run(new ComponentSelectionForm());
             //Application.Run(new MenuTestForm());
+            //Application.Run(new ExtAppEditorForm());
             //*/
         }
     }

@@ -138,7 +138,7 @@ namespace CircuitMaker.Components
 
         public abstract void Render(Graphics graphics, bool simulating, ColourScheme colourScheme);
 
-        public abstract void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
+        public abstract void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme);
 
         protected void DrawComponentFromPath(Graphics graphics, GraphicsPath path, ColourScheme colourScheme)
         {
@@ -362,7 +362,7 @@ namespace CircuitMaker.Components
             {
                 InpOutpTools.DrawInpLine(graphics, simulating, GetInpOffset(), colourScheme, this);
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
 
@@ -406,7 +406,7 @@ namespace CircuitMaker.Components
                     InpOutpTools.DrawInpLine(graphics, simulating, inpOffset, colourScheme, this);
                 }
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
 
@@ -447,7 +447,7 @@ namespace CircuitMaker.Components
             {
                 InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
 
@@ -491,7 +491,7 @@ namespace CircuitMaker.Components
                     InpOutpTools.DrawOutpLine(graphics, simulating, outpOffset, colourScheme, this);
                 }
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
 
@@ -554,7 +554,7 @@ namespace CircuitMaker.Components
 
                 InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
 
@@ -619,7 +619,7 @@ namespace CircuitMaker.Components
                     InpOutpTools.DrawOutpLine(graphics, simulating, outpOffset, colourScheme, this);
                 }
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
 
@@ -684,7 +684,7 @@ namespace CircuitMaker.Components
 
                 InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
 
@@ -752,7 +752,7 @@ namespace CircuitMaker.Components
                     InpOutpTools.DrawOutpLine(graphics, simulating, outpOffset, colourScheme, this);
                 }
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
         }
     }
@@ -975,7 +975,7 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawAndComponent(graphics, colourScheme);
             }
@@ -1015,7 +1015,7 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawOrComponent(graphics, colourScheme);
             }
@@ -1055,7 +1055,7 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawXorComponent(graphics, colourScheme);
             }
@@ -1095,7 +1095,7 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawAndComponent(graphics, colourScheme);
                 DrawNotCircle(graphics, colourScheme);
@@ -1136,7 +1136,7 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawOrComponent(graphics, colourScheme);
                 DrawNotCircle(graphics, colourScheme);
@@ -1177,7 +1177,7 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawXorComponent(graphics, colourScheme);
                 DrawNotCircle(graphics, colourScheme);
@@ -1258,7 +1258,7 @@ namespace CircuitMaker.Components
             OutputState = stateSettingDesc.GetValue();
         }
 
-        public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
         {
             GraphicsPath path = new GraphicsPath();
 
@@ -1338,8 +1338,7 @@ namespace CircuitMaker.Components
             {
                 using (BinaryWriter bw = new BinaryWriter(stream))
                 {
-                    bw.Write(0F);
-                    bw.Write(0F);
+                    bw.Write(false);
 
                     stream.Position = 0;
 
@@ -1351,13 +1350,13 @@ namespace CircuitMaker.Components
             }
         }
 
-        public LogicProbeComponent(PointF graphicalLocation)
+        public LogicProbeComponent()
         {
-            GraphicalLocation = graphicalLocation;
-
-            DisplayFormat = new StringFormat();
-            DisplayFormat.Alignment = StringAlignment.Center;
-            DisplayFormat.LineAlignment = StringAlignment.Center;
+            DisplayFormat = new StringFormat
+            {
+                Alignment = StringAlignment.Center,
+                LineAlignment = StringAlignment.Center
+            };
         }
 
         public override void Tick() { }
@@ -1365,16 +1364,16 @@ namespace CircuitMaker.Components
         public static string ID = "PROBE";
         public static string DefaultDetails;
 
-        private PointF GraphicalLocation;
+        private PointF? GraphicalLocation = null;
 
         private StringFormat DisplayFormat;
 
-        public PointF GetGraphicalElementLocation()
+        public PointF? GetGraphicalElementLocation()
         {
             return GraphicalLocation;
         }
 
-        public void SetGraphicalElementLocation(PointF location)
+        public void SetGraphicalElementLocation(PointF? location)
         {
             GraphicalLocation = location;
         }
@@ -1390,8 +1389,12 @@ namespace CircuitMaker.Components
             {
                 using (BinaryWriter bw = new BinaryWriter(stream))
                 {
-                    bw.Write(GraphicalLocation.X);
-                    bw.Write(GraphicalLocation.Y);
+                    bw.Write(GraphicalLocation.HasValue);
+                    if (GraphicalLocation.HasValue)
+                    {
+                        bw.Write(GraphicalLocation.Value.X);
+                        bw.Write(GraphicalLocation.Value.Y);
+                    }
 
                     stream.Position = 0;
 
@@ -1409,7 +1412,14 @@ namespace CircuitMaker.Components
             {
                 using (BinaryReader br = new BinaryReader(stream))
                 {
-                    return new LogicProbeComponent(new PointF(br.ReadSingle(), br.ReadSingle()));
+                    LogicProbeComponent retVal = new LogicProbeComponent();
+
+                    if (br.ReadBoolean())
+                    {
+                        retVal.SetGraphicalElementLocation(new PointF(br.ReadSingle(), br.ReadSingle()));
+                    }
+
+                    return retVal;
                 }
             }
         }
@@ -1428,7 +1438,7 @@ namespace CircuitMaker.Components
             return rect;
         }
 
-        public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
         {
             GraphicsPath path = new GraphicsPath();
 
@@ -1440,29 +1450,27 @@ namespace CircuitMaker.Components
 
         public void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme)
         {
-            string display;
+            char display;
             Color colour;
 
             if (simulating)
             {
                 Pin.State state = GetInpPin().GetStateForDisplay();
 
-                display = $"{state.ToString()[0]}";
+                display = state.ToString()[0];
                 colour = colourScheme.GetWireColour(state);
-                //graphics.DrawString($"{state.ToString()[0]}", new Font("arial", 0.5F), new SolidBrush(colourScheme.GetWireColour(state)), 0, -0.5F);
             } else
             {
-                display = "?";
+                display = '?';
                 colour = colourScheme.Wire;
-                //graphics.DrawString("?", new Font("arial", 0.5F), new SolidBrush(colourScheme.Wire), 0, -0.5F);
             }
 
-            graphics.DrawString(display, new Font("arial", 0.5F), new SolidBrush(colour), 0, 0, DisplayFormat);
+            graphics.DrawString($"{display}", new Font("arial", 0.5F), new SolidBrush(colour), 0, 0, DisplayFormat);
         }
 
-        public SizeF GetGraphicalElementBounds()
+        public RectangleF GetGraphicalElementBounds()
         {
-            return new SizeF(1, 1);
+            return new RectangleF(-0.5F, -0.5F, 0.5F, 0.5F);
         }
     }
 
@@ -1598,7 +1606,7 @@ namespace CircuitMaker.Components
                 graphics.DrawString(ComponentName, new Font("arial", 0.5F), Brushes.Black, -1, -0.25F);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 GraphicsPath path = new GraphicsPath();
 
@@ -1734,7 +1742,7 @@ namespace CircuitMaker.Components
                 graphics.DrawString(ComponentName, new Font("arial", 0.5F), Brushes.Black, -0.5F, -0.25F);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 GraphicsPath path = new GraphicsPath();
 
@@ -1881,12 +1889,12 @@ namespace CircuitMaker.Components
             {
                 InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, offset, new PointF(offset.X, offset.Y - 1.5F), colourScheme, this);
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
 
                 graphics.DrawString(ComponentName, new Font("arial", 0.5F), Brushes.Black, -1, -0.25F);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 GraphicsPath path = new GraphicsPath();
 
@@ -1897,7 +1905,7 @@ namespace CircuitMaker.Components
             }
         }
 
-        public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent//, IGraphicalComponent
+        public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent, IBoardContainerComponent
         {
             public Board InternalBoard;
 
@@ -1911,6 +1919,8 @@ namespace CircuitMaker.Components
 
             private static StringFormat LeftStringFormat,  RightStringFormat,  TopStringFormat, BottomStringFormat;
             private static Dictionary<Board.InterfaceLocation.Side, StringFormat> StringFormats;
+
+            private PointF? GraphicalLocation = null;
 
             public override Pos[] GetInpOffsets()
             {
@@ -2121,10 +2131,10 @@ namespace CircuitMaker.Components
                     InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, offsetInfo.Item1.Add(offsetInfo.Item2), new PointF(otherOffset.X, otherOffset.Y), colourScheme, this);
                 }
 
-                RenderMainShape(graphics, colourScheme);
+                RenderMainShape(graphics, simulating, colourScheme);
             }
 
-            public override void RenderMainShape(Graphics graphics, ColourScheme colourScheme)
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 GraphicsPath path = new GraphicsPath();
                 path.AddRectangle(Shape);
@@ -2147,6 +2157,60 @@ namespace CircuitMaker.Components
 
                 //graphics.FillRectangle(new SolidBrush(colourScheme.ComponentBackground), rect);
                 //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), rect.X, rect.Y, rect.Width, rect.Height);
+            }
+
+            public void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme)
+            {
+                Matrix matrix;
+
+                foreach (IGraphicalComponent graphicalComp in InternalBoard.GetGraphicalComponents())
+                {
+                    PointF loc = graphicalComp.GetGraphicalElementLocation().GetValueOrDefault(new PointF());
+
+                    matrix = new Matrix();
+                    matrix.Translate(loc.X, loc.Y);
+
+                    graphics.MultiplyTransform(matrix);
+
+                    graphicalComp.RenderGraphicalElement(graphics, simulating, colourScheme);
+
+                    matrix.Invert();
+                    graphics.MultiplyTransform(matrix);
+                }
+            }
+
+            public RectangleF GetShape()
+            {
+                return Shape;
+            }
+
+            public PointF? GetGraphicalElementLocation()
+            {
+                return GraphicalLocation;
+            }
+
+            public void SetGraphicalElementLocation(PointF? point)
+            {
+                GraphicalLocation = point;
+            }
+
+            public RectangleF GetGraphicalElementBounds()
+            {
+                RectangleF rect = new RectangleF(), compRect;
+
+                foreach (IGraphicalComponent graphicalComp in InternalBoard.GetGraphicalComponents())
+                {
+                    compRect = graphicalComp.GetGraphicalElementBounds();
+
+                    rect = RectangleF.FromLTRB(
+                        Math.Min(rect.Left, compRect.Left),
+                        Math.Min(rect.Top, compRect.Top),
+                        Math.Max(rect.Right, compRect.Right),
+                        Math.Max(rect.Bottom, compRect.Bottom)
+                    );
+                }
+
+                return rect;
             }
         }
     } 

@@ -11,6 +11,7 @@ using System.Drawing.Drawing2D;
 using CircuitMaker.Basics;
 using CircuitMaker.Components;
 using CircuitMaker.GUI.Settings;
+using CircuitMaker.GUI.ExtApp;
 
 namespace CircuitMaker.GUI
 {
@@ -99,7 +100,13 @@ namespace CircuitMaker.GUI
 
         private void editExternalAppearanceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            ExtAppEditorForm dialog = new ExtAppEditorForm(new BoardContainerComponents.BoardContainerComponent(builder.GetBoard()), builder.colourScheme);
+
+            if (dialog.ShowDialog() != DialogResult.OK)
+            {
+                dialog.ResetChanges();
+            }
         }
 
         private void insertBuiltinComponentToolStripMenuItem_Click(object sender, EventArgs e)
@@ -207,11 +214,16 @@ namespace CircuitMaker.GUI
         private Board board;
         private string storedFilename;
 
-        private ColourScheme colourScheme;
+        public ColourScheme colourScheme { get; private set; }
 
         public bool Simulating { get; private set; } = false;
 
         private Timer simulationTimer;
+
+        public Board GetBoard()
+        {
+            return board;
+        }
 
         private static string ConstructDefaultFilename(string boardName) // <----------------------------------------------------- change to use saved default directory
         {

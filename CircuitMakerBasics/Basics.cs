@@ -381,7 +381,7 @@ namespace CircuitMaker.Basics
         //*/
 
         void Render(Graphics graphics, bool simulating, ColourScheme colourScheme);
-        //void RenderMainShape(Graphics graphics, ColourScheme colourScheme);
+        void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme);
     }
 
     public interface IInteractibleComponent : IComponent
@@ -407,9 +407,15 @@ namespace CircuitMaker.Basics
     public interface IGraphicalComponent : IComponent
     {
         void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme);
-        SizeF GetGraphicalElementBounds();
-        PointF GetGraphicalElementLocation();
-        void SetGraphicalElementLocation(PointF location);
+        RectangleF GetGraphicalElementBounds();
+        PointF? GetGraphicalElementLocation();
+        void SetGraphicalElementLocation(PointF? location);
+    }
+
+    public interface IBoardContainerComponent : IGraphicalComponent
+    {
+        RectangleF GetShape();
+        //void SetShape(RectangleF shape);
     }
 
     static class StateExtensions
