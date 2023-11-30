@@ -12,6 +12,16 @@ namespace CircuitMaker.Basics
     //*
     public static class ReadWriteImplementation
     {
+        public static void Write<T>(this BinaryWriter bw, T enumVal) where T : Enum
+        {
+            bw.Write(enumVal.ToString());
+        }
+
+        public static T ReadEnum<T>(this BinaryReader br) where T : Enum
+        {
+            return (T)Enum.Parse(typeof(T), br.ReadString());
+        }
+
         public static void Write(this BinaryWriter bw, Pos pos)
         {
             bw.Write(pos.X);
@@ -41,6 +51,7 @@ namespace CircuitMaker.Basics
             bw.Write(comp.GetComponentID());
             bw.Write(comp.GetComponentDetails());
             bw.Write(comp.GetComponentPos());
+            bw.Write(comp.GetComponentRotation());
         }
 
         public static IComponent ReadComponent(this BinaryReader br, Board board)
@@ -48,12 +59,13 @@ namespace CircuitMaker.Basics
             if (Constructors.TryGetValue(br.ReadString(), out Func<string, IComponent> compFunc))
             {
                 IComponent comp = compFunc(br.ReadString());
-                comp.Place(br.ReadPos(), board);
+                comp.Place(br.ReadPos(), br.ReadEnum<Rotation>(), board);
                 return comp;
             }
 
             br.ReadString(); // if couldn't find the chip, just ignore it.
             br.ReadPos();
+            br.ReadEnum<Rotation>();
 
             return null;
         }
@@ -416,6 +428,8 @@ namespace CircuitMaker.Basics
     {
         RectangleF GetShape();
         //void SetShape(RectangleF shape);
+
+        Board GetInternalBoard();
     }
 
     static class StateExtensions
@@ -966,6 +980,8 @@ namespace CircuitMaker.Basics
                     }
                 }
             }
+
+            graphics.FillEllipse(Brushes.Red, -0.05F, -0.05F, 0.1F, 0.1F);
 
             Matrix matrix = new Matrix();
 

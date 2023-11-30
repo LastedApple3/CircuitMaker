@@ -37,11 +37,11 @@
             // 
             // extAppEditor1
             // 
-            this.tableLayoutPanel1.SetColumnSpan(this.extAppEditor1, 3);
-            this.extAppEditor1.Location = new System.Drawing.Point(3, 3);
-            this.extAppEditor1.Name = "extAppEditor1";
-            this.extAppEditor1.Size = new System.Drawing.Size(150, 44);
-            this.extAppEditor1.TabIndex = 0;
+            this.tableLayoutPanel1.SetColumnSpan(this.extAppEditor, 3);
+            this.extAppEditor.Location = new System.Drawing.Point(3, 3);
+            this.extAppEditor.Name = "extAppEditor1";
+            this.extAppEditor.Size = new System.Drawing.Size(150, 44);
+            this.extAppEditor.TabIndex = 0;
             // 
             // tableLayoutPanel1
             // 
@@ -51,7 +51,7 @@
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
-            this.tableLayoutPanel1.Controls.Add(this.extAppEditor1, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.extAppEditor, 0, 0);
             this.tableLayoutPanel1.Controls.Add(this.btnCancel, 1, 1);
             this.tableLayoutPanel1.Controls.Add(this.btnOK, 2, 1);
             this.tableLayoutPanel1.Location = new System.Drawing.Point(12, 12);
@@ -103,7 +103,7 @@
 
         #endregion
 
-        private ExtAppEditor extAppEditor1;
+        private ExtAppEditor extAppEditor;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnOK;

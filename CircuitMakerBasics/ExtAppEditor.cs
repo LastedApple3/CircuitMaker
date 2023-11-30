@@ -17,9 +17,51 @@ namespace CircuitMaker.GUI.ExtApp
         private IBoardContainerComponent boardContainerComp;
         public ColourScheme colourScheme;
 
+        private Dictionary<string, Board.InterfaceLocation> interfaceLocSave;
+        private Dictionary<IGraphicalComponent, PointF?> graphicalLocSave;
+
         public ExtAppEditor(IBoardContainerComponent boardContainerComp, ColourScheme colourScheme)
         {
             InitializeComponent();
+
+            this.colourScheme = colourScheme;
+            this.boardContainerComp = boardContainerComp;
+
+            SaveChanges();
+        }
+
+        public void SaveChanges()
+        {
+            Board internalBoard = boardContainerComp.GetInternalBoard();
+
+            interfaceLocSave = new Dictionary<string, Board.InterfaceLocation>();
+
+            foreach (IBoardInterfaceComponent interfaceComp in internalBoard.GetInterfaceComponents())
+            {
+                interfaceLocSave.Add(interfaceComp.GetComponentName(), interfaceComp.GetInterfaceLocation());
+            }
+
+            graphicalLocSave = new Dictionary<IGraphicalComponent, PointF?>();
+
+            foreach (IGraphicalComponent graphicalComp in internalBoard.GetGraphicalComponents())
+            {
+                graphicalLocSave.Add(graphicalComp, graphicalComp.GetGraphicalElementLocation());
+            }
+        }
+
+        public void ResetChanges()
+        {
+            Board internalBoard = boardContainerComp.GetInternalBoard();
+
+            foreach (string compName in interfaceLocSave.Keys)
+            {
+                internalBoard.GetInterfaceComponent(compName).SetInterfaceLocation(interfaceLocSave[compName]);
+            }
+
+            foreach (IGraphicalComponent graphicalComp in graphicalLocSave.Keys)
+            {
+                graphicalComp.SetGraphicalElementLocation(graphicalLocSave[graphicalComp]);
+            }
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)

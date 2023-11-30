@@ -22,15 +22,20 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.Constructors.Add(VarInpComponents.VarInpNorComponent.ID, VarInpComponents.VarInpNorComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(VarInpComponents.VarInpXnorComponent.ID, VarInpComponents.VarInpXnorComponent.Constructor);
 
+            ReadWriteImplementation.Constructors.Add(NotComponent.ID, NotComponent.Constructor);
+
             ReadWriteImplementation.Constructors.Add(FixedStateComponent.ID, FixedStateComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(UserToggleInpComponent.ID, UserToggleInpComponent.Constructor);
 
             ReadWriteImplementation.Constructors.Add(LogicProbeComponent.ID, LogicProbeComponent.Constructor);
 
+            ReadWriteImplementation.Constructors.Add(TristateBufferComponent.ID, TristateBufferComponent.Constructor);
+
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardInputComponent.ID, BoardContainerComponents.BoardInputComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardOutputComponent.ID, BoardContainerComponents.BoardOutputComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardBidirComponent.ID, BoardContainerComponents.BoardBidirComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardContainerComponent.ID, BoardContainerComponents.BoardContainerComponent.Constructor);
+
 
 
             ReadWriteImplementation.DefaultDetails.Add(VarInpComponents.VarInpAndComponent.ID, VarInpComponents.VarInpAndComponent.DefaultDetails);
@@ -40,10 +45,14 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.DefaultDetails.Add(VarInpComponents.VarInpNorComponent.ID, VarInpComponents.VarInpNorComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(VarInpComponents.VarInpXnorComponent.ID, VarInpComponents.VarInpXnorComponent.DefaultDetails);
 
+            ReadWriteImplementation.DefaultDetails.Add(NotComponent.ID, NotComponent.DefaultDetails);
+
             ReadWriteImplementation.DefaultDetails.Add(FixedStateComponent.ID, FixedStateComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(UserToggleInpComponent.ID, UserToggleInpComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(LogicProbeComponent.ID, LogicProbeComponent.DefaultDetails);
+
+            ReadWriteImplementation.DefaultDetails.Add(TristateBufferComponent.ID, TristateBufferComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(BoardContainerComponents.BoardInputComponent.ID, BoardContainerComponents.BoardInputComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(BoardContainerComponents.BoardOutputComponent.ID, BoardContainerComponents.BoardOutputComponent.DefaultDetails);
@@ -53,7 +62,6 @@ namespace CircuitMaker.Components
 
         /* More Components: 
          * TristateBuffer
-         * Not
          * VisualDisplay (need better name. the most basic form of graphical interaction that boards will inherit)
          * SevenSeg
          */
@@ -146,6 +154,13 @@ namespace CircuitMaker.Components
             graphics.DrawPath(new Pen(colourScheme.ComponentEdge, 0.01F), path);
         }
 
+        protected void DrawInversionCircle(Graphics graphics, PointF point, ColourScheme colourScheme)
+        {
+            float rad = 0.2F;
+            graphics.FillEllipse(new SolidBrush(colourScheme.Background), point.X, point.Y - rad, 2 * rad, 2 * rad); // need to make this transparent
+            graphics.DrawEllipse(new Pen(colourScheme.ComponentEdge, 0.01F), point.X, point.Y - rad, 2 * rad, 2 * rad);
+        }
+
         public abstract RectangleF GetComponentBounds();
 
         //*
@@ -173,7 +188,12 @@ namespace CircuitMaker.Components
             PointF[] corners = { new PointF(rect.Left, rect.Top), new PointF(rect.Right, rect.Bottom) };
             matrix.TransformPoints(corners);
 
-            return RectangleF.FromLTRB(corners[0].X, corners[0].Y, corners[1].X, corners[1].Y);
+            return RectangleF.FromLTRB(
+                Math.Min(corners[0].X, corners[1].X),
+                Math.Min(corners[0].Y, corners[1].Y),
+                Math.Max(corners[0].X, corners[1].X),
+                Math.Max(corners[0].Y, corners[1].Y)
+            );
         }
 
         /*
@@ -757,6 +777,73 @@ namespace CircuitMaker.Components
         }
     }
 
+    class NotComponent : InpOutpBaseComponents.SingInpSingOutpBaseComponent
+    {
+        public override Pos GetInpOffset()
+        {
+            return new Pos(-2, 0);
+        }
+
+        public override Pos GetOutpOffset()
+        {
+            return new Pos(2, 0);
+        }
+
+        public NotComponent() { }
+
+        public override void Tick()
+        {
+            GetOutpPin().SetState(GetInpPin().GetStateForComponent().Not());
+        }
+
+        public static string ID = "NOT";
+        public static string DefaultDetails = "";
+
+        public override string GetComponentID()
+        {
+            return ID;
+        }
+
+        public override string GetComponentDetails()
+        {
+            return "";
+        }
+
+        public static NotComponent Constructor(string details)
+        {
+            return new NotComponent();
+        }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
+        }
+
+        public override RectangleF GetComponentBounds()
+        {
+            RectangleF rect = GetDefaultComponentBounds();
+            rect.Inflate(0, 1);
+            return rect;
+        }
+
+        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+        {
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddLines(new PointF[]
+            {
+                new PointF(-1, -1),
+                new PointF(1, 0),
+                new PointF(-1, 1)
+            });
+            path.CloseFigure();
+
+            DrawComponentFromPath(graphics, path, colourScheme);
+
+            DrawInversionCircle(graphics, new PointF(1, 0), colourScheme);
+        }
+    }
+
     abstract class VarInpComponents
     {
         public abstract class BaseVarInpComponent : InpOutpBaseComponents.MultInpSingOutpBaseComponent, ISettingsComponent
@@ -837,13 +924,6 @@ namespace CircuitMaker.Components
                 InpCount = inputSettingDesc.GetValue();
 
                 DefineInpOffsets();
-            }
-
-            protected void DrawNotCircle(Graphics graphics, ColourScheme colourScheme)
-            {
-                float rad = 0.2F;
-                graphics.FillEllipse(new SolidBrush(colourScheme.Background), GetOutpOffset().X - 1, GetOutpOffset().Y - rad, 2 * rad, 2 * rad); // need to make this transparent
-                graphics.DrawEllipse(new Pen(colourScheme.ComponentEdge, 0.01F), GetOutpOffset().X - 1, GetOutpOffset().Y - rad, 2 * rad, 2 * rad);
             }
 
             protected GraphicsPath AddAndShape(GraphicsPath path)
@@ -1098,7 +1178,7 @@ namespace CircuitMaker.Components
             public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawAndComponent(graphics, colourScheme);
-                DrawNotCircle(graphics, colourScheme);
+                DrawInversionCircle(graphics, new PointF(1, 0), colourScheme);
             }
         }
 
@@ -1139,7 +1219,7 @@ namespace CircuitMaker.Components
             public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawOrComponent(graphics, colourScheme);
-                DrawNotCircle(graphics, colourScheme);
+                DrawInversionCircle(graphics, new PointF(1, 0), colourScheme);
             }
         }
 
@@ -1180,7 +1260,7 @@ namespace CircuitMaker.Components
             public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 DrawXorComponent(graphics, colourScheme);
-                DrawNotCircle(graphics, colourScheme);
+                DrawInversionCircle(graphics, new PointF(1, 0), colourScheme);
             }
         }
     }
@@ -1322,6 +1402,96 @@ namespace CircuitMaker.Components
         public new void ResetToDefault()
         {
             OutputState = DefaultState;
+        }
+    }
+
+    class TristateBufferComponent : InpOutpBaseComponents.MultInpSingOutpBaseComponent
+    {
+        public override Pos[] GetInpOffsets()
+        {
+            return new Pos[] {
+                new Pos(-2, 0),
+                new Pos(0, -2)
+            };
+        }
+
+        public override Pos GetOutpOffset()
+        {
+            return new Pos(2, 0);
+        }
+
+        public TristateBufferComponent() { }
+
+        public override void Tick()
+        {
+            Pin.State activationState = GetInpPins()[1].GetStateForComponent();
+
+            if (activationState == Pin.State.HIGH)
+            {
+                GetOutpPin().SetState(GetInpPins()[0].GetStateForComponent());
+            } else if (activationState == Pin.State.LOW)
+            {
+                GetOutpPin().SetState(Pin.State.FLOATING);
+            } else
+            {
+                GetOutpPin().SetState(Pin.State.ILLEGAL);
+            }
+        }
+
+        public static string ID = "TRISTATE";
+        public static string DefaultDetails = "";
+
+        public override string GetComponentID()
+        {
+            return ID;
+        }
+
+        public override string GetComponentDetails()
+        {
+            return "";
+        }
+
+        public static TristateBufferComponent Constructor(string details)
+        {
+            return new TristateBufferComponent();
+        }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
+        }
+
+        public override RectangleF GetComponentBounds()
+        {
+            RectangleF rect = GetDefaultComponentBounds();
+            rect.Height += 1;
+            return rect;
+        }
+
+        public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
+        {
+            InpOutpBaseComponents.InpOutpTools.DrawInpLine(graphics, simulating, GetInpOffsets()[0], colourScheme, this);
+
+            InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, GetInpOffsets()[1], new PointF(0, 0), colourScheme, this);
+
+            InpOutpBaseComponents.InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
+
+            RenderMainShape(graphics, simulating, colourScheme);
+        }
+
+        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+        {
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddLines(new PointF[]
+            {
+                new PointF(-1, -1),
+                new PointF(1, 0),
+                new PointF(-1, 1)
+            });
+            path.CloseFigure();
+
+            DrawComponentFromPath(graphics, path, colourScheme);
         }
     }
 
@@ -2182,6 +2352,11 @@ namespace CircuitMaker.Components
             public RectangleF GetShape()
             {
                 return Shape;
+            }
+
+            public Board GetInternalBoard()
+            {
+                return InternalBoard;
             }
 
             public PointF? GetGraphicalElementLocation()

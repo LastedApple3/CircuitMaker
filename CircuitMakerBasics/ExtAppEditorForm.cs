@@ -16,9 +16,19 @@ namespace CircuitMaker.GUI.ExtApp
     {
         public ExtAppEditorForm(IBoardContainerComponent boardContainerComp, ColourScheme colourScheme)
         {
-            extAppEditor1 = new ExtAppEditor(boardContainerComp, colourScheme);
+            extAppEditor = new ExtAppEditor(boardContainerComp, colourScheme);
 
             InitializeComponent();
+        }
+
+        public void SaveChanges()
+        {
+            extAppEditor.SaveChanges();
+        }
+
+        public void ResetChanges()
+        {
+            extAppEditor.ResetChanges();
         }
     }
 }
