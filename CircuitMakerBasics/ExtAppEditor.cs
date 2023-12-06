@@ -20,14 +20,36 @@ namespace CircuitMaker.GUI.ExtApp
         private Dictionary<string, Board.InterfaceLocation> interfaceLocSave;
         private Dictionary<IGraphicalComponent, PointF?> graphicalLocSave;
 
+        private int scale = 40;
+
+        private Matrix transformationMatrix;
+
         public ExtAppEditor(IBoardContainerComponent boardContainerComp, ColourScheme colourScheme)
         {
             InitializeComponent();
 
+            transformationMatrix = new Matrix();
+
+            RectangleF compRect = boardContainerComp.GetShape();
+            transformationMatrix.Scale(scale, scale);
+            transformationMatrix.Translate(-compRect.X, -compRect.Y);
+            transformationMatrix.Translate(1, 1);
+
             this.colourScheme = colourScheme;
             this.boardContainerComp = boardContainerComp;
 
+            ResetSize();
+
             SaveChanges();
+        }
+
+        private void ResetSize()
+        {
+            Size = boardContainerComp.GetInternalBoard().ExternalSize;
+            Width += 2;
+            Height += 2;
+            Width *= scale;
+            Height *= scale;
         }
 
         public void SaveChanges()
@@ -64,23 +86,35 @@ namespace CircuitMaker.GUI.ExtApp
             }
         }
 
-        protected override void OnPaintBackground(PaintEventArgs e)
+        private Matrix GetInvertedTransformationMatrix()
         {
-            base.OnPaintBackground(e);
+            Matrix invertedMatrix = transformationMatrix.Clone();
+            invertedMatrix.Invert();
+            return invertedMatrix;
+        }
 
-            Graphics graphics = e.Graphics;
+        private Point DetransformPoint(Point point)
+        {
+            Point[] points = new Point[] { point };
+            DetransformPoints(points);
+            return points[0];
+        }
 
-            Matrix matrix = new Matrix();
+        private PointF DetransformPointF(PointF point)
+        {
+            PointF[] points = new PointF[] { point };
+            DetransformPointFs(points);
+            return points[0];
+        }
 
-            RectangleF rect = boardContainerComp.GetShape();
-            matrix.Translate(-rect.X, -rect.Y);
+        private void DetransformPoints(Point[] points)
+        {
+            GetInvertedTransformationMatrix().TransformPoints(points);
+        }
 
-            graphics.MultiplyTransform(matrix);
-
-            boardContainerComp.RenderMainShape(graphics, false, colourScheme);
-
-            matrix.Invert();
-            graphics.MultiplyTransform(matrix);
+        private void DetransformPointFs(PointF[] points)
+        {
+            GetInvertedTransformationMatrix().TransformPoints(points);
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -89,17 +123,89 @@ namespace CircuitMaker.GUI.ExtApp
 
             Graphics graphics = e.Graphics;
 
-            Matrix matrix = new Matrix();
+            graphics.ResetTransform();
 
-            RectangleF rect = boardContainerComp.GetShape();
-            matrix.Translate(-rect.X, -rect.Y);
+            graphics.Clear(Color.White);
 
-            graphics.MultiplyTransform(matrix);
+            Rectangle clipRect = e.ClipRectangle;
+            clipRect.Width -= 1;
+            clipRect.Height -= 1;
+            graphics.DrawRectangle(new Pen(Brushes.Black, 0.5F), clipRect);
+
+            graphics.MultiplyTransform(transformationMatrix);
 
             boardContainerComp.Render(graphics, false, colourScheme);
 
-            matrix.Invert();
-            graphics.MultiplyTransform(matrix);
+            Matrix inverseTransformationMatrix = transformationMatrix.Clone();
+            inverseTransformationMatrix.Invert();
+            graphics.MultiplyTransform(inverseTransformationMatrix);
+        }
+
+        private IGraphicalComponent[] GetGraphicalComponents()
+        {
+            return boardContainerComp.GetInternalBoard().GetGraphicalComponents();
+        }
+
+        private IBoardInterfaceComponent[] GetInterfaceComponents()
+        {
+            return boardContainerComp.GetInternalBoard().GetInterfaceComponents();
+        }
+
+        protected override void OnMouseClick(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+
+            bool onLeft = e.Location.X < scale, onRight = e.Location.X > Size.Width - scale,
+                onTop = e.Location.Y < scale, onBottom = e.Location.Y > Size.Height - scale,
+                onLeftRight = onLeft || onRight, onTopBottom = onTop || onBottom;
+
+            if (!(onLeftRight || onTopBottom))
+            {
+                foreach (IGraphicalComponent graphicalComp in GetGraphicalComponents())
+                {
+                    if (graphicalComp.GetGraphicalElementBounds().Contains(e.Location))
+                    {
+
+                    }
+                }
+            } else if (onLeftRight ^ onTopBottom)
+            {
+                /*
+                Board.InterfaceLocation.SideEnum side = 0b000;
+
+                if (!(onTop || onBottom))
+                {
+                    if (onLeft)
+                    {
+                        side = Board.InterfaceLocation.SideEnum.Left;
+                    }
+                    else if (onRight)
+                    {
+                        side = Board.InterfaceLocation.SideEnum.Right;
+                    }
+                }
+                else if (!(onLeft || onRight))
+                {
+                    if (onTop)
+                    {
+                        side = Board.InterfaceLocation.SideEnum.Top;
+                    }
+                    else if (onBottom)
+                    {
+                        side = Board.InterfaceLocation.SideEnum.Bottom;
+                    }
+                }
+                //*/
+
+                Board.InterfaceLocation.SideEnum side = Board.InterfaceLocation.SideEnum.IsSide |
+                    (onLeftRight ? Board.InterfaceLocation.SideEnum.LeftRight : Board.InterfaceLocation.SideEnum.Nothing) |
+                    ((onBottom || onRight) ? Board.InterfaceLocation.SideEnum.BottomRight : Board.InterfaceLocation.SideEnum.Nothing);
+
+                foreach (IBoardInterfaceComponent interfaceComp in GetInterfaceComponents().Where(interfaceComp => interfaceComp.GetInterfaceLocation().Side == side))
+                {
+
+                }
+            }
         }
     }
 }

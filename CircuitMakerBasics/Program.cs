@@ -21,49 +21,17 @@ namespace CircuitMaker
         {
             ComponentRegisterer.RegisterComponents();
 
-            //Board board = Board.Load("SR-Latch.brd");
-
-            //Action<string> textInteract = (str) => _ = str;
-
-            /*
-            Board board = new Board("VarInpTests");
-
-            int inpCount = 5;
-
-            IComponent and = new VarInpComponents.VarInpAndComponent(inpCount);
-            IComponent or = new VarInpComponents.VarInpOrComponent(inpCount);
-            IComponent xor = new VarInpComponents.VarInpXorComponent(inpCount);
-            IComponent nand = new VarInpComponents.VarInpNandComponent(inpCount);
-            IComponent nor = new VarInpComponents.VarInpNorComponent(inpCount);
-            IComponent xnor = new VarInpComponents.VarInpXnorComponent(inpCount);
-
-            and.Place(new Pos(0, 0), board);
-            or.Place(new Pos(10, 0), board);
-            xor.Place(new Pos(20, 0), board);
-            nand.Place(new Pos(30, 0), board);
-            nor.Place(new Pos(40, 0), board);
-            xnor.Place(new Pos(50, 0), board);
-
-            //ReadWriteImplementation.Constructors["AND"]("5");
-
-            board.Save();
-            //*/
-
-            /* <-------------------------------------------------------------------------------------------------------------------------------------
+            //* <-------------------------------------------------------------------------------------------------------------------------------------
             Board board = new Board("SR-Nor-Latch", new System.Drawing.Size(4, 4));
 
-            //IBoardInterfaceComponent Bidir = new BoardContainerComponents.BoardBidirComponent("B", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.Side.Top, 2));
-
-            IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.Side.Left, 1));
-            IBoardInputComponent Reset = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.Side.Left, 3));
+            IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
+            IBoardInputComponent Reset = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
 
             IComponent QNor = new VarInpComponents.VarInpNorComponent(2);
             IComponent QBarNor = new VarInpComponents.VarInpNorComponent(2);
 
-            IBoardOutputComponent Q = new BoardContainerComponents.BoardOutputComponent("Q", new Board.InterfaceLocation(Board.InterfaceLocation.Side.Right, 1));
-            IBoardOutputComponent QBar = new BoardContainerComponents.BoardOutputComponent("QBAR", new Board.InterfaceLocation(Board.InterfaceLocation.Side.Right, 3));
-
-            //Bidir.Place(new Pos(-10, -10), board);
+            IBoardOutputComponent Q = new BoardContainerComponents.BoardOutputComponent("Q", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 1));
+            IBoardOutputComponent QBar = new BoardContainerComponents.BoardOutputComponent("QBAR", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 3));
 
             Set.Place(new Pos(4, 2), board);
             Reset.Place(new Pos(4, 9), board);
@@ -95,92 +63,12 @@ namespace CircuitMaker
             board.Save("Boards/SR-Nor-Latch.brd");
             //*/
 
-            /*
-            Board board = Board.Load("SR-Nor-Latch");
-            //*/
-
-            /*
-            Pin.State setState = Pin.State.LOW;
-            Pin.State resetState = Pin.State.LOW;
-
-            textInteract = str => { 
-                if (str == "S") { setState = setState.Not(); } else if (str == "R") { resetState = resetState.Not(); };
-
-                board.GetInputComponent("S").SetInputState(setState);
-                board.GetInputComponent("R").SetInputState(resetState);
-            };
-            //*/
-
-            /*
-            Board board = new Board("test");
-
-            IInteractibleComponent Set = new UserToggleInpComponent(Pin.State.LOW);
-            IInteractibleComponent Reset = (IInteractibleComponent)Set.Copy();
-            //IInteractibleComponent Reset = new UserToggleInpComponent(Pin.State.LOW);
-
-            IComponent srLatch = new BoardContainerComponents.BoardContainerComponent(Board.Load("SR-Nor-Latch")); // make this another constructor? it is the Constructor function.
-
-            Set.Place(new Pos(0, 5), board);
-            Reset.Place(new Pos(0, 0), board);
-
-            srLatch.Place(new Pos(5, 2), board);
-
-            Wire[] wires = new Wire[]
-            {
-                new Wire(Set.GetAllPinPositions()[0], srLatch.GetAllPinPositions()[0], board),
-                new Wire(Reset.GetAllPinPositions()[0], srLatch.GetAllPinPositions()[1], board)
-            };
-
-            textInteract = str => { if (str == "S") { Set.Interact(); } else if (str == "R") { Reset.Interact(); } };
-            //*/
-
-            /*
-            string inp;
-            while (true)
-            {
-                board.Tick();
-
-                RenderComponents(board);
-
-                textInteract(Console.ReadLine());
-
-                Console.Clear();
-            }//*/
-
-            /*
-            EnumSettingDescription<Pin.State> enumSettingDescription = new EnumSettingDescription<Pin.State>("state:");
-            IntSettingDescription intSettingDescription = new IntSettingDescription("int:");
-
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new SettingsDialog("test", new ISettingDescription[] { }));
-
-            SettingsDialog dialog = new SettingsDialog("test", new ISettingDescription[] { enumSettingDescription, intSettingDescription });
-            dialog.ShowDialog();
-            //*/
-
-            /*
-            ComponentSelectionForm form = new ComponentSelectionForm();
-
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                Console.WriteLine(form.GetConstructor());
-                Console.ReadLine();
-            }
-            //*/
-
             //*
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new GUIForm());
-            //Application.Run(new ComponentSelectionForm());
-            //Application.Run(new MenuTestForm());
             //Application.Run(new ExtAppEditorForm());
             //*/
         }
     }
 }
-
-//TODO:
-
-// 1) Construct GUI.

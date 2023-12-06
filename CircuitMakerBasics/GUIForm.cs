@@ -1027,7 +1027,8 @@ namespace CircuitMaker.GUI
             base.OnMouseWheel(e);
             if (dragType == DragType.MoveComponent) 
             {
-                dragNewRot += (90 * Math.Sign(e.Delta));
+                //dragNewRot += (90 * Math.Sign(e.Delta));
+                dragNewRot = dragNewRot.AddRotation(e.Delta > 0 ? Rotation.CLOCKWISE : Rotation.ANTICLOCKWISE);
 
                 Invalidate();
             } else 

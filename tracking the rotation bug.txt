@@ -1,0 +1,11 @@
+pins are correctly placed, but not rotated
+	confirmed Pos.Rotate works right
+	issue was that Pos.Rotate required Rotation to be one of the 4 options, while scrolling could move it beyond the bounds - an angle >270 or <0.
+
+rendering (only transformed by GetRenderMatrix) rotated around the origin
+	this was fixed by swapping the Rotate and Translate
+	but they were already the right way round, and now they are the wrong way round
+	worked: translate, then rotate
+	should work: rotate then translate
+	why
+	oh well

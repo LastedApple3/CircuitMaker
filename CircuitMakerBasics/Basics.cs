@@ -178,14 +178,17 @@ namespace CircuitMaker.Basics
         {
             if (rotation == Rotation.CLOCKWISE)
             {
-                return new Pos(Y, -X);
-            } else if (rotation == Rotation.HALF)
+                return new Pos(-Y, X);
+            }
+            else if (rotation == Rotation.HALF)
             {
                 return new Pos(-X, -Y);
-            } else if (rotation == Rotation.ANTICLOCKWISE)
+            }
+            else if (rotation == Rotation.ANTICLOCKWISE)
             {
-                return new Pos(-Y, X);
-            } else
+                return new Pos(Y, -X);
+            }
+            else
             {
                 return this;
             }
@@ -207,27 +210,12 @@ namespace CircuitMaker.Basics
         ZERO = 0, CLOCKWISE = 90, HALF = 180, ANTICLOCKWISE = 270
     }
 
-    /*
+    //*
     static class RotationExtensions
     {
-        public static Pos ApplyRotation(this Rotation rotation, Pos offset)
+        public static Rotation AddRotation(this Rotation rot1, Rotation rot2)
         {
-            if (rotation == Rotation.CLOCKWISE)
-            {
-                return new Pos(offset.Y, -offset.X);
-            }
-
-            if (rotation == Rotation.ANTICLOCKWISE)
-            {
-                return new Pos(-offset.Y, offset.X);
-            }
-
-            if (rotation == Rotation.HALF)
-            {
-                return new Pos(-offset.X, -offset.Y);
-            }
-
-            return offset;
+            return (Rotation)(((int)rot1 + (int)rot2) % 360);
         }
     }//*/
 
@@ -424,6 +412,25 @@ namespace CircuitMaker.Basics
         void SetGraphicalElementLocation(PointF? location);
     }
 
+    public static class GraphicalComponentExtensions
+    {
+        public static RectangleF? GetOffsetGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
+        {
+            RectangleF rect = comp.GetGraphicalElementBounds();
+            PointF? pos = comp.GetGraphicalElementLocation();
+
+            if (pos.HasValue)
+            {
+                rect.X += pos.Value.X;
+                rect.Y += pos.Value.Y;
+
+                return rect;
+            }
+
+            return null;
+        }
+    }
+
     public interface IBoardContainerComponent : IGraphicalComponent
     {
         RectangleF GetShape();
@@ -584,9 +591,9 @@ namespace CircuitMaker.Basics
     {
         public struct InterfaceLocation
         {
-            //public enum Side { Top, Left, Bottom, Right }
             [Flags]
-            public enum Side : byte { 
+            public enum SideEnum : byte { 
+                Nothing = 0b000,
                 LeftRight = 0b010, 
                 BottomRight = 0b001,
                 IsSide = 0b100,
@@ -595,21 +602,20 @@ namespace CircuitMaker.Basics
                 Bottom = IsSide | BottomRight,
                 Left = IsSide | LeftRight,
                 Right = IsSide | LeftRight | BottomRight,
-                //Top = 0b100, Left = 0b110, Bottom = 0b101, Right = 0b111
             }
 
-            public Side side;
-            public int distance;
+            public SideEnum Side;
+            public int Distance;
 
-            public InterfaceLocation(Side side, int distance)
+            public InterfaceLocation(SideEnum side, int distance)
             {
-                this.side = side;
-                this.distance = distance;
+                Side = side;
+                Distance = distance;
             }
 
             public override string ToString()
             {
-                return $"({side},{distance})";
+                return $"({Side},{Distance})";
             }
         }
 
@@ -636,11 +642,6 @@ namespace CircuitMaker.Basics
         private HashSet<Wire> Wires = new HashSet<Wire>();
 
         private HashSet<IComponent> Components = new HashSet<IComponent>();
-
-        //private Dictionary<string, InterfaceLocation> InterfaceLocations = new Dictionary<string, InterfaceLocation>();
-        //private Dictionary<string, IBoardInterfaceComponent> InterfaceComponents = new Dictionary<string, IBoardInterfaceComponent>();
-        //private Dictionary<string, IBoardInputComponent> InputComponents = new Dictionary<string, IBoardInputComponent>();
-        //private Dictionary<string, IBoardOutputComponent> OutputComponents = new Dictionary<string, IBoardOutputComponent>();
         private InterfaceComponentDictionary<IBoardInterfaceComponent> InterfaceComponents = new InterfaceComponentDictionary<IBoardInterfaceComponent>();
         private InterfaceComponentDictionary<IBoardInputComponent> InputComponents = new InterfaceComponentDictionary<IBoardInputComponent>();
         private InterfaceComponentDictionary<IBoardOutputComponent> OutputComponents = new InterfaceComponentDictionary<IBoardOutputComponent>();
@@ -969,7 +970,12 @@ namespace CircuitMaker.Basics
 
                     connectionCount = pin.GetWires().Length + compPins.Where(pinPos.Equals).Count();
 
-                    if (connectionCount != 2 && connectionCount != 0)
+                    if (connectionCount == 0)
+                    {
+                        continue;
+                    }
+
+                    if (connectionCount != 2)
                     {
                         graphics.FillEllipse(new SolidBrush(colourScheme.GetWireColour(pin.GetStateForDisplay())), pinPos.X - 0.05F, pinPos.Y - 0.05F, 0.1F, 0.1F);
                     }
@@ -981,7 +987,7 @@ namespace CircuitMaker.Basics
                 }
             }
 
-            graphics.FillEllipse(Brushes.Red, -0.05F, -0.05F, 0.1F, 0.1F);
+            graphics.FillEllipse(Brushes.Black, -0.5F, -0.5F, 1, 1);
 
             Matrix matrix = new Matrix();
 
