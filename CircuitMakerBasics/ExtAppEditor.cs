@@ -151,6 +151,11 @@ namespace CircuitMaker.GUI.ExtApp
             return boardContainerComp.GetInternalBoard().GetInterfaceComponents();
         }
 
+        private PointF PositionNewGraphicalElement(RectangleF bounds)
+        {
+            return new PointF();
+        }
+
         protected override void OnMouseClick(MouseEventArgs e)
         {
             base.OnMouseClick(e);
@@ -159,13 +164,36 @@ namespace CircuitMaker.GUI.ExtApp
                 onTop = e.Location.Y < scale, onBottom = e.Location.Y > Size.Height - scale,
                 onLeftRight = onLeft || onRight, onTopBottom = onTop || onBottom;
 
+            Console.WriteLine($"{e.Location}, {new PointF(scale, scale)}, {new PointF(Size.Width - scale, Size.Height - scale)}");
+            Console.WriteLine($"onLeft: {onLeft}, onRight: {onRight}, onTop: {onTop}, onBottom: {onBottom}");
+            Console.WriteLine(!(onLeftRight || onTopBottom));
+
             if (!(onLeftRight || onTopBottom))
             {
+                RectangleF? possibleBounds;
+                RectangleF bounds;
+
                 foreach (IGraphicalComponent graphicalComp in GetGraphicalComponents())
                 {
-                    if (graphicalComp.GetGraphicalElementBounds().Contains(e.Location))
-                    {
+                    possibleBounds = graphicalComp.GetOffsetGraphicalElementBounds();
 
+                    if (possibleBounds.HasValue)
+                    {
+                        bounds = possibleBounds.Value;
+                    } else
+                    {
+                        graphicalComp.SetGraphicalElementLocation(PositionNewGraphicalElement(graphicalComp.GetGraphicalElementBounds()));
+
+                        Invalidate();
+
+                        bounds = graphicalComp.GetOffsetGraphicalElementBounds().Value;
+                    }
+
+                    Console.WriteLine($"{bounds.Location}, {new PointF(bounds.X + bounds.Width, bounds.Y + bounds.Height)}");
+
+                    if (bounds.Contains(DetransformPointF(e.Location)))
+                    {
+                        Console.WriteLine("clicked on graphical element");
                     }
                 }
             } else if (onLeftRight ^ onTopBottom)
@@ -206,6 +234,8 @@ namespace CircuitMaker.GUI.ExtApp
 
                 }
             }
+
+            Console.WriteLine();
         }
     }
 }

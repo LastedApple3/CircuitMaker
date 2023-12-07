@@ -137,6 +137,62 @@ namespace CircuitMaker.GUI.Settings
         }
     }
 
+    public abstract class CharLimitTextBoxSettingDescription<T> : TextBoxSettingDescription<T>
+    {
+        protected string CharLimit;
+
+        public CharLimitTextBoxSettingDescription(string prompt, T defaultVal, string charLimit) : base(prompt, defaultVal)
+        {
+            CharLimit = charLimit;
+        }
+
+        public override bool AllowInput(string current, char newChar, int caretIdx)
+        {
+            if (CharLimit.Contains(newChar))
+            {
+                return true;
+            }
+
+            return false;
+        }
+    }
+
+    public class PositiveIntSettingDescription : CharLimitTextBoxSettingDescription<int>
+    {
+        public PositiveIntSettingDescription(string prompt, int defaultVal = 0) : base(prompt, defaultVal, "0123456789") { }
+
+        public override int GetValue()
+        {
+            return int.Parse(inputControl.Text);
+        }
+    }
+
+    public class SignedIntSettingDescription : PositiveIntSettingDescription
+    {
+        public SignedIntSettingDescription(string prompt, int defaultVal = 0) : base(prompt, defaultVal) { }
+
+        public override bool AllowInput(string current, char newChar, int caretIdx)
+        {
+            if (newChar == '-' && caretIdx == 0 && !current.Contains('-'))
+            {
+                return true;
+            }
+
+            return base.AllowInput(current, newChar, caretIdx);
+        }
+    }
+
+    public class NameSettingDescription : CharLimitTextBoxSettingDescription<string>
+    {
+        public NameSettingDescription(string prompt, string defaultVal) : base(prompt, defaultVal, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789") { }
+
+        public override string GetValue()
+        {
+            return inputControl.Text;
+        }
+    }
+
+    /*
     public class SignedIntSettingDescription : TextBoxSettingDescription<int>
     {
         public SignedIntSettingDescription(string prompt, int defaultVal = 0) : base(prompt, defaultVal) { }
@@ -188,7 +244,7 @@ namespace CircuitMaker.GUI.Settings
 
         public override bool AllowInput(string current, char newChar, int caretIdx)
         {
-            return ('A' <= newChar && newChar <= 'Z') || ('a' <= newChar && newChar <= 'z');
+            return ('A' <= newChar && newChar <= 'Z') || ('a' <= newChar && newChar <= 'z') || ('0' <= newChar && newChar <= '9');
         }
 
         public override string GetValue()
@@ -196,6 +252,7 @@ namespace CircuitMaker.GUI.Settings
             return inputControl.Text;
         }
     }
+    //*/
 
     public class EnumSettingDescription<E> : SettingDescription<E> where E : Enum {
         protected ComboBox inputControl;

@@ -1538,7 +1538,7 @@ namespace CircuitMaker.Components
         {
             RectangleF rect = GetDefaultComponentBounds();
             rect.Inflate(1, 0.5F);
-            rect.Width -= 0.5F;
+            rect.Width -= 1.5F;
             rect.X++;
             return rect;
         }
@@ -1575,7 +1575,7 @@ namespace CircuitMaker.Components
 
         public RectangleF GetGraphicalElementBounds()
         {
-            return new RectangleF(-0.5F, -0.5F, 0.5F, 0.5F);
+            return new RectangleF(-0.5F, -0.5F, 1, 1);
         }
     }
 
@@ -2237,6 +2237,8 @@ namespace CircuitMaker.Components
                 }
 
                 RenderMainShape(graphics, simulating, colourScheme);
+
+                RenderGraphicalElement(graphics, simulating, colourScheme);
             }
 
             public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
@@ -2267,20 +2269,24 @@ namespace CircuitMaker.Components
             public void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 Matrix matrix;
+                PointF? loc;
 
                 foreach (IGraphicalComponent graphicalComp in InternalBoard.GetGraphicalComponents())
                 {
-                    PointF loc = graphicalComp.GetGraphicalElementLocation().GetValueOrDefault(new PointF());
+                    loc = graphicalComp.GetGraphicalElementLocation();
 
-                    matrix = new Matrix();
-                    matrix.Translate(loc.X, loc.Y);
+                    if (loc.HasValue)
+                    {
+                        matrix = new Matrix();
+                        matrix.Translate(loc.Value.X, loc.Value.Y);
 
-                    graphics.MultiplyTransform(matrix);
+                        graphics.MultiplyTransform(matrix);
 
-                    graphicalComp.RenderGraphicalElement(graphics, simulating, colourScheme);
+                        graphicalComp.RenderGraphicalElement(graphics, simulating, colourScheme);
 
-                    matrix.Invert();
-                    graphics.MultiplyTransform(matrix);
+                        matrix.Invert();
+                        graphics.MultiplyTransform(matrix);
+                    }
                 }
             }
 

@@ -21,7 +21,7 @@ namespace CircuitMaker
         {
             ComponentRegisterer.RegisterComponents();
 
-            //* <-------------------------------------------------------------------------------------------------------------------------------------
+            //*
             Board board = new Board("SR-Nor-Latch", new System.Drawing.Size(4, 4));
 
             IBoardInputComponent Set = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
