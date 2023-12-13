@@ -180,6 +180,19 @@ namespace CircuitMaker.GUI
 
             public void Select(IComponent comp) { SelectedObject.Set(comp); }
             public void Select(Wire wire) { SelectedObject.Set(wire); }
+
+            public void Remove()
+            {
+                if (SelectedObject.IsComp())
+                {
+                    SelectedObject.Comp().Remove();
+                } else if (SelectedObject.IsWire())
+                {
+                    SelectedObject.Wire().Remove();
+                }
+
+                SelectedObject.Reset();
+            }
         }
 
         private ContextMenuStrip genericMenu, componentMenu;
@@ -236,20 +249,24 @@ namespace CircuitMaker.GUI
         }
 
         public static Builder NewBoard(string name) {
-            return new Builder(new Board(name, new Size(2, 2)), ConstructDefaultFilename(name));
+            return new Builder(new Board(name), ConstructDefaultFilename(name));
         }
 
         public void OpenLoadBoard(string filename)
         {
             board = Board.Load(filename);
 
+            selection.Deselect();
+
             Invalidate();
         }
 
         public void OpenNewBoard(string name)
         {
-            board = new Board(name, new Size(2, 2));
+            board = new Board(name);
             storedFilename = ConstructDefaultFilename(name);
+
+            selection.Deselect();
 
             Invalidate();
         }
@@ -257,6 +274,7 @@ namespace CircuitMaker.GUI
         public void SaveBoard(string filename = null)
         {
             storedFilename = filename ?? storedFilename;
+            board.Name = storedFilename;
             board.Save(storedFilename);
         }
 
@@ -662,15 +680,18 @@ namespace CircuitMaker.GUI
             {
                 if (selection.HasObject())
                 {
+                    if (e.KeyCode == Keys.Delete)
+                    {
+                        selection.Remove();
+
+                        board.SimplifyWires();
+
+                        Invalidate();
+                    }
+
                     if (selection.HasComp()) // <---------------------------------------------------------------------- selected wire not dealt with
                     {
-                        if (e.KeyCode == Keys.Delete)
-                        {
-                            selection.SelectedComp.Remove();
-                            selection.Deselect();
-                        }
-
-                        else if (e.KeyCode == (Keys.Control | Keys.C))
+                        if (e.KeyCode == (Keys.Control | Keys.C))
                         {
                             if (dragType == DragType.None)
                             {
@@ -838,7 +859,14 @@ namespace CircuitMaker.GUI
                         IComponent clickedComp = GetClickedComponent(e.Location);
                         Wire clickedWire = GetClickedWire(e.Location);
 
-                        if (clickedComp != null)
+                        Pos clickedPos = Pos.FromPoint(DetransformPoint(e.Location));
+
+                        if (board.GetComponents().Select(comp => comp.GetAllPinPositions()).Aggregate((posArr1, posArr2) => posArr1.Concat(posArr2).ToArray()).Contains(clickedPos))
+                        {
+                            StartWire(clickedPos);
+
+                            dragType = DragType.DrawWire;
+                        } else if (clickedComp != null)
                         {
                             if (clickedComp == selection.SelectedComp)
                             {
@@ -853,7 +881,7 @@ namespace CircuitMaker.GUI
                         {
                             if (clickedWire == selection.SelectedWire)
                             {
-                                StartWire(Pos.FromPoint(DetransformPoint(e.Location)));
+                                StartWire(clickedPos);
 
                                 dragType = DragType.DrawWire;
                             } else

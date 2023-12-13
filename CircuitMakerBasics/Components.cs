@@ -1623,7 +1623,7 @@ namespace CircuitMaker.Components
             }
 
             public new static string ID = "INPUT";
-            public new static string DefaultDetails = $"INPUT,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Left},{1}";
+            public new static string DefaultDetails = $"INPUT,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Left},{0}";
 
             public override string GetComponentID()
             {
@@ -1765,7 +1765,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "OUTPUT";
-            public static string DefaultDetails = $"OUTPUT,{(byte)Board.InterfaceLocation.SideEnum.Right},{1}";
+            public static string DefaultDetails = $"OUTPUT,{(byte)Board.InterfaceLocation.SideEnum.Right},{0}";
 
             public override string GetComponentID()
             {
@@ -1911,7 +1911,7 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "BIDIR";
-            public static string DefaultDetails = $"BIDIR,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Top},{1}";
+            public static string DefaultDetails = $"BIDIR,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Top},{0}";
 
             public override string GetComponentID()
             {

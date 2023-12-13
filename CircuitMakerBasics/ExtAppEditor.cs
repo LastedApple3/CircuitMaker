@@ -14,21 +14,67 @@ namespace CircuitMaker.GUI.ExtApp
 {
     public partial class ExtAppEditor : UserControl
     {
+        private class DragState
+        {
+            private bool isInterfaceLoc;
+            private bool isGraphicalComp;
+            private bool isSize;
+
+            private string interfaceLocName;
+            private IGraphicalComponent graphicalComp;
+
+            private Board.InterfaceLocation interfaceLocReset;
+            private PointF? graphicalCompReset;
+            private Size sizeReset;
+
+            public DragState()
+            {
+                Reset();
+            }
+
+            public bool IsAnything() { return isInterfaceLoc || isGraphicalComp || isSize; }
+
+            public bool IsInterfaceLoc() { return isInterfaceLoc; }
+            public bool IsGraphicalComp() { return isGraphicalComp; }
+            public bool IsSize() { return isSize; }
+
+            public string GetInterfaceLocName() { return interfaceLocName; }
+            public IGraphicalComponent GetGraphicalComp() { return graphicalComp; }
+
+            public Board.InterfaceLocation GetInterfaceLocReset() { return interfaceLocReset; }
+            public PointF? GetGraphicalCompReset() { return graphicalCompReset; }
+            public Size GetSizeReset() { return sizeReset; }
+
+            public void SelectInterfaceLoc(string name, Board.InterfaceLocation reset) { Reset(); isInterfaceLoc = true; interfaceLocName = name; interfaceLocReset = reset; }
+            public void SelectGraphicalComp(IGraphicalComponent comp, PointF? reset) { Reset(); isGraphicalComp = true; graphicalComp = comp; graphicalCompReset = reset; }
+            public void SelectSize(Size reset) { Reset(); isSize = true; sizeReset = reset; }
+
+            public void Reset() { isInterfaceLoc = false; isGraphicalComp = false; isSize = false; /* interfaceLocName = null; graphicalComp = null; interfaceLocReset = null; graphicalCompReset = null; */ }
+        }
+
         private IBoardContainerComponent boardContainerComp;
         public ColourScheme colourScheme;
 
         private Dictionary<string, Board.InterfaceLocation> interfaceLocSave;
         private Dictionary<IGraphicalComponent, PointF?> graphicalLocSave;
+        private Size sizeSave;
 
         private int scale = 40;
+        private int resizeStartRange = 10;
 
         private Matrix transformationMatrix;
+
+        private DragState dragState;
+
+        private Point mouseDragLoc;
 
         public ExtAppEditor(IBoardContainerComponent boardContainerComp, ColourScheme colourScheme)
         {
             InitializeComponent();
 
             transformationMatrix = new Matrix();
+
+            dragState = new DragState();
 
             RectangleF compRect = boardContainerComp.GetShape();
             transformationMatrix.Scale(scale, scale);
@@ -69,6 +115,8 @@ namespace CircuitMaker.GUI.ExtApp
             {
                 graphicalLocSave.Add(graphicalComp, graphicalComp.GetGraphicalElementLocation());
             }
+
+            sizeSave = internalBoard.ExternalSize;
         }
 
         public void ResetChanges()
@@ -84,6 +132,8 @@ namespace CircuitMaker.GUI.ExtApp
             {
                 graphicalComp.SetGraphicalElementLocation(graphicalLocSave[graphicalComp]);
             }
+
+            internalBoard.ExternalSize = sizeSave;
         }
 
         private Matrix GetInvertedTransformationMatrix()
@@ -156,86 +206,126 @@ namespace CircuitMaker.GUI.ExtApp
             return new PointF();
         }
 
-        protected override void OnMouseClick(MouseEventArgs e)
+        protected override void OnMouseDown(MouseEventArgs e)
         {
-            base.OnMouseClick(e);
+            base.OnMouseDown(e);
 
-            bool onLeft = e.Location.X < scale, onRight = e.Location.X > Size.Width - scale,
-                onTop = e.Location.Y < scale, onBottom = e.Location.Y > Size.Height - scale,
-                onLeftRight = onLeft || onRight, onTopBottom = onTop || onBottom;
-
-            Console.WriteLine($"{e.Location}, {new PointF(scale, scale)}, {new PointF(Size.Width - scale, Size.Height - scale)}");
-            Console.WriteLine($"onLeft: {onLeft}, onRight: {onRight}, onTop: {onTop}, onBottom: {onBottom}");
-            Console.WriteLine(!(onLeftRight || onTopBottom));
-
-            if (!(onLeftRight || onTopBottom))
+            if (e.Location.X > Size.Width - scale - resizeStartRange && e.Location.X < Size.Width - scale + resizeStartRange &&
+                e.Location.Y > Size.Height - scale - resizeStartRange && e.Location.Y < Size.Height - scale + resizeStartRange)
             {
-                RectangleF? possibleBounds;
-                RectangleF bounds;
-
-                foreach (IGraphicalComponent graphicalComp in GetGraphicalComponents())
-                {
-                    possibleBounds = graphicalComp.GetOffsetGraphicalElementBounds();
-
-                    if (possibleBounds.HasValue)
-                    {
-                        bounds = possibleBounds.Value;
-                    } else
-                    {
-                        graphicalComp.SetGraphicalElementLocation(PositionNewGraphicalElement(graphicalComp.GetGraphicalElementBounds()));
-
-                        Invalidate();
-
-                        bounds = graphicalComp.GetOffsetGraphicalElementBounds().Value;
-                    }
-
-                    Console.WriteLine($"{bounds.Location}, {new PointF(bounds.X + bounds.Width, bounds.Y + bounds.Height)}");
-
-                    if (bounds.Contains(DetransformPointF(e.Location)))
-                    {
-                        Console.WriteLine("clicked on graphical element");
-                    }
-                }
-            } else if (onLeftRight ^ onTopBottom)
+                dragState.SelectSize(boardContainerComp.GetInternalBoard().ExternalSize);
+            } else
             {
-                /*
-                Board.InterfaceLocation.SideEnum side = 0b000;
+                bool onLeft = e.Location.X < scale, onRight = e.Location.X > Size.Width - scale,
+                    onTop = e.Location.Y < scale, onBottom = e.Location.Y > Size.Height - scale,
+                    onLeftRight = onLeft || onRight, onTopBottom = onTop || onBottom;
 
-                if (!(onTop || onBottom))
+                if (!(onLeftRight || onTopBottom))
                 {
-                    if (onLeft)
+                    RectangleF? possibleBounds;
+                    RectangleF bounds;
+
+                    foreach (IGraphicalComponent graphicalComp in GetGraphicalComponents())
                     {
-                        side = Board.InterfaceLocation.SideEnum.Left;
-                    }
-                    else if (onRight)
-                    {
-                        side = Board.InterfaceLocation.SideEnum.Right;
+                        possibleBounds = graphicalComp.GetOffsetGraphicalElementBounds();
+
+                        if (possibleBounds.HasValue)
+                        {
+                            bounds = possibleBounds.Value;
+                        }
+                        else
+                        {
+                            graphicalComp.SetGraphicalElementLocation(PositionNewGraphicalElement(graphicalComp.GetGraphicalElementBounds()));
+
+                            Invalidate();
+
+                            bounds = graphicalComp.GetOffsetGraphicalElementBounds().Value;
+                        }
+
+                        dragState.SelectGraphicalComp(graphicalComp, graphicalComp.GetGraphicalElementLocation());
                     }
                 }
-                else if (!(onLeft || onRight))
+                else if (onLeftRight ^ onTopBottom)
                 {
-                    if (onTop)
+                    /*
+                    Board.InterfaceLocation.SideEnum side = 0b000;
+
+                    if (!(onTop || onBottom))
                     {
-                        side = Board.InterfaceLocation.SideEnum.Top;
+                        if (onLeft)
+                        {
+                            side = Board.InterfaceLocation.SideEnum.Left;
+                        }
+                        else if (onRight)
+                        {
+                            side = Board.InterfaceLocation.SideEnum.Right;
+                        }
                     }
-                    else if (onBottom)
+                    else if (!(onLeft || onRight))
                     {
-                        side = Board.InterfaceLocation.SideEnum.Bottom;
+                        if (onTop)
+                        {
+                            side = Board.InterfaceLocation.SideEnum.Top;
+                        }
+                        else if (onBottom)
+                        {
+                            side = Board.InterfaceLocation.SideEnum.Bottom;
+                        }
                     }
-                }
-                //*/
+                    //*/
 
-                Board.InterfaceLocation.SideEnum side = Board.InterfaceLocation.SideEnum.IsSide |
-                    (onLeftRight ? Board.InterfaceLocation.SideEnum.LeftRight : Board.InterfaceLocation.SideEnum.Nothing) |
-                    ((onBottom || onRight) ? Board.InterfaceLocation.SideEnum.BottomRight : Board.InterfaceLocation.SideEnum.Nothing);
+                    Board.InterfaceLocation.SideEnum side = Board.InterfaceLocation.SideEnum.IsSide |
+                        (onLeftRight ? Board.InterfaceLocation.SideEnum.LeftRight : Board.InterfaceLocation.SideEnum.Nothing) |
+                        ((onBottom || onRight) ? Board.InterfaceLocation.SideEnum.BottomRight : Board.InterfaceLocation.SideEnum.Nothing);
 
-                foreach (IBoardInterfaceComponent interfaceComp in GetInterfaceComponents().Where(interfaceComp => interfaceComp.GetInterfaceLocation().Side == side))
-                {
+                    Point clickedPoint = DetransformPoint(e.Location);
 
+                    foreach (IBoardInterfaceComponent interfaceComp in GetInterfaceComponents().Where(interfaceComp => interfaceComp.GetInterfaceLocation().Side == side))
+                    {
+                        if ((onLeftRight ? clickedPoint.Y : clickedPoint.X) + 1 == interfaceComp.GetInterfaceLocation().Distance)
+                        {
+                            dragState.SelectInterfaceLoc(interfaceComp.GetComponentName(), interfaceComp.GetInterfaceLocation());
+                        }
+                    }
                 }
             }
+        }
 
-            Console.WriteLine();
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+
+            if (dragState.IsAnything())
+            {
+                dragState.Reset();
+
+                Invalidate();
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+
+            if (dragState.IsAnything())
+            {
+                mouseDragLoc = e.Location;
+
+                Point mousePoint = DetransformPoint(mouseDragLoc);
+
+                if (dragState.IsSize())
+                {
+
+                } else if (dragState.IsInterfaceLoc())
+                {
+
+                } else if (dragState.IsGraphicalComp())
+                {
+
+                }
+
+                Invalidate();
+            }
         }
     }
 }

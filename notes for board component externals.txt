@@ -25,3 +25,11 @@ Dictionary<GraphicalComponent, PointF> graphicsLocationSaves
 GUI live updates it
 
 ResetChanges just loads these back up.
+
+
+When you add a input/output automatically make it taller to work. make it wider by a decreased factor?
+2x2
+4x4
+6x4
+8x6
+add 2 to height, if height is double width add 2 to width
