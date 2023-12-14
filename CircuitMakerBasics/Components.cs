@@ -2012,7 +2012,7 @@ namespace CircuitMaker.Components
 
         public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent, IBoardContainerComponent
         {
-            public Board InternalBoard;
+            public Board InternalBoard { get; }
 
             private Rectangle Shape;
 
@@ -2067,7 +2067,9 @@ namespace CircuitMaker.Components
             {
                 InternalBoard = internalBoard;
 
-                Shape = new Rectangle(-InternalBoard.ExternalSize.Width / 2, -InternalBoard.ExternalSize.Width / 2, InternalBoard.ExternalSize.Width, InternalBoard.ExternalSize.Height);
+                InternalBoard.SizeChanged += InternalBoard_SizeChanged;
+
+                ResetShape();
 
                 IBoardInterfaceComponent[] interfaceComps = InternalBoard.GetInterfaceComponents();
 
@@ -2102,6 +2104,22 @@ namespace CircuitMaker.Components
                 InpNames = inpNameList.ToArray();
                 OutpOffsets = outpOffsetList.ToArray();
                 OutpNames = outpNameList.ToArray();
+            }
+
+            private void InternalBoard_SizeChanged()
+            {
+                ResetShape();
+            }
+
+            public void ResetShape()
+            {
+                Console.WriteLine("resetting shape");
+                Console.WriteLine(InternalBoard.ExternalSize);
+
+                Shape = new Rectangle(-InternalBoard.ExternalSize.Width / 2, -InternalBoard.ExternalSize.Width / 2, InternalBoard.ExternalSize.Width, InternalBoard.ExternalSize.Height);
+
+                Console.WriteLine(Shape);
+                Console.WriteLine("finished resetting shape");
             }
 
             public static string ID = "BOARD";
@@ -2290,7 +2308,7 @@ namespace CircuitMaker.Components
                 }
             }
 
-            public RectangleF GetShape()
+            public Rectangle GetShape()
             {
                 return Shape;
             }

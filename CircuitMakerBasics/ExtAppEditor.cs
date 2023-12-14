@@ -70,16 +70,11 @@ namespace CircuitMaker.GUI.ExtApp
 
         public ExtAppEditor(IBoardContainerComponent boardContainerComp, ColourScheme colourScheme)
         {
+            DoubleBuffered = true;
+
             InitializeComponent();
 
-            transformationMatrix = new Matrix();
-
             dragState = new DragState();
-
-            RectangleF compRect = boardContainerComp.GetShape();
-            transformationMatrix.Scale(scale, scale);
-            transformationMatrix.Translate(-compRect.X, -compRect.Y);
-            transformationMatrix.Translate(1, 1);
 
             this.colourScheme = colourScheme;
             this.boardContainerComp = boardContainerComp;
@@ -91,11 +86,21 @@ namespace CircuitMaker.GUI.ExtApp
 
         private void ResetSize()
         {
-            Size = boardContainerComp.GetInternalBoard().ExternalSize;
-            Width += 2;
-            Height += 2;
-            Width *= scale;
-            Height *= scale;
+            //boardContainerComp.ResetShape();
+
+            Size size = boardContainerComp.GetInternalBoard().ExternalSize;
+            size.Width += 2;
+            size.Height += 2;
+            size.Width *= scale;
+            size.Height *= scale;
+            Size = size;
+
+            transformationMatrix = new Matrix();
+
+            Rectangle compRect = boardContainerComp.GetShape();
+            transformationMatrix.Scale(scale, scale);
+            transformationMatrix.Translate(-compRect.X, -compRect.Y);
+            transformationMatrix.Translate(1, 1);
         }
 
         public void SaveChanges()
@@ -299,7 +304,7 @@ namespace CircuitMaker.GUI.ExtApp
             {
                 dragState.Reset();
 
-                Invalidate();
+                //Invalidate();
             }
         }
 
@@ -312,12 +317,34 @@ namespace CircuitMaker.GUI.ExtApp
                 mouseDragLoc = e.Location;
 
                 Point mousePoint = DetransformPoint(mouseDragLoc);
+                Board internalBoard = boardContainerComp.GetInternalBoard();
 
                 if (dragState.IsSize())
                 {
+                    float[] bounds = new float[] { 1, 1 };
 
-                } else if (dragState.IsInterfaceLoc())
+                    foreach (IGraphicalComponent graphicalComp in internalBoard.GetGraphicalComponents())
+                    {
+                        RectangleF compBounds = graphicalComp.GetGraphicalElementBounds();
+
+                        bounds = new float[]
+                        {
+                            Math.Max(bounds[0], compBounds.Width),
+                            Math.Max(bounds[1], compBounds.Height),
+                        };
+                    }
+
+                    Rectangle shape = boardContainerComp.GetShape();
+
+                    internalBoard.ExternalSize = new Size(Math.Max(mousePoint.X - shape.X, (int)Math.Ceiling(bounds[0])), Math.Max(mousePoint.Y - shape.Y, (int)Math.Ceiling(bounds[1])));
+
+                    ResetSize();
+
+                    Console.WriteLine(internalBoard.ExternalSize);
+                }
+                else if (dragState.IsInterfaceLoc())
                 {
+                    // get closest position around the edge that is not occupied.
 
                 } else if (dragState.IsGraphicalComp())
                 {

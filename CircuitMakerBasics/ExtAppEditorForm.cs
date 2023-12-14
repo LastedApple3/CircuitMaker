@@ -18,6 +18,8 @@ namespace CircuitMaker.GUI.ExtApp
         {
             extAppEditor = new ExtAppEditor(boardContainerComp, colourScheme);
 
+            DoubleBuffered = true;
+
             InitializeComponent();
         }
 

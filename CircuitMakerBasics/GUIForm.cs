@@ -861,7 +861,7 @@ namespace CircuitMaker.GUI
 
                         Pos clickedPos = Pos.FromPoint(DetransformPoint(e.Location));
 
-                        if (board.GetComponents().Select(comp => comp.GetAllPinPositions()).Aggregate((posArr1, posArr2) => posArr1.Concat(posArr2).ToArray()).Contains(clickedPos))
+                        if (board.GetComponents().Length != 0 && board.GetComponents().Select(comp => comp.GetAllPinPositions()).Aggregate((posArr1, posArr2) => posArr1.Concat(posArr2).ToArray()).Contains(clickedPos))
                         {
                             StartWire(clickedPos);
 

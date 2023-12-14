@@ -433,7 +433,8 @@ namespace CircuitMaker.Basics
 
     public interface IBoardContainerComponent : IGraphicalComponent
     {
-        RectangleF GetShape();
+        Rectangle GetShape();
+        void ResetShape();
         //void SetShape(RectangleF shape);
 
         Board GetInternalBoard();
@@ -652,23 +653,28 @@ namespace CircuitMaker.Basics
         {
             get
             {
-                if (externalSize.HasValue)
+                if (!externalSize.HasValue)
                 {
-                    return externalSize.Value;
+                    int bidirCount = InputComponents.Count() + OutputComponents.Count() - InterfaceComponents.Count();
+
+                    int vertLimit = Math.Max(Math.Max(InputComponents.Count(), OutputComponents.Count()) - bidirCount, 1),
+                        horiLimit = Math.Max(Math.Max(bidirCount, vertLimit / 2), 1);
+
+                    externalSize = new Size(vertLimit * 2, horiLimit * 2);
+
+                    SizeChanged?.Invoke();
                 }
 
-                int bidirCount = InputComponents.Count() + OutputComponents.Count() - InterfaceComponents.Count();
-
-                int vertLimit = Math.Max(Math.Max(InputComponents.Count(), OutputComponents.Count()) - bidirCount, 1),
-                    horiLimit = Math.Max(bidirCount, (vertLimit / 2) + 0);
-
-                return new Size(vertLimit * 2, horiLimit * 2);
+                return externalSize.Value;
             }
             set
             {
                 externalSize = value;
+                SizeChanged?.Invoke();
             }
-        } 
+        }
+
+        public event Action SizeChanged;
 
         public string Name;
 

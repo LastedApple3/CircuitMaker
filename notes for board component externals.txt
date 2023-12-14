@@ -33,3 +33,8 @@ When you add a input/output automatically make it taller to work. make it wider 
 6x4
 8x6
 add 2 to height, if height is double width add 2 to width
+
+interface loc generator:
+	figure out quarter (divided diagonally):
+		x > 0 && 
+		compare x+y (and x-y?)
