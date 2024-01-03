@@ -2113,13 +2113,13 @@ namespace CircuitMaker.Components
 
             public void ResetShape()
             {
-                Console.WriteLine("resetting shape");
-                Console.WriteLine(InternalBoard.ExternalSize);
+                //Console.WriteLine("resetting shape");
+                //Console.WriteLine(InternalBoard.ExternalSize);
 
                 Shape = new Rectangle(-InternalBoard.ExternalSize.Width / 2, -InternalBoard.ExternalSize.Width / 2, InternalBoard.ExternalSize.Width, InternalBoard.ExternalSize.Height);
 
-                Console.WriteLine(Shape);
-                Console.WriteLine("finished resetting shape");
+                //Console.WriteLine(Shape);
+                //Console.WriteLine("finished resetting shape");
             }
 
             public static string ID = "BOARD";

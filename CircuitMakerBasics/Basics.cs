@@ -588,6 +588,18 @@ namespace CircuitMaker.Basics
         }
     }
 
+    public static class SideEnumExtensions
+    {
+        public static bool IsLeftRight(this Board.InterfaceLocation.SideEnum side)
+        {
+            return side.HasFlag(Board.InterfaceLocation.SideEnum.LeftRight);
+        }
+        public static bool IsBottomRight(this Board.InterfaceLocation.SideEnum side)
+        {
+            return side.HasFlag(Board.InterfaceLocation.SideEnum.BottomRight);
+        }
+    }
+
     public class Board
     {
         public struct InterfaceLocation
@@ -612,6 +624,33 @@ namespace CircuitMaker.Basics
             {
                 Side = side;
                 Distance = distance;
+            }
+
+            public static bool operator ==(InterfaceLocation loc1, InterfaceLocation loc2)
+            {
+                return loc1.Side == loc2.Side && loc1.Distance == loc2.Distance;
+            }
+
+            public static bool operator !=(InterfaceLocation loc1, InterfaceLocation loc2)
+            {
+                return loc1.Side != loc2.Side || loc1.Distance != loc2.Distance;
+            }
+
+            public override bool Equals(object other)
+            {
+                if (other is InterfaceLocation otherLoc)
+                {
+                    return this == otherLoc;
+                }
+
+                return false;
+            }
+
+            public override int GetHashCode()
+            {
+                //return base.GetHashCode();
+
+                return (int)Side ^ Distance;
             }
 
             public override string ToString()

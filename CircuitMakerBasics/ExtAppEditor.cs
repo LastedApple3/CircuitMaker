@@ -191,6 +191,19 @@ namespace CircuitMaker.GUI.ExtApp
 
             boardContainerComp.Render(graphics, false, colourScheme);
 
+            /*
+            float rad = 0.05F;
+            
+            for (int x = -10; x <= 10; x++)
+            {
+                for (int y = -10; y <= 10; y++)
+                {
+                    graphics.FillEllipse(Brushes.Red, x - rad, y - rad, 2 * rad, 2 * rad);
+                    graphics.DrawString($"{x},{y}", new Font("arial", 0.1F), Brushes.Blue, x, y);
+                }
+            }
+            //*/
+
             Matrix inverseTransformationMatrix = transformationMatrix.Clone();
             inverseTransformationMatrix.Invert();
             graphics.MultiplyTransform(inverseTransformationMatrix);
@@ -204,6 +217,23 @@ namespace CircuitMaker.GUI.ExtApp
         private IBoardInterfaceComponent[] GetInterfaceComponents()
         {
             return boardContainerComp.GetInternalBoard().GetInterfaceComponents();
+        }
+
+        private IBoardInterfaceComponent GetInterfaceComponent(string name)
+        {
+            return boardContainerComp.GetInternalBoard().GetInterfaceComponent(name);
+        }
+
+        private IBoardInterfaceComponent GetInterfaceComponent(Board.InterfaceLocation loc)
+        {
+            IBoardInterfaceComponent[] comps = GetInterfaceComponents().Where(comp => comp.GetInterfaceLocation() == loc).ToArray();
+
+            if (comps.Length == 0)
+            {
+                return null;
+            }
+
+            return comps[1];
         }
 
         private PointF PositionNewGraphicalElement(RectangleF bounds)
@@ -252,42 +282,16 @@ namespace CircuitMaker.GUI.ExtApp
                 }
                 else if (onLeftRight ^ onTopBottom)
                 {
-                    /*
-                    Board.InterfaceLocation.SideEnum side = 0b000;
-
-                    if (!(onTop || onBottom))
-                    {
-                        if (onLeft)
-                        {
-                            side = Board.InterfaceLocation.SideEnum.Left;
-                        }
-                        else if (onRight)
-                        {
-                            side = Board.InterfaceLocation.SideEnum.Right;
-                        }
-                    }
-                    else if (!(onLeft || onRight))
-                    {
-                        if (onTop)
-                        {
-                            side = Board.InterfaceLocation.SideEnum.Top;
-                        }
-                        else if (onBottom)
-                        {
-                            side = Board.InterfaceLocation.SideEnum.Bottom;
-                        }
-                    }
-                    //*/
-
                     Board.InterfaceLocation.SideEnum side = Board.InterfaceLocation.SideEnum.IsSide |
                         (onLeftRight ? Board.InterfaceLocation.SideEnum.LeftRight : Board.InterfaceLocation.SideEnum.Nothing) |
                         ((onBottom || onRight) ? Board.InterfaceLocation.SideEnum.BottomRight : Board.InterfaceLocation.SideEnum.Nothing);
 
                     Point clickedPoint = DetransformPoint(e.Location);
+                    Point offset = boardContainerComp.GetShape().Location;
 
                     foreach (IBoardInterfaceComponent interfaceComp in GetInterfaceComponents().Where(interfaceComp => interfaceComp.GetInterfaceLocation().Side == side))
                     {
-                        if ((onLeftRight ? clickedPoint.Y : clickedPoint.X) + 1 == interfaceComp.GetInterfaceLocation().Distance)
+                        if ((onLeftRight ? clickedPoint.Y - offset.Y : clickedPoint.X - offset.X) == interfaceComp.GetInterfaceLocation().Distance)
                         {
                             dragState.SelectInterfaceLoc(interfaceComp.GetComponentName(), interfaceComp.GetInterfaceLocation());
                         }
@@ -319,19 +323,37 @@ namespace CircuitMaker.GUI.ExtApp
                 Point mousePoint = DetransformPoint(mouseDragLoc);
                 Board internalBoard = boardContainerComp.GetInternalBoard();
 
+                //Console.WriteLine(mousePoint);
+                //Console.WriteLine(boardContainerComp.GetShape());
+                //Console.WriteLine();
+
                 if (dragState.IsSize())
                 {
-                    float[] bounds = new float[] { 1, 1 };
+                    IBoardInterfaceComponent[] interfaceComps = GetInterfaceComponents();
+                    Func<Board.InterfaceLocation.SideEnum, int> interfacesOnSide = side => interfaceComps.Where(comp => comp.GetInterfaceLocation().Side == side).Count();
+
+                    float[] bounds = new float[] {
+                        Math.Max(1, Math.Max(interfacesOnSide(Board.InterfaceLocation.SideEnum.Top), interfacesOnSide(Board.InterfaceLocation.SideEnum.Bottom)) + 1),
+                        Math.Max(1, Math.Max(interfacesOnSide(Board.InterfaceLocation.SideEnum.Left), interfacesOnSide(Board.InterfaceLocation.SideEnum.Right)) + 1)
+                    };
+
+                    RectangleF? possCompBounds;
+                    RectangleF compBounds;
 
                     foreach (IGraphicalComponent graphicalComp in internalBoard.GetGraphicalComponents())
                     {
-                        RectangleF compBounds = graphicalComp.GetGraphicalElementBounds();
+                        possCompBounds = graphicalComp.GetOffsetGraphicalElementBounds();
 
-                        bounds = new float[]
+                        if (possCompBounds.HasValue)
                         {
-                            Math.Max(bounds[0], compBounds.Width),
-                            Math.Max(bounds[1], compBounds.Height),
-                        };
+                            compBounds = possCompBounds.Value;
+
+                            bounds = new float[]
+                            {
+                               Math.Max(bounds[0], compBounds.Left),
+                               Math.Max(bounds[1], compBounds.Bottom),
+                            };
+                        }
                     }
 
                     Rectangle shape = boardContainerComp.GetShape();
@@ -340,10 +362,76 @@ namespace CircuitMaker.GUI.ExtApp
 
                     ResetSize();
 
-                    Console.WriteLine(internalBoard.ExternalSize);
+                    //Console.WriteLine(internalBoard.ExternalSize);
                 }
                 else if (dragState.IsInterfaceLoc())
                 {
+                    Rectangle shape = boardContainerComp.GetShape();
+
+                    Point relToCorner = new Point(mousePoint.X - shape.X, mousePoint.Y - shape.Y);
+
+                    Dictionary<Board.InterfaceLocation.SideEnum, int> dists = new Dictionary<Board.InterfaceLocation.SideEnum, int> {
+                        { Board.InterfaceLocation.SideEnum.Left, relToCorner.X },
+                        { Board.InterfaceLocation.SideEnum.Top, relToCorner.Y },
+                        { Board.InterfaceLocation.SideEnum.Right, shape.Width - relToCorner.X },
+                        { Board.InterfaceLocation.SideEnum.Bottom, shape.Height - relToCorner.Y }
+                    };
+
+                    Board.InterfaceLocation.SideEnum closestSide = dists.Aggregate((kvp1, kvp2) => kvp1.Value < kvp2.Value ? kvp1 : kvp2).Key;
+                    int closestDist = Math.Max(1, closestSide.IsLeftRight() ? Math.Min(relToCorner.Y, shape.Height - 1) : Math.Min(relToCorner.X, shape.Width - 1));
+
+                    Board.InterfaceLocation.SideEnum actualSide = closestSide;
+                    int actualDist = closestDist;
+
+                    int distProg = 0, sideProg = 0;
+
+                    bool lastOutside = false, thisOutside;
+
+                    while (lastOutside || GetInterfaceComponent(new Board.InterfaceLocation(actualSide, actualDist)) != null)
+                    {
+                        actualDist += distProg * ((2 * (distProg % 2)) - 1);
+
+                        distProg++;
+
+                        thisOutside = actualDist <= 0 || actualDist >= (actualSide.IsLeftRight() ? shape.Height : shape.Width);
+
+                        if (thisOutside && lastOutside)
+                        {
+                            if (sideProg == 0 || sideProg == 2)
+                            {
+                                actualSide ^= Board.InterfaceLocation.SideEnum.LeftRight;
+                            } else if (sideProg == 1)
+                            {
+                                actualSide ^= Board.InterfaceLocation.SideEnum.BottomRight;
+                            } else if (sideProg == 3)
+                            {
+                                throw new Exception("no space");
+                            }
+
+                            if (actualSide.IsLeftRight() == closestSide.IsLeftRight())
+                            {
+                                actualDist = closestDist;
+                            } else if (closestSide.IsBottomRight())
+                            {
+                                actualDist = (actualSide.IsLeftRight() ? shape.Height : shape.Width) - 1;
+                            } else
+                            {
+                                actualDist = 1;
+                            }
+
+                            distProg = 0;
+                            sideProg++;
+                        }
+
+                        lastOutside = thisOutside;
+                    }
+
+
+                        
+                    GetInterfaceComponent(dragState.GetInterfaceLocName()).SetInterfaceLocation(new Board.InterfaceLocation(closestSide, closestDist));
+                    
+                    //Board.InterfaceLocation.SideEnum side = ;
+
                     // get closest position around the edge that is not occupied.
 
                 } else if (dragState.IsGraphicalComp())
