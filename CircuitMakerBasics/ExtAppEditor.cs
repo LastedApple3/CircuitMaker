@@ -56,17 +56,21 @@ namespace CircuitMaker.GUI.ExtApp
         public ColourScheme colourScheme;
 
         private Dictionary<string, Board.InterfaceLocation> interfaceLocSave;
-        private Dictionary<IGraphicalComponent, PointF?> graphicalLocSave;
+        private Dictionary<IGraphicalComponent, Point?> graphicalLocSave;
         private Size sizeSave;
 
         private int scale = 40;
         private int resizeStartRange = 10;
 
-        private Matrix transformationMatrix;
+        private Matrix compTransformationMatrix = new Matrix();
+        private Matrix graphicalsTransformationMatrix = new Matrix();
 
         private DragState dragState;
 
         private Point mouseDragLoc;
+
+        Rectangle compDisplayBounds;
+        Rectangle graphicalsDisplayBounds;
 
         public ExtAppEditor(IBoardContainerComponent boardContainerComp, ColourScheme colourScheme)
         {
@@ -91,16 +95,35 @@ namespace CircuitMaker.GUI.ExtApp
             Size size = boardContainerComp.GetInternalBoard().ExternalSize;
             size.Width += 2;
             size.Height += 2;
+
+            float graphicalsStart = size.Width;
+
             size.Width *= scale;
             size.Height *= scale;
+
+            compDisplayBounds = new Rectangle(Point.Empty, size);
+
+            size.Width += scale / 2;
+
+            graphicalsStart += 0.5F;
+
+            int graphicalsWidth = GetUnplacedGraphicalComponents().Select(comp => (int)Math.Ceiling(comp.GetGraphicalElementBounds().Width)).Append(scale).Aggregate(Math.Max);
+
+            graphicalsDisplayBounds = new Rectangle(size.Width, 0, graphicalsWidth, size.Height);
+
+            size.Width += graphicalsWidth;
+
             Size = size;
 
-            transformationMatrix = new Matrix();
-
             Rectangle compRect = boardContainerComp.GetShape();
-            transformationMatrix.Scale(scale, scale);
-            transformationMatrix.Translate(-compRect.X, -compRect.Y);
-            transformationMatrix.Translate(1, 1);
+            compTransformationMatrix.Reset();
+            compTransformationMatrix.Scale(scale, scale);
+            compTransformationMatrix.Translate(-compRect.X, -compRect.Y);
+            compTransformationMatrix.Translate(1, 1);
+
+            graphicalsTransformationMatrix.Reset();
+            graphicalsTransformationMatrix.Scale(scale, scale);
+            graphicalsTransformationMatrix.Translate(graphicalsStart /*boardContainerComp.GetInternalBoard().ExternalSize.Width + 2.5F*/ /*graphicalsDisplayBounds.X*/ , 0);
         }
 
         public void SaveChanges()
@@ -114,7 +137,7 @@ namespace CircuitMaker.GUI.ExtApp
                 interfaceLocSave.Add(interfaceComp.GetComponentName(), interfaceComp.GetInterfaceLocation());
             }
 
-            graphicalLocSave = new Dictionary<IGraphicalComponent, PointF?>();
+            graphicalLocSave = new Dictionary<IGraphicalComponent, Point?>();
 
             foreach (IGraphicalComponent graphicalComp in internalBoard.GetGraphicalComponents())
             {
@@ -141,35 +164,75 @@ namespace CircuitMaker.GUI.ExtApp
             internalBoard.ExternalSize = sizeSave;
         }
 
-        private Matrix GetInvertedTransformationMatrix()
+        private Matrix GetInvertedCompTransformationMatrix()
         {
-            Matrix invertedMatrix = transformationMatrix.Clone();
+            Matrix invertedMatrix = compTransformationMatrix.Clone();
             invertedMatrix.Invert();
             return invertedMatrix;
         }
 
-        private Point DetransformPoint(Point point)
+        private Point CompDetransformPoint(Point point)
         {
             Point[] points = new Point[] { point };
-            DetransformPoints(points);
+            CompDetransformPoints(points);
             return points[0];
         }
 
-        private PointF DetransformPointF(PointF point)
+        private PointF CompDetransformPointF(PointF point)
         {
             PointF[] points = new PointF[] { point };
-            DetransformPointFs(points);
+            CompDetransformPointFs(points);
             return points[0];
         }
 
-        private void DetransformPoints(Point[] points)
+        private void CompDetransformPoints(Point[] points)
         {
-            GetInvertedTransformationMatrix().TransformPoints(points);
+            GetInvertedCompTransformationMatrix().TransformPoints(points);
         }
 
-        private void DetransformPointFs(PointF[] points)
+        private void CompDetransformPointFs(PointF[] points)
         {
-            GetInvertedTransformationMatrix().TransformPoints(points);
+            GetInvertedCompTransformationMatrix().TransformPoints(points);
+        }
+
+        private IGraphicalComponent DetectUnplacedGraphicalClick(Point point)
+        {
+            int offset = 0;
+            Matrix matrix = new Matrix();
+            RectangleF boundsF;
+            Rectangle bounds;
+            PointF[] points;
+
+            foreach (IGraphicalComponent graphicalComp in GetUnplacedGraphicalComponents())
+            {
+                matrix.Reset();
+
+                matrix.Translate(0, offset);
+
+                boundsF = graphicalComp.GetGraphicalElementBounds();
+                bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
+
+                //Console.WriteLine(bounds);
+
+                offset += bounds.Height;
+
+                matrix.Translate(-bounds.X, -bounds.Y);
+                matrix.Multiply(graphicalsTransformationMatrix);
+                matrix.Invert();
+
+                points = new PointF[] { point };
+
+                matrix.TransformPoints(points);
+
+                Console.WriteLine(points[0]);
+
+                if (((RectangleF)bounds).Contains(points[0]))
+                {
+                    return graphicalComp;
+                }
+            }
+
+            return null;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -180,38 +243,72 @@ namespace CircuitMaker.GUI.ExtApp
 
             graphics.ResetTransform();
 
-            graphics.Clear(Color.White);
+            graphics.Clear(DefaultBackColor);
+            //graphics.Clear(Color.White);
 
-            Rectangle clipRect = e.ClipRectangle;
-            clipRect.Width -= 1;
-            clipRect.Height -= 1;
-            graphics.DrawRectangle(new Pen(Brushes.Black, 0.5F), clipRect);
+            Rectangle compRect = compDisplayBounds;
+            compRect.Width -= 1;
+            compRect.Height -= 1;
+            graphics.FillRectangle(new SolidBrush(Color.White), compRect);
+            graphics.DrawRectangle(new Pen(Brushes.Black, 0.5F), compRect);
 
-            graphics.MultiplyTransform(transformationMatrix);
+            Rectangle graphicalsRect = graphicalsDisplayBounds;
+            graphicalsRect.Width -= 1;
+            graphicalsRect.Height -= 1;
+            graphics.FillRectangle(new SolidBrush(Color.White), graphicalsRect);
+            graphics.DrawRectangle(new Pen(Brushes.Black, 0.5F), graphicalsRect);
+
+            graphics.MultiplyTransform(compTransformationMatrix);
 
             boardContainerComp.Render(graphics, false, colourScheme);
 
-            /*
-            float rad = 0.05F;
-            
-            for (int x = -10; x <= 10; x++)
-            {
-                for (int y = -10; y <= 10; y++)
-                {
-                    graphics.FillEllipse(Brushes.Red, x - rad, y - rad, 2 * rad, 2 * rad);
-                    graphics.DrawString($"{x},{y}", new Font("arial", 0.1F), Brushes.Blue, x, y);
-                }
-            }
-            //*/
+            graphics.ResetTransform();
+            //graphics.MultiplyTransform(GetInvertedCompTransformationMatrix());
 
-            Matrix inverseTransformationMatrix = transformationMatrix.Clone();
-            inverseTransformationMatrix.Invert();
-            graphics.MultiplyTransform(inverseTransformationMatrix);
+            graphics.MultiplyTransform(graphicalsTransformationMatrix);
+
+            //int rad = 1; //194;
+            //graphics.FillEllipse(new SolidBrush(Color.Orange), -rad, -rad, 2 * rad, 2 * rad);
+
+            int offset = 0;
+            Matrix matrix = new Matrix();
+            RectangleF boundsF;
+            Rectangle bounds;
+
+            foreach (IGraphicalComponent graphicalComp in GetUnplacedGraphicalComponents())
+            {
+                //Console.WriteLine(graphicalComp.GetComponentID());
+
+                matrix.Reset();
+
+                matrix.Translate(0, offset);
+
+                boundsF = graphicalComp.GetGraphicalElementBounds();
+                bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
+
+                //Console.WriteLine(bounds);
+
+                offset += bounds.Height;
+
+                matrix.Translate(-bounds.X, -bounds.Y);
+
+                graphics.MultiplyTransform(matrix, MatrixOrder.Append);
+
+                graphicalComp.RenderGraphicalElement(graphics, false, colourScheme);
+
+                matrix.Invert();
+                graphics.MultiplyTransform(matrix, MatrixOrder.Append);
+            }
         }
 
         private IGraphicalComponent[] GetGraphicalComponents()
         {
             return boardContainerComp.GetInternalBoard().GetGraphicalComponents();
+        }
+
+        private IGraphicalComponent[] GetUnplacedGraphicalComponents()
+        {
+            return GetGraphicalComponents().Where(comp => !comp.GetGraphicalElementLocation().HasValue).ToArray();
         }
 
         private IBoardInterfaceComponent[] GetInterfaceComponents()
@@ -233,51 +330,47 @@ namespace CircuitMaker.GUI.ExtApp
                 return null;
             }
 
-            return comps[1];
-        }
-
-        private PointF PositionNewGraphicalElement(RectangleF bounds)
-        {
-            return new PointF();
+            return comps[0];
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
 
-            if (e.Location.X > Size.Width - scale - resizeStartRange && e.Location.X < Size.Width - scale + resizeStartRange &&
-                e.Location.Y > Size.Height - scale - resizeStartRange && e.Location.Y < Size.Height - scale + resizeStartRange)
+            Point farCorner = new Point(compDisplayBounds.Width - scale, compDisplayBounds.Height - scale);
+
+            if (e.Location.X > compDisplayBounds.Width)
+            {
+                Console.WriteLine(DetectUnplacedGraphicalClick(e.Location).GetComponentID());
+            } else if (e.Location.X > farCorner.X - resizeStartRange && e.Location.X < farCorner.X + resizeStartRange && e.Location.Y > farCorner.Y - resizeStartRange && e.Location.Y < farCorner.Y + resizeStartRange)
             {
                 dragState.SelectSize(boardContainerComp.GetInternalBoard().ExternalSize);
             } else
             {
-                bool onLeft = e.Location.X < scale, onRight = e.Location.X > Size.Width - scale,
-                    onTop = e.Location.Y < scale, onBottom = e.Location.Y > Size.Height - scale,
+                bool onLeft = e.Location.X < scale, onRight = e.Location.X > farCorner.X,
+                    onTop = e.Location.Y < scale, onBottom = e.Location.Y > farCorner.Y,
                     onLeftRight = onLeft || onRight, onTopBottom = onTop || onBottom;
 
                 if (!(onLeftRight || onTopBottom))
                 {
-                    RectangleF? possibleBounds;
-                    RectangleF bounds;
+                    RectangleF? bounds;
 
                     foreach (IGraphicalComponent graphicalComp in GetGraphicalComponents())
                     {
-                        possibleBounds = graphicalComp.GetOffsetGraphicalElementBounds();
+                        bounds = graphicalComp.GetOffsetGraphicalElementBounds();
 
-                        if (possibleBounds.HasValue)
+                        if (bounds.HasValue)
                         {
-                            bounds = possibleBounds.Value;
+                            Console.WriteLine(bounds.Value);
+                            Console.WriteLine(e.Location);
+
+                            if (true) // test collision
+                            {
+                                dragState.SelectGraphicalComp(graphicalComp, graphicalComp.GetGraphicalElementLocation());
+
+                                break;
+                            }
                         }
-                        else
-                        {
-                            graphicalComp.SetGraphicalElementLocation(PositionNewGraphicalElement(graphicalComp.GetGraphicalElementBounds()));
-
-                            Invalidate();
-
-                            bounds = graphicalComp.GetOffsetGraphicalElementBounds().Value;
-                        }
-
-                        dragState.SelectGraphicalComp(graphicalComp, graphicalComp.GetGraphicalElementLocation());
                     }
                 }
                 else if (onLeftRight ^ onTopBottom)
@@ -286,7 +379,7 @@ namespace CircuitMaker.GUI.ExtApp
                         (onLeftRight ? Board.InterfaceLocation.SideEnum.LeftRight : Board.InterfaceLocation.SideEnum.Nothing) |
                         ((onBottom || onRight) ? Board.InterfaceLocation.SideEnum.BottomRight : Board.InterfaceLocation.SideEnum.Nothing);
 
-                    Point clickedPoint = DetransformPoint(e.Location);
+                    Point clickedPoint = CompDetransformPoint(e.Location);
                     Point offset = boardContainerComp.GetShape().Location;
 
                     foreach (IBoardInterfaceComponent interfaceComp in GetInterfaceComponents().Where(interfaceComp => interfaceComp.GetInterfaceLocation().Side == side))
@@ -320,7 +413,7 @@ namespace CircuitMaker.GUI.ExtApp
             {
                 mouseDragLoc = e.Location;
 
-                Point mousePoint = DetransformPoint(mouseDragLoc);
+                Point mousePoint = CompDetransformPoint(mouseDragLoc);
                 Board internalBoard = boardContainerComp.GetInternalBoard();
 
                 //Console.WriteLine(mousePoint);
@@ -329,6 +422,18 @@ namespace CircuitMaker.GUI.ExtApp
 
                 if (dragState.IsSize())
                 {
+                    float[] bounds = new float[] { 1, 1 };
+
+                    int idx;
+
+                    foreach (IBoardInterfaceComponent comp in GetInterfaceComponents())
+                    {
+                        idx = comp.GetInterfaceLocation().Side.IsLeftRight() ? 1 : 0;
+
+                        bounds[idx] = Math.Max(comp.GetInterfaceLocation().Distance + 1, bounds[idx]);
+                    }
+
+                    /*
                     IBoardInterfaceComponent[] interfaceComps = GetInterfaceComponents();
                     Func<Board.InterfaceLocation.SideEnum, int> interfacesOnSide = side => interfaceComps.Where(comp => comp.GetInterfaceLocation().Side == side).Count();
 
@@ -336,6 +441,7 @@ namespace CircuitMaker.GUI.ExtApp
                         Math.Max(1, Math.Max(interfacesOnSide(Board.InterfaceLocation.SideEnum.Top), interfacesOnSide(Board.InterfaceLocation.SideEnum.Bottom)) + 1),
                         Math.Max(1, Math.Max(interfacesOnSide(Board.InterfaceLocation.SideEnum.Left), interfacesOnSide(Board.InterfaceLocation.SideEnum.Right)) + 1)
                     };
+                    //*/
 
                     RectangleF? possCompBounds;
                     RectangleF compBounds;
@@ -387,7 +493,9 @@ namespace CircuitMaker.GUI.ExtApp
 
                     bool lastOutside = false, thisOutside;
 
-                    while (lastOutside || GetInterfaceComponent(new Board.InterfaceLocation(actualSide, actualDist)) != null)
+                    while (lastOutside || 
+                           !(GetInterfaceComponent(new Board.InterfaceLocation(actualSide, actualDist)) == null ||
+                             GetInterfaceComponent(new Board.InterfaceLocation(actualSide, actualDist)).GetComponentName() == dragState.GetInterfaceLocName()))
                     {
                         actualDist += distProg * ((2 * (distProg % 2)) - 1);
 
@@ -425,14 +533,8 @@ namespace CircuitMaker.GUI.ExtApp
 
                         lastOutside = thisOutside;
                     }
-
-
-                        
-                    GetInterfaceComponent(dragState.GetInterfaceLocName()).SetInterfaceLocation(new Board.InterfaceLocation(closestSide, closestDist));
                     
-                    //Board.InterfaceLocation.SideEnum side = ;
-
-                    // get closest position around the edge that is not occupied.
+                    GetInterfaceComponent(dragState.GetInterfaceLocName()).SetInterfaceLocation(new Board.InterfaceLocation(actualSide, actualDist));
 
                 } else if (dragState.IsGraphicalComp())
                 {

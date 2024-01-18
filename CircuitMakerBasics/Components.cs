@@ -1469,16 +1469,16 @@ namespace CircuitMaker.Components
         public static string ID = "PROBE";
         public static string DefaultDetails;
 
-        private PointF? GraphicalLocation = null;
+        private Point? GraphicalLocation = null;
 
         private StringFormat DisplayFormat;
 
-        public PointF? GetGraphicalElementLocation()
+        public Point? GetGraphicalElementLocation()
         {
             return GraphicalLocation;
         }
 
-        public void SetGraphicalElementLocation(PointF? location)
+        public void SetGraphicalElementLocation(Point? location)
         {
             GraphicalLocation = location;
         }
@@ -1521,7 +1521,8 @@ namespace CircuitMaker.Components
 
                     if (br.ReadBoolean())
                     {
-                        retVal.SetGraphicalElementLocation(new PointF(br.ReadSingle(), br.ReadSingle()));
+                        //retVal.SetGraphicalElementLocation(new PointF(br.ReadSingle(), br.ReadSingle()));
+                        retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
                     }
 
                     return retVal;
@@ -2025,7 +2026,7 @@ namespace CircuitMaker.Components
             private static StringFormat LeftStringFormat,  RightStringFormat,  TopStringFormat, BottomStringFormat;
             private static Dictionary<Board.InterfaceLocation.SideEnum, StringFormat> StringFormats;
 
-            private PointF? GraphicalLocation = null;
+            private Point? GraphicalLocation = null;
 
             public override Pos[] GetInpOffsets()
             {
@@ -2116,7 +2117,7 @@ namespace CircuitMaker.Components
                 //Console.WriteLine("resetting shape");
                 //Console.WriteLine(InternalBoard.ExternalSize);
 
-                Shape = new Rectangle(-InternalBoard.ExternalSize.Width / 2, -InternalBoard.ExternalSize.Width / 2, InternalBoard.ExternalSize.Width, InternalBoard.ExternalSize.Height);
+                Shape = new Rectangle(-InternalBoard.ExternalSize.Width / 2, -InternalBoard.ExternalSize.Height / 2, InternalBoard.ExternalSize.Width, InternalBoard.ExternalSize.Height);
 
                 //Console.WriteLine(Shape);
                 //Console.WriteLine("finished resetting shape");
@@ -2318,12 +2319,12 @@ namespace CircuitMaker.Components
                 return InternalBoard;
             }
 
-            public PointF? GetGraphicalElementLocation()
+            public Point? GetGraphicalElementLocation()
             {
                 return GraphicalLocation;
             }
 
-            public void SetGraphicalElementLocation(PointF? point)
+            public void SetGraphicalElementLocation(Point? point)
             {
                 GraphicalLocation = point;
             }

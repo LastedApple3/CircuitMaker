@@ -408,8 +408,8 @@ namespace CircuitMaker.Basics
     {
         void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme);
         RectangleF GetGraphicalElementBounds();
-        PointF? GetGraphicalElementLocation();
-        void SetGraphicalElementLocation(PointF? location);
+        Point? GetGraphicalElementLocation();
+        void SetGraphicalElementLocation(Point? location);
     }
 
     public static class GraphicalComponentExtensions
@@ -417,12 +417,11 @@ namespace CircuitMaker.Basics
         public static RectangleF? GetOffsetGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
         {
             RectangleF rect = comp.GetGraphicalElementBounds();
-            PointF? pos = comp.GetGraphicalElementLocation();
+            Point? pos = comp.GetGraphicalElementLocation();
 
             if (pos.HasValue)
             {
-                rect.X += pos.Value.X;
-                rect.Y += pos.Value.Y;
+                rect.Offset(pos.Value);
 
                 return rect;
             }
@@ -659,7 +658,8 @@ namespace CircuitMaker.Basics
             }
         }
 
-        private class InterfaceComponentDictionary<T> : Dictionary<string, T> where T : IBoardInterfaceComponent
+        /*
+        private class InterfaceComponentStore<T> : HashSet<T> where T : IBoardInterfaceComponent
         {
             public void Add(T component)
             {
@@ -676,15 +676,16 @@ namespace CircuitMaker.Basics
                 return ContainsKey(component.GetComponentName());
             }
         }
+        //*/
 
         private DefaultDictionary<Pos, Pin> Pins = new DefaultDictionary<Pos, Pin>(() => new Pin());
 
         private HashSet<Wire> Wires = new HashSet<Wire>();
 
         private HashSet<IComponent> Components = new HashSet<IComponent>();
-        private InterfaceComponentDictionary<IBoardInterfaceComponent> InterfaceComponents = new InterfaceComponentDictionary<IBoardInterfaceComponent>();
-        private InterfaceComponentDictionary<IBoardInputComponent> InputComponents = new InterfaceComponentDictionary<IBoardInputComponent>();
-        private InterfaceComponentDictionary<IBoardOutputComponent> OutputComponents = new InterfaceComponentDictionary<IBoardOutputComponent>();
+        private HashSet<IBoardInterfaceComponent> InterfaceComponents = new HashSet<IBoardInterfaceComponent>();
+        private HashSet<IBoardInputComponent> InputComponents = new HashSet<IBoardInputComponent>();
+        private HashSet<IBoardOutputComponent> OutputComponents = new HashSet<IBoardOutputComponent>();
         private List<IGraphicalComponent> GraphicalComponents = new List<IGraphicalComponent>();
 
         private Size? externalSize;
@@ -762,12 +763,22 @@ namespace CircuitMaker.Basics
 
         public IBoardInterfaceComponent[] GetInterfaceComponents()
         {
-            return InterfaceComponents.Values.ToArray();
+            return InterfaceComponents.ToArray();
         }
 
         public IBoardInterfaceComponent GetInterfaceComponent(string name)
         {
-            return InterfaceComponents.ContainsKey(name) ? InterfaceComponents[name] : null;
+            foreach (IBoardInterfaceComponent comp in InterfaceComponents)
+            {
+                if (comp.GetComponentName() == name)
+                {
+                    return comp;
+                }
+            }
+
+            return null;
+            
+            //return InterfaceComponents.ContainsKey(name) ? InterfaceComponents[name] : null;
         }
 
         public IGraphicalComponent[] GetGraphicalComponents()
@@ -782,22 +793,42 @@ namespace CircuitMaker.Basics
 
         public IBoardInputComponent[] GetInputComponents()
         {
-            return InputComponents.Values.ToArray();
+            return InputComponents.ToArray();
         }
 
         public IBoardInputComponent GetInputComponent(string name)
         {
-            return InputComponents.ContainsKey(name) ? InputComponents[name] : null;
+            foreach (IBoardInputComponent comp in InputComponents)
+            {
+                if (comp.GetComponentName() == name)
+                {
+                    return comp;
+                }
+            }
+
+            return null;
+
+            //return InputComponents.ContainsKey(name) ? InputComponents[name] : null;
         }
 
         public IBoardOutputComponent[] GetOutputComponents()
         {
-            return OutputComponents.Values.ToArray();
+            return OutputComponents.ToArray();
         }
 
         public IBoardOutputComponent GetOutputComponent(string name)
         {
-            return OutputComponents.ContainsKey(name) ? OutputComponents[name] : null;
+            foreach (IBoardOutputComponent comp in OutputComponents)
+            {
+                if (comp.GetComponentName() == name)
+                {
+                    return comp;
+                }
+            }
+
+            return null;
+
+            //return OutputComponents.ContainsKey(name) ? OutputComponents[name] : null;
         }
 
         /*
@@ -900,7 +931,8 @@ namespace CircuitMaker.Basics
                     }
                 }
 
-                interfaceComp.SetComponentName(GuaranteeUniqueName(interfaceComp.GetComponentName(), InputComponents.Keys.Concat(OutputComponents.Keys).ToArray()));
+                interfaceComp.SetComponentName(GuaranteeUniqueName(interfaceComp.GetComponentName(), 
+                    InputComponents.Select(thisComp => thisComp.GetComponentName()).Concat(OutputComponents.Select(thisComp => thisComp.GetComponentName())).ToArray()));
 
                 //InterfaceComponents.Add(interfaceComp.GetComponentName(), interfaceComp);
                 InterfaceComponents.Add(interfaceComp);
@@ -965,12 +997,12 @@ namespace CircuitMaker.Basics
 
             if (comp is IBoardInputComponent inpComponent)
             {
-                InputComponents.Remove(inpComponent.GetComponentName());
+                InputComponents.Remove(inpComponent);
             }
 
             if (comp is IBoardOutputComponent outpComponent)
             {
-                OutputComponents.Remove(outpComponent.GetComponentName());
+                OutputComponents.Remove(outpComponent);
             }
             //*/
         }
