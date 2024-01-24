@@ -203,7 +203,7 @@ namespace CircuitMaker.GUI.ExtApp
             Rectangle bounds;
             PointF[] points;
 
-            foreach (IGraphicalComponent graphicalComp in GetUnplacedGraphicalComponents())
+            foreach (IGraphicalComponent graphicalComp in GetUnplacedGraphicalComponents().Where(comp => comp.HasGraphics()))
             {
                 matrix.Reset();
 
@@ -224,9 +224,9 @@ namespace CircuitMaker.GUI.ExtApp
 
                 matrix.TransformPoints(points);
 
-                Console.WriteLine(points[0]);
+                //Console.WriteLine($"{boundsF} - {points[0]}");
 
-                if (((RectangleF)bounds).Contains(points[0]))
+                if (boundsF.Contains(points[0]))
                 {
                     return graphicalComp;
                 }
@@ -294,6 +294,11 @@ namespace CircuitMaker.GUI.ExtApp
 
                 graphics.MultiplyTransform(matrix, MatrixOrder.Append);
 
+                if (dragState.IsGraphicalComp() && dragState.GetGraphicalComp() == graphicalComp)
+                {
+                    graphics.FillRectangle(Brushes.Gray, boundsF);
+                }
+
                 graphicalComp.RenderGraphicalElement(graphics, false, colourScheme);
 
                 matrix.Invert();
@@ -308,7 +313,7 @@ namespace CircuitMaker.GUI.ExtApp
 
         private IGraphicalComponent[] GetUnplacedGraphicalComponents()
         {
-            return GetGraphicalComponents().Where(comp => !comp.GetGraphicalElementLocation().HasValue).ToArray();
+            return GetGraphicalComponents().Where(comp => comp.HasGraphics() && !comp.GetGraphicalElementLocation().HasValue).ToArray();
         }
 
         private IBoardInterfaceComponent[] GetInterfaceComponents()
@@ -341,7 +346,11 @@ namespace CircuitMaker.GUI.ExtApp
 
             if (e.Location.X > compDisplayBounds.Width)
             {
-                Console.WriteLine(DetectUnplacedGraphicalClick(e.Location).GetComponentID());
+                IGraphicalComponent comp = DetectUnplacedGraphicalClick(e.Location);
+                if (comp != null)
+                {
+                    dragState.SelectGraphicalComp(comp, null);
+                }
             } else if (e.Location.X > farCorner.X - resizeStartRange && e.Location.X < farCorner.X + resizeStartRange && e.Location.Y > farCorner.Y - resizeStartRange && e.Location.Y < farCorner.Y + resizeStartRange)
             {
                 dragState.SelectSize(boardContainerComp.GetInternalBoard().ExternalSize);
@@ -361,10 +370,10 @@ namespace CircuitMaker.GUI.ExtApp
 
                         if (bounds.HasValue)
                         {
-                            Console.WriteLine(bounds.Value);
-                            Console.WriteLine(e.Location);
+                            //Console.WriteLine(bounds.Value);
+                            //Console.WriteLine(e.Location);
 
-                            if (true) // test collision
+                            if (bounds.Value.Contains(CompDetransformPointF(e.Location)))
                             {
                                 dragState.SelectGraphicalComp(graphicalComp, graphicalComp.GetGraphicalElementLocation());
 
@@ -401,7 +410,7 @@ namespace CircuitMaker.GUI.ExtApp
             {
                 dragState.Reset();
 
-                //Invalidate();
+                Invalidate();
             }
         }
 
@@ -415,9 +424,10 @@ namespace CircuitMaker.GUI.ExtApp
 
                 Point mousePoint = CompDetransformPoint(mouseDragLoc);
                 Board internalBoard = boardContainerComp.GetInternalBoard();
+                Rectangle shape = boardContainerComp.GetShape();
 
                 //Console.WriteLine(mousePoint);
-                //Console.WriteLine(boardContainerComp.GetShape());
+                //Console.WriteLine(shape);
                 //Console.WriteLine();
 
                 if (dragState.IsSize())
@@ -462,8 +472,6 @@ namespace CircuitMaker.GUI.ExtApp
                         }
                     }
 
-                    Rectangle shape = boardContainerComp.GetShape();
-
                     internalBoard.ExternalSize = new Size(Math.Max(mousePoint.X - shape.X, (int)Math.Ceiling(bounds[0])), Math.Max(mousePoint.Y - shape.Y, (int)Math.Ceiling(bounds[1])));
 
                     ResetSize();
@@ -472,7 +480,6 @@ namespace CircuitMaker.GUI.ExtApp
                 }
                 else if (dragState.IsInterfaceLoc())
                 {
-                    Rectangle shape = boardContainerComp.GetShape();
 
                     Point relToCorner = new Point(mousePoint.X - shape.X, mousePoint.Y - shape.Y);
 
@@ -513,7 +520,7 @@ namespace CircuitMaker.GUI.ExtApp
                                 actualSide ^= Board.InterfaceLocation.SideEnum.BottomRight;
                             } else if (sideProg == 3)
                             {
-                                throw new Exception("no space");
+                                throw new Exception("no space"); // logically would never happen, as the empty slot it was originally in should still exist
                             }
 
                             if (actualSide.IsLeftRight() == closestSide.IsLeftRight())
@@ -538,7 +545,25 @@ namespace CircuitMaker.GUI.ExtApp
 
                 } else if (dragState.IsGraphicalComp())
                 {
+                    IGraphicalComponent graphicalComp = dragState.GetGraphicalComp();
 
+                    if (mousePoint.X > shape.X && mousePoint.X < shape.X + shape.Width && mousePoint.Y > shape.Y && mousePoint.Y < shape.Y + shape.Height)
+                    {
+                        graphicalComp.SetGraphicalElementLocation(mousePoint);
+
+                        RectangleF graphicalCompBounds = graphicalComp.GetOffsetGraphicalElementBounds().Value;
+
+                        foreach (IGraphicalComponent otherGraphicalComp in GetGraphicalComponents().Where(comp => comp.HasGraphics() && comp.GetGraphicalElementLocation().HasValue && comp != graphicalComp))
+                        {
+                            if (otherGraphicalComp.GetOffsetGraphicalElementBounds().Value.IntersectsWith(graphicalCompBounds)) {
+                                graphicalComp.SetGraphicalElementLocation(null);
+                                break;
+                            }
+                        }
+                    } else
+                    {
+                        graphicalComp.SetGraphicalElementLocation(null);
+                    }
                 }
 
                 Invalidate();

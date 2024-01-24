@@ -1473,6 +1473,11 @@ namespace CircuitMaker.Components
 
         private StringFormat DisplayFormat;
 
+        public bool HasGraphics()
+        {
+            return true;
+        }
+
         public Point? GetGraphicalElementLocation()
         {
             return GraphicalLocation;
@@ -1498,14 +1503,20 @@ namespace CircuitMaker.Components
                     if (GraphicalLocation.HasValue)
                     {
                         bw.Write(GraphicalLocation.Value.X);
-                        bw.Write(GraphicalLocation.Value.Y);
+                        bw.Write(GraphicalLocation.Value.Y); // -1 is being recorded as 3f3f3f3f instead of ffffffff. I suspect ReadToEnd replaces anything without an ASCII character with a question mark (3f)
                     }
 
                     stream.Position = 0;
 
                     using (StreamReader sr = new StreamReader(stream))
                     {
-                        return sr.ReadToEnd();
+                        Console.WriteLine(GraphicalLocation?.Y);
+
+                        Func<string, string> WriteAndReturn = (str) => {
+                            Console.WriteLine($"'{str}' {str.Length}");
+                            return str;
+                        };
+                        return WriteAndReturn(sr.ReadToEnd());
                     }
                 }
             }
@@ -1519,11 +1530,25 @@ namespace CircuitMaker.Components
                 {
                     LogicProbeComponent retVal = new LogicProbeComponent();
 
-                    if (br.ReadBoolean())
+                    using (StreamReader sr = new StreamReader(stream))
                     {
-                        //retVal.SetGraphicalElementLocation(new PointF(br.ReadSingle(), br.ReadSingle()));
-                        retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
+                        Func<string, string> WriteAndReturn = (str) => {
+                            Console.WriteLine($"'{str}' {str.Length}");
+                            return str;
+                        };
+
+                        WriteAndReturn(sr.ReadToEnd());
+
+                        stream.Position = 0;
+
+                        if (br.ReadBoolean())
+                        {
+                            //retVal.SetGraphicalElementLocation(new PointF(br.ReadSingle(), br.ReadSingle()));
+                            retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
+                        }
                     }
+
+                    Console.WriteLine(retVal.GetGraphicalElementLocation()?.Y);
 
                     return retVal;
                 }
@@ -2290,12 +2315,14 @@ namespace CircuitMaker.Components
                 Matrix matrix;
                 PointF? loc;
 
-                foreach (IGraphicalComponent graphicalComp in InternalBoard.GetGraphicalComponents())
+                foreach (IGraphicalComponent graphicalComp in InternalBoard.GetGraphicalComponents().Where(comp => comp.HasGraphics()))
                 {
                     loc = graphicalComp.GetGraphicalElementLocation();
 
                     if (loc.HasValue)
                     {
+                        Console.WriteLine(loc.Value);
+
                         matrix = new Matrix();
                         matrix.Translate(loc.Value.X, loc.Value.Y);
 
@@ -2317,6 +2344,11 @@ namespace CircuitMaker.Components
             public Board GetInternalBoard()
             {
                 return InternalBoard;
+            }
+
+            public bool HasGraphics()
+            {
+                return InternalBoard.GetGraphicalComponents().Where(comp => comp.HasGraphics()).Any();
             }
 
             public Point? GetGraphicalElementLocation()

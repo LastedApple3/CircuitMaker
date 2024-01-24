@@ -406,6 +406,7 @@ namespace CircuitMaker.Basics
 
     public interface IGraphicalComponent : IComponent
     {
+        bool HasGraphics();
         void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme);
         RectangleF GetGraphicalElementBounds();
         Point? GetGraphicalElementLocation();

@@ -21,6 +21,19 @@ namespace CircuitMaker
         {
             ComponentRegisterer.RegisterComponents();
 
+            using (Stream stream = new MemoryStream())
+            {
+                using (StreamWriter writer = new StreamWriter(stream))
+                {
+                    writer.Write(0xFF);
+                }
+
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    Console.WriteLine(reader.ReadToEnd());
+                }
+            }
+
             //*
             Board board = new Board("SR-Nor-Latch", new System.Drawing.Size(4, 4));
 
