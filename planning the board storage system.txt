@@ -1,0 +1,10 @@
+new component added:
+	has existing name:
+		double check <- elaborate
+	has new name:
+		add new board to list
+component removed:
+	other component has name:
+		leave board in list
+	no other component has name:
+		remove board from list

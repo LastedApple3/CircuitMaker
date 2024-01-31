@@ -1447,9 +1447,9 @@ namespace CircuitMaker.Components
 
                     stream.Position = 0;
 
-                    using (StreamReader sr = new StreamReader(stream))
+                    using (BinaryReader br = new BinaryReader(stream))
                     {
-                        DefaultDetails = sr.ReadToEnd();
+                        DefaultDetails = ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
                     }
                 }
             }
@@ -1508,7 +1508,7 @@ namespace CircuitMaker.Components
 
                     stream.Position = 0;
 
-                    using (StreamReader sr = new StreamReader(stream))
+                    using (BinaryReader br = new BinaryReader(stream))
                     {
                         Console.WriteLine(GraphicalLocation?.Y);
 
@@ -1516,7 +1516,7 @@ namespace CircuitMaker.Components
                             Console.WriteLine($"'{str}' {str.Length}");
                             return str;
                         };
-                        return WriteAndReturn(sr.ReadToEnd());
+                        return WriteAndReturn(ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length)));
                     }
                 }
             }
@@ -1524,28 +1524,24 @@ namespace CircuitMaker.Components
 
         public static LogicProbeComponent Constructor(string details)
         {
-            using (Stream stream = new MemoryStream(Encoding.ASCII.GetBytes(details)))
+            using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
             {
                 using (BinaryReader br = new BinaryReader(stream))
                 {
                     LogicProbeComponent retVal = new LogicProbeComponent();
 
-                    using (StreamReader sr = new StreamReader(stream))
+                    Func<string, string> WriteAndReturn = (str) => {
+                        Console.WriteLine($"'{str}' {str.Length}");
+                        return str;
+                    };
+
+                    WriteAndReturn(ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length)));
+
+                    stream.Position = 0;
+
+                    if (br.ReadBoolean())
                     {
-                        Func<string, string> WriteAndReturn = (str) => {
-                            Console.WriteLine($"'{str}' {str.Length}");
-                            return str;
-                        };
-
-                        WriteAndReturn(sr.ReadToEnd());
-
-                        stream.Position = 0;
-
-                        if (br.ReadBoolean())
-                        {
-                            //retVal.SetGraphicalElementLocation(new PointF(br.ReadSingle(), br.ReadSingle()));
-                            retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
-                        }
+                        retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
                     }
 
                     Console.WriteLine(retVal.GetGraphicalElementLocation()?.Y);
@@ -2165,9 +2161,9 @@ namespace CircuitMaker.Components
 
                         stream.Position = 0;
 
-                        using (StreamReader sr = new StreamReader(stream))
+                        using (BinaryReader br = new BinaryReader(stream))
                         {
-                            return sr.ReadToEnd();
+                            return ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
                         }
                     }
                 }
@@ -2236,7 +2232,7 @@ namespace CircuitMaker.Components
 
             public static BoardContainerComponent Constructor(string details)
             {
-                using (Stream stream = new MemoryStream(Encoding.ASCII.GetBytes(details)))
+                using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
                 {
                     using (BinaryReader br = new BinaryReader(stream))
                     {

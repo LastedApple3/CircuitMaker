@@ -66,6 +66,12 @@
     <Compile Include="ExtAppEditorForm.Designer.cs">
       <DependentUpon>ExtAppEditorForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="RenameBoardForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RenameBoardForm.Designer.cs">
+      <DependentUpon>RenameBoardForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -93,6 +99,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="ExtAppEditorForm.resx">
       <DependentUpon>ExtAppEditorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RenameBoardForm.resx">
+      <DependentUpon>RenameBoardForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="SettingsForm.resx">
       <DependentUpon>SettingsForm.cs</DependentUpon>

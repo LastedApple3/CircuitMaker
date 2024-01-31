@@ -40,8 +40,9 @@ namespace CircuitMaker.GUI
             this.saveBoardToolStripMenuItem = new ToolStripMenuItem();
             this.saveBoardAsToolStripMenuItem = new ToolStripMenuItem();
             this.editToolStripMenuItem = new ToolStripMenuItem();
-            this.undoToolStripMenuItem = new ToolStripMenuItem();
-            this.redoToolStripMenuItem = new ToolStripMenuItem();
+            this.renameToolStripMenuItem = new ToolStripMenuItem();
+            //this.undoToolStripMenuItem = new ToolStripMenuItem();
+            //this.redoToolStripMenuItem = new ToolStripMenuItem();
             this.toolStripSeparator1 = new ToolStripSeparator();
             this.copyToolStripMenuItem = new ToolStripMenuItem();
             this.cutToolStripMenuItem = new ToolStripMenuItem();
@@ -121,9 +122,10 @@ namespace CircuitMaker.GUI
             // editToolStripMenuItem
             // 
             this.editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] {
+            this.renameToolStripMenuItem,
             //this.undoToolStripMenuItem,
             //this.redoToolStripMenuItem,
-            //this.toolStripSeparator1,
+            this.toolStripSeparator1,
             this.copyToolStripMenuItem,
             this.cutToolStripMenuItem,
             this.pasteToolStripMenuItem,
@@ -132,20 +134,27 @@ namespace CircuitMaker.GUI
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.Size = new Size(39, 20);
             this.editToolStripMenuItem.Text = "Edit";
+            //
+            // renameToolStripMenuItem
+            //
+            this.renameToolStripMenuItem.Name = "renameToolStripMenuItem";
+            this.renameToolStripMenuItem.Size = new Size(205, 22);
+            this.renameToolStripMenuItem.Text = "Rename";
+            this.renameToolStripMenuItem.Click += new EventHandler(this.renameToolStripMenuItem_Click);
             // 
             // undoToolStripMenuItem
             // 
-            this.undoToolStripMenuItem.Name = "undoToolStripMenuItem";
-            this.undoToolStripMenuItem.Size = new Size(205, 22);
-            this.undoToolStripMenuItem.Text = "Undo";
-            this.undoToolStripMenuItem.Click += new EventHandler(this.undoToolStripMenuItem_Click);
+            //this.undoToolStripMenuItem.Name = "undoToolStripMenuItem";
+            //this.undoToolStripMenuItem.Size = new Size(205, 22);
+            //this.undoToolStripMenuItem.Text = "Undo";
+            //this.undoToolStripMenuItem.Click += new EventHandler(this.undoToolStripMenuItem_Click);
             // 
             // redoToolStripMenuItem
             // 
-            this.redoToolStripMenuItem.Name = "redoToolStripMenuItem";
-            this.redoToolStripMenuItem.Size = new Size(205, 22);
-            this.redoToolStripMenuItem.Text = "Redo";
-            this.redoToolStripMenuItem.Click += new EventHandler(this.redoToolStripMenuItem_Click);
+            //this.redoToolStripMenuItem.Name = "redoToolStripMenuItem";
+            //this.redoToolStripMenuItem.Size = new Size(205, 22);
+            //this.redoToolStripMenuItem.Text = "Redo";
+            //this.redoToolStripMenuItem.Click += new EventHandler(this.redoToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
@@ -283,8 +292,9 @@ namespace CircuitMaker.GUI
         private ToolStripMenuItem saveBoardToolStripMenuItem;
         private ToolStripMenuItem saveBoardAsToolStripMenuItem;
         private ToolStripMenuItem editToolStripMenuItem;
-        private ToolStripMenuItem undoToolStripMenuItem;
-        private ToolStripMenuItem redoToolStripMenuItem;
+        private ToolStripMenuItem renameToolStripMenuItem;
+        //private ToolStripMenuItem undoToolStripMenuItem;
+        //private ToolStripMenuItem redoToolStripMenuItem;
         private ToolStripMenuItem copyToolStripMenuItem;
         private ToolStripMenuItem cutToolStripMenuItem;
         private ToolStripMenuItem pasteToolStripMenuItem;

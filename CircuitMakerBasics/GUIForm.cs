@@ -25,7 +25,9 @@ namespace CircuitMaker.GUI
         private void newBoardToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //builder = Builder.NewBoard("newBoard");
-            builder.OpenNewBoard("new board");
+            builder.OpenNewBoard("untitled");
+
+            UpdateFormText();
 
             Invalidate();
         }
@@ -40,6 +42,7 @@ namespace CircuitMaker.GUI
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     builder.OpenLoadBoard(openFileDialog.FileName);
+                    UpdateFormText();
                 }
             }
 
@@ -53,13 +56,13 @@ namespace CircuitMaker.GUI
 
         private void saveBoardAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //throw new NotImplementedException();
-            // use SaveFileDialog
-
             using (SaveFileDialog saveFileDialog = new SaveFileDialog())
             {
                 saveFileDialog.Filter = "Boards (*.brd)|*.brd|All files (*.*)|*.*";
                 saveFileDialog.FilterIndex = 0;
+
+                saveFileDialog.FileName = builder.GetBoard().Name;
+                saveFileDialog.DefaultExt = "brd";
 
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
@@ -70,14 +73,15 @@ namespace CircuitMaker.GUI
             Invalidate();
         }
 
-        private void undoToolStripMenuItem_Click(object sender, EventArgs e)
+        private void renameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            throw new NotImplementedException();
-        }
+            RenameBoardForm dialog = new RenameBoardForm(builder.GetBoard().Name);
 
-        private void redoToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            throw new NotImplementedException();
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                builder.GetBoard().Name = dialog.NewBoardName();
+                UpdateFormText();
+            }
         }
 
         private void cutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -100,7 +104,6 @@ namespace CircuitMaker.GUI
 
         private void editExternalAppearanceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //throw new NotImplementedException();
             ExtAppEditorForm dialog = new ExtAppEditorForm(new BoardContainerComponents.BoardContainerComponent(builder.GetBoard()), builder.colourScheme);
 
             if (dialog.ShowDialog() != DialogResult.OK)
@@ -119,13 +122,15 @@ namespace CircuitMaker.GUI
             builder.CreateBoardComponent();
         }
 
-        private void BtnSimulate_Click(object sender, System.EventArgs e)
+        private void BtnSimulate_Click(object sender, EventArgs e)
         {
             builder.SetSimulation(!builder.Simulating);
         }
 
         private void BtnSimulate_UpdateText(bool simulating)
         {
+            UpdateFormText();
+
             if (simulating)
             {
                 btnSimulate.Text = "Stop Simulation";
@@ -134,6 +139,11 @@ namespace CircuitMaker.GUI
             {
                 btnSimulate.Text = "Start Simulation";
             }
+        }
+
+        private void UpdateFormText()
+        {
+            Text = $"{builder.GetBoard().Name} - {(builder.Simulating ? "Simulating" : "Editing")}";
         }
     }
 
@@ -196,8 +206,9 @@ namespace CircuitMaker.GUI
         }
 
         private ContextMenuStrip genericMenu, componentMenu;
+        private ToolStripLabel compNameMenuLabel;
         private ToolStripMenuItem startSimMenuItem, pasteCompMenuItem, createBuiltinCompMenuItem, createBoardCompMenuItem, openSettingsMenuItem, moveCompMenuItem, copyCompMenuItem, deleteCompMenuItem;
-        private ToolStripSeparator componentMenuSep;
+        private ToolStripSeparator compNameMenuSep, openSettingsMenuSep;
 
         private DragType dragType = DragType.None;
 
@@ -257,6 +268,7 @@ namespace CircuitMaker.GUI
             board = Board.Load(filename);
 
             selection.Deselect();
+            SetSimulation(false);
 
             Invalidate();
         }
@@ -267,6 +279,7 @@ namespace CircuitMaker.GUI
             storedFilename = ConstructDefaultFilename(name);
 
             selection.Deselect();
+            SetSimulation(false);
 
             Invalidate();
         }
@@ -345,6 +358,16 @@ namespace CircuitMaker.GUI
             };
             genericMenu.Items.AddRange(new ToolStripItem[] { startSimMenuItem, pasteCompMenuItem, createBuiltinCompMenuItem, createBoardCompMenuItem });
 
+            compNameMenuLabel = new ToolStripLabel
+            {
+                Name = "tslCompName"
+            };
+
+            compNameMenuSep = new ToolStripSeparator
+            {
+                Name = "tssCompName"
+            };
+
             openSettingsMenuItem = new ToolStripMenuItem
             {
                 Name = "tsmiOpenSettings",
@@ -352,9 +375,9 @@ namespace CircuitMaker.GUI
             };
             openSettingsMenuItem.Click += OpenSettingsMenuItem_Click;
 
-            componentMenuSep = new ToolStripSeparator
+            openSettingsMenuSep = new ToolStripSeparator
             {
-                Name = "tssCompMenu"
+                Name = "tssOpenSettings"
             };
 
             moveCompMenuItem = new ToolStripMenuItem
@@ -911,11 +934,27 @@ namespace CircuitMaker.GUI
                         if (clickedComp is ISettingsComponent)
                         {
                             contextMenuStrip.Items.Insert(0, openSettingsMenuItem);
-                            contextMenuStrip.Items.Insert(1, componentMenuSep);
+                            contextMenuStrip.Items.Insert(1, openSettingsMenuSep);
                         } else
                         {
                             contextMenuStrip.Items.Remove(openSettingsMenuItem);
-                            contextMenuStrip.Items.Remove(componentMenuSep);
+                            contextMenuStrip.Items.Remove(openSettingsMenuSep);
+                        }
+
+                        if (clickedComp is IBoardInterfaceComponent interfaceComp) 
+                        {
+                            compNameMenuLabel.Text = interfaceComp.GetComponentName();
+                            contextMenuStrip.Items.Insert(0, compNameMenuLabel);
+                            contextMenuStrip.Items.Insert(1, compNameMenuSep);
+                        } else if (clickedComp is IBoardContainerComponent contComp)
+                        {
+                            compNameMenuLabel.Text = contComp.GetInternalBoard().Name;
+                            contextMenuStrip.Items.Insert(0, compNameMenuLabel);
+                            contextMenuStrip.Items.Insert(1, compNameMenuSep);
+                        } else
+                        {
+                            contextMenuStrip.Items.Remove(compNameMenuLabel);
+                            contextMenuStrip.Items.Remove(compNameMenuSep);
                         }
                     }
                     else

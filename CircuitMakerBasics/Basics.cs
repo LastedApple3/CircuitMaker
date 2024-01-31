@@ -9,6 +9,64 @@ using System.Drawing.Drawing2D;
 
 namespace CircuitMaker.Basics
 {
+    public class ByteEncoding : Encoding
+    {
+        public override int GetByteCount(char[] chars, int index, int count)
+        {
+            return count;
+        }
+
+        public override int GetBytes(char[] chars, int charIndex, int charCount, byte[] bytes, int byteIndex)
+        {
+            for (int i = 0; i < charCount; i++)
+            {
+                bytes[byteIndex + i] = (byte)chars[charIndex + i];
+            }
+
+            return charCount;
+        }
+
+        public override int GetCharCount(byte[] bytes, int index, int count)
+        {
+            return count;
+        }
+
+        public override int GetChars(byte[] bytes, int byteIndex, int byteCount, char[] chars, int charIndex)
+        {
+            for (int i = 0; i < byteCount; i++)
+            {
+                chars[charIndex + i] = (char)bytes[byteIndex + i];
+            }
+
+            return byteCount;
+        }
+
+        public override int GetMaxByteCount(int charCount)
+        {
+            return charCount;
+        }
+
+        public override int GetMaxCharCount(int byteCount)
+        {
+            return byteCount;
+        }
+
+        private static Encoding byteEncoding = null;
+
+        public static Encoding Byte
+        {
+            get
+            {
+                if (byteEncoding == null)
+                {
+                    byteEncoding = new ByteEncoding();
+                }
+
+                return byteEncoding;
+            }
+        }
+    }
+
     //*
     public static class ReadWriteImplementation
     {
@@ -688,6 +746,8 @@ namespace CircuitMaker.Basics
         private HashSet<IBoardInputComponent> InputComponents = new HashSet<IBoardInputComponent>();
         private HashSet<IBoardOutputComponent> OutputComponents = new HashSet<IBoardOutputComponent>();
         private List<IGraphicalComponent> GraphicalComponents = new List<IGraphicalComponent>();
+        private HashSet<IBoardContainerComponent> ContainerComponents = new HashSet<IBoardContainerComponent>();
+        private HashSet<Board> InternalBoards = new HashSet<Board>();
 
         private Size? externalSize;
         public Size ExternalSize
@@ -778,8 +838,6 @@ namespace CircuitMaker.Basics
             }
 
             return null;
-            
-            //return InterfaceComponents.ContainsKey(name) ? InterfaceComponents[name] : null;
         }
 
         public IGraphicalComponent[] GetGraphicalComponents()
@@ -808,8 +866,6 @@ namespace CircuitMaker.Basics
             }
 
             return null;
-
-            //return InputComponents.ContainsKey(name) ? InputComponents[name] : null;
         }
 
         public IBoardOutputComponent[] GetOutputComponents()
@@ -828,32 +884,12 @@ namespace CircuitMaker.Basics
             }
 
             return null;
-
-            //return OutputComponents.ContainsKey(name) ? OutputComponents[name] : null;
         }
 
-        /*
-        public InterfaceLocation? NextEmptyInterfaceLocation()
+        public IBoardContainerComponent[] GetContainerComponents()
         {
-            foreach (InterfaceLocation.Side side in new InterfaceLocation.Side[] { 
-                InterfaceLocation.Side.Left,
-                InterfaceLocation.Side.Right,
-                InterfaceLocation.Side.Top,
-                InterfaceLocation.Side.Bottom
-            })
-            {
-                int max = (side & InterfaceLocation.Side.LeftRight) == InterfaceLocation.Side.LeftRight ? ExternalSize.Height : ExternalSize.Width;
-                
-                for (int val = 0; val == max; val++)
-                {
-                    InterfaceLocation interfaceLocation = new InterfaceLocation(side, max);
-                    return interfaceLocation; // incomplete
-                }
-            }
-
-            return null;
+            return ContainerComponents.ToArray();
         }
-        */
 
         public void Tick()
         {
@@ -966,6 +1002,19 @@ namespace CircuitMaker.Basics
                     OutputComponents.Add(outpComp);
                 }
 
+                if (comp is IBoardContainerComponent contComp)
+                {
+                    ContainerComponents.Add(contComp);
+
+                    if (InternalBoards.Select(board => board.Name).Contains(contComp.GetInternalBoard().Name))
+                    {
+                        // check <-------------------------------------------------------------------------------------------------------------------------------------------------
+                    } else
+                    {
+                        InternalBoards.Add(contComp.GetInternalBoard());
+                    }
+                }
+
                 bool isSide = (interfaceLoc.Side & InterfaceLocation.SideEnum.LeftRight) != InterfaceLocation.SideEnum.Nothing;
 
                 while (interfaceLoc.Distance >= (isSide ? ExternalSize.Height : ExternalSize.Width))
@@ -996,14 +1045,24 @@ namespace CircuitMaker.Basics
                 InterfaceComponents.Remove(interfaceComp);
             }
 
-            if (comp is IBoardInputComponent inpComponent)
+            if (comp is IBoardInputComponent inpComp)
             {
-                InputComponents.Remove(inpComponent);
+                InputComponents.Remove(inpComp);
             }
 
-            if (comp is IBoardOutputComponent outpComponent)
+            if (comp is IBoardOutputComponent outpComp)
             {
-                OutputComponents.Remove(outpComponent);
+                OutputComponents.Remove(outpComp);
+            }
+
+            if (comp is IBoardContainerComponent contComp)
+            {
+                ContainerComponents.Remove(contComp);
+
+                if (!ContainerComponents.Select(selComp => selComp.GetInternalBoard().Name).Contains(contComp.GetInternalBoard().Name))
+                {
+                    InternalBoards.RemoveWhere(board => board.Name == contComp.GetInternalBoard().Name);
+                }
             }
             //*/
         }

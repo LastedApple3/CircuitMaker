@@ -1,0 +1,3 @@
+existing methods of converting from byte[] to string to byte[] are not perfect.
+a perfect one if one byte -> one char -> the original byte
+I had to create a custom Encoding (ByteEncoding) to implement this behaviour.
