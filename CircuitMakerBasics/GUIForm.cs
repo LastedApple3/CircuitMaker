@@ -499,7 +499,22 @@ namespace CircuitMaker.GUI
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    StartDraggingComponent(new BoardContainerComponents.BoardContainerComponent(Board.Load(openFileDialog.FileName)), new Point(), true, true);
+                    Board intBoard = Board.Load(openFileDialog.FileName);
+
+                    string[] overlap = intBoard.GetBoardList().Select(board => board.Name).Intersect(board.GetBoardList().Select(board => board.Name)).ToArray();
+
+                    Console.WriteLine();
+
+                    if (overlap.Count() > 0)
+                    {
+                        MessageBox.Show(
+                            overlap.Prepend("The following boards are found within both the board you just selected and the board you are working on:").Aggregate((s1, s2) => s1 + "\n\t - " + s2) + "\nIf this might cause any issues, cancel now and double check. If this is intended, continue.",
+                            "Overlap Detected",
+                            MessageBoxButtons.OKCancel
+                        );
+                    }
+
+                    StartDraggingComponent(new BoardContainerComponents.BoardContainerComponent(intBoard), new Point(), true, true);
 
                     dragType = DragType.MoveComponent;
                 }

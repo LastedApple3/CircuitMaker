@@ -131,6 +131,19 @@ namespace CircuitMaker.Basics
 
         public static void Write(this BinaryWriter bw, Board board)
         {
+            WriteBoardBasic(bw, board);
+
+            Board[] boards = board.GetBoardList().Where(thisBoard => thisBoard.Name != board.Name).ToArray();
+
+            bw.Write(boards.Length);
+            foreach (Board thisBoard in boards)
+            {
+                WriteBoardBasic(bw, thisBoard);
+            }
+        }
+
+        private static void WriteBoardBasic(BinaryWriter bw, Board board)
+        {
             bw.Write(board.Name);
             bw.Write(board.ExternalSize.Width);
             bw.Write(board.ExternalSize.Height);
@@ -153,17 +166,26 @@ namespace CircuitMaker.Basics
 
         public static Board ReadBoard(this BinaryReader br)
         {
+            Board board = ReadBoardBasic(br);
+
+            int boardCount = br.ReadInt32();
+            for (int i = 0; i < boardCount; i++)
+            {
+                // do something with these boards such that the BoardContainerComponent can access them later.
+            }
+        }
+
+        private static Board ReadBoardBasic(BinaryReader br)
+        {
             Board board = new Board(br.ReadString(), new Size(br.ReadInt32(), br.ReadInt32()));
 
             int compCount = br.ReadInt32();
-
             for (int i = 0; i < compCount; i++)
             {
                 br.ReadComponent(board);
             }
 
             int wireCount = br.ReadInt32();
-
             for (int i = 0; i < wireCount; i++)
             {
                 br.ReadWire(board);
@@ -747,7 +769,19 @@ namespace CircuitMaker.Basics
         private HashSet<IBoardOutputComponent> OutputComponents = new HashSet<IBoardOutputComponent>();
         private List<IGraphicalComponent> GraphicalComponents = new List<IGraphicalComponent>();
         private HashSet<IBoardContainerComponent> ContainerComponents = new HashSet<IBoardContainerComponent>();
-        private HashSet<Board> InternalBoards = new HashSet<Board>();
+        //private HashSet<Board> InternalBoards = new HashSet<Board>();
+
+        private Board owner;
+
+        public void SetOwnerBoard(Board owner)
+        {
+            this.owner = owner;
+        }
+
+        public void ResetOwnerBoard()
+        {
+            owner = null;
+        }
 
         private Size? externalSize;
         public Size ExternalSize
@@ -891,6 +925,51 @@ namespace CircuitMaker.Basics
             return ContainerComponents.ToArray();
         }
 
+        public Board[] GetBoardList()
+        {
+            //Console.WriteLine($"adding to unchecked: {Name}");
+
+            //Console.WriteLine("0, 0");
+
+            List<Board> checkedBoardList = new List<Board>(), uncheckedBoardList = new List<Board> { this };
+
+            //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
+
+            Func<Board, bool> notSeen = board => !checkedBoardList.Select(checkedBoard => checkedBoard.Name).Concat(uncheckedBoardList.Select(uncheckedBoard => uncheckedBoard.Name)).Contains(board.Name);
+
+            while (uncheckedBoardList.Count > 0)
+            {
+                foreach (IBoardContainerComponent contComp in uncheckedBoardList[0].GetContainerComponents())
+                {
+                    //Console.WriteLine($"encountering {contComp.GetInternalBoard().Name}");
+
+                    if (notSeen(contComp.GetInternalBoard()))
+                    {
+                        //Console.WriteLine($"adding to unchecked: {contComp.GetInternalBoard().Name}");
+
+                        //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
+
+                        uncheckedBoardList.Add(contComp.GetInternalBoard());
+
+                        //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
+                    }
+                }
+
+                //Console.WriteLine($"moving to checked: {uncheckedBoardList[0].Name}");
+
+                //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
+
+                checkedBoardList.Add(uncheckedBoardList[0]);
+                uncheckedBoardList.RemoveAt(0);
+
+                //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
+            }
+
+            //Console.WriteLine($"checked {checkedBoardList.Count()}: {(checkedBoardList.Count() > 0 ? checkedBoardList.Select(board => board.Name).Aggregate((s1, s2) => s1 + ", " + s2) : "")}");
+
+            return checkedBoardList.ToArray();
+        }
+
         public void Tick()
         {
 
@@ -943,6 +1022,11 @@ namespace CircuitMaker.Basics
             if (comp is IGraphicalComponent graphicalComp)
             {
                 GraphicalComponents.Add(graphicalComp);
+            }
+
+            if (comp is IBoardContainerComponent contComp)
+            {
+                ContainerComponents.Add(contComp);
             }
 
             if (comp is IBoardInterfaceComponent interfaceComp)
@@ -1002,19 +1086,6 @@ namespace CircuitMaker.Basics
                     OutputComponents.Add(outpComp);
                 }
 
-                if (comp is IBoardContainerComponent contComp)
-                {
-                    ContainerComponents.Add(contComp);
-
-                    if (InternalBoards.Select(board => board.Name).Contains(contComp.GetInternalBoard().Name))
-                    {
-                        // check <-------------------------------------------------------------------------------------------------------------------------------------------------
-                    } else
-                    {
-                        InternalBoards.Add(contComp.GetInternalBoard());
-                    }
-                }
-
                 bool isSide = (interfaceLoc.Side & InterfaceLocation.SideEnum.LeftRight) != InterfaceLocation.SideEnum.Nothing;
 
                 while (interfaceLoc.Distance >= (isSide ? ExternalSize.Height : ExternalSize.Width))
@@ -1058,11 +1129,6 @@ namespace CircuitMaker.Basics
             if (comp is IBoardContainerComponent contComp)
             {
                 ContainerComponents.Remove(contComp);
-
-                if (!ContainerComponents.Select(selComp => selComp.GetInternalBoard().Name).Contains(contComp.GetInternalBoard().Name))
-                {
-                    InternalBoards.RemoveWhere(board => board.Name == contComp.GetInternalBoard().Name);
-                }
             }
             //*/
         }

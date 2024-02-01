@@ -2153,6 +2153,7 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
+                /*
                 using (Stream stream = new MemoryStream())
                 {
                     using (BinaryWriter bw = new BinaryWriter(stream))
@@ -2167,8 +2168,9 @@ namespace CircuitMaker.Components
                         }
                     }
                 }
+                //*/
 
-                //return InternalBoard.Name; // return the file form of the board instead
+                return InternalBoard.Name; // return the file form of the board instead
             }
 
             private (Pos, Pos) GetOffset(Board.InterfaceLocation interfaceLocation)
@@ -2208,6 +2210,8 @@ namespace CircuitMaker.Components
                 {
                     InternalBoard.GetOutputComponent(OutpNames[i]).SetExternalPin(outpPins[i]);
                 }
+
+                InternalBoard.SetOwnerBoard(board);
             }
 
             public override void Remove()
@@ -2223,6 +2227,8 @@ namespace CircuitMaker.Components
                 {
                     outpComp.RemoveExternalPin();
                 }
+
+                InternalBoard.ResetOwnerBoard();
             }
 
             public override void Tick()
@@ -2232,6 +2238,9 @@ namespace CircuitMaker.Components
 
             public static BoardContainerComponent Constructor(string details)
             {
+
+
+                /*
                 using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
                 {
                     using (BinaryReader br = new BinaryReader(stream))
@@ -2239,6 +2248,7 @@ namespace CircuitMaker.Components
                         return new BoardContainerComponent(br.ReadBoard());
                     }
                 }
+                //*/
             }
 
             public override IComponent NonStaticConstructor(string details)

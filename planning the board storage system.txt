@@ -8,3 +8,12 @@ component removed:
 		leave board in list
 	no other component has name:
 		remove board from list
+
+
+nested container comps might have issues. need to prevent recursion.
+
+
+
+contcomp has 1 board
+board has var contcomps
+when placing contcomp, tell its contained board that it is contained
