@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -24,7 +23,6 @@ namespace CircuitMaker.GUI
 
         private void newBoardToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //builder = Builder.NewBoard("newBoard");
             builder.OpenNewBoard("untitled");
 
             UpdateFormText();
@@ -66,6 +64,16 @@ namespace CircuitMaker.GUI
 
                 if (saveFileDialog.ShowDialog() == DialogResult.OK)
                 {
+                    string name = saveFileDialog.FileName.Split('\\').LastOrDefault();
+
+                    if (name.EndsWith(".brd"))
+                    {
+                        name = name.Remove(name.Length - 4);
+                    }
+
+                    builder.GetBoard().Name = name;
+                    UpdateFormText();
+
                     builder.SaveBoard(saveFileDialog.FileName);
                 }
             }
@@ -114,12 +122,25 @@ namespace CircuitMaker.GUI
 
         private void insertBuiltinComponentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            builder.CreateBuiltinComponent();
+            try
+            {
+                builder.CreateBuiltinComponent();
+            }
+            catch (PlacementException ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void insertBoardComponentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            builder.CreateBoardComponent();
+            try
+            {
+                builder.CreateBoardComponent();
+            } catch (PlacementException ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void BtnSimulate_Click(object sender, EventArgs e)
@@ -141,7 +162,7 @@ namespace CircuitMaker.GUI
             }
         }
 
-        private void UpdateFormText()
+        public void UpdateFormText()
         {
             Text = $"{builder.GetBoard().Name} - {(builder.Simulating ? "Simulating" : "Editing")}";
         }
@@ -249,7 +270,7 @@ namespace CircuitMaker.GUI
             return board;
         }
 
-        private static string ConstructDefaultFilename(string boardName) // <----------------------------------------------------- change to use saved default directory
+        private static string ConstructDefaultFilename(string boardName)
         {
             return $"Boards/{boardName}.brd";
         }
@@ -266,6 +287,7 @@ namespace CircuitMaker.GUI
         public void OpenLoadBoard(string filename)
         {
             board = Board.Load(filename);
+            storedFilename = filename;
 
             selection.Deselect();
             SetSimulation(false);
@@ -287,7 +309,6 @@ namespace CircuitMaker.GUI
         public void SaveBoard(string filename = null)
         {
             storedFilename = filename ?? storedFilename;
-            board.Name = storedFilename;
             board.Save(storedFilename);
         }
 
@@ -315,9 +336,11 @@ namespace CircuitMaker.GUI
                 Grid = Color.FromArgb(63, Color.Black)
             };
 
+            int tps = 10;
+
             simulationTimer = new Timer
             {
-                Interval = (int)Math.Round((double)(1000 / 10)), // 10 t/s
+                Interval = (int)Math.Round((double)(1000 / tps)),
                 Enabled = false
             };
             simulationTimer.Tick += SimulationTick;
@@ -449,9 +472,6 @@ namespace CircuitMaker.GUI
 
         private void MoveCompMenuItem_Click(object sender, EventArgs e)
         {
-            //Console.Write("moving: ");
-            //Console.WriteLine(rightClickedComp);
-
             if (rightClickedComp != null)
             {
                 StartDraggingComponent(rightClickedComp, rightClickMouseLoc, true);
@@ -503,15 +523,16 @@ namespace CircuitMaker.GUI
 
                     string[] overlap = intBoard.GetBoardList().Select(board => board.Name).Intersect(board.GetBoardList().Select(board => board.Name)).ToArray();
 
-                    Console.WriteLine();
-
                     if (overlap.Count() > 0)
                     {
-                        MessageBox.Show(
+                        if (MessageBox.Show(
                             overlap.Prepend("The following boards are found within both the board you just selected and the board you are working on:").Aggregate((s1, s2) => s1 + "\n\t - " + s2) + "\nIf this might cause any issues, cancel now and double check. If this is intended, continue.",
                             "Overlap Detected",
                             MessageBoxButtons.OKCancel
-                        );
+                        ) == DialogResult.Cancel)
+                        {
+                            return;
+                        }
                     }
 
                     StartDraggingComponent(new BoardContainerComponents.BoardContainerComponent(intBoard), new Point(), true, true);
@@ -560,7 +581,6 @@ namespace CircuitMaker.GUI
 
                 if (Simulating)
                 {
-                    //selectedComp = null;
                     selection.Deselect();
 
                     board.ResetForSimulation();
@@ -727,7 +747,7 @@ namespace CircuitMaker.GUI
                         Invalidate();
                     }
 
-                    if (selection.HasComp()) // <---------------------------------------------------------------------- selected wire not dealt with
+                    if (selection.HasComp())
                     {
                         if (e.KeyCode == (Keys.Control | Keys.C))
                         {
@@ -783,7 +803,7 @@ namespace CircuitMaker.GUI
         private void PutDownDraggedComponent()
         {
             Point newPoint = DetransformPoint(dragNewPoint);
-            Pos newPos = Pos.FromPoint(newPoint); //new Pos(newPoint.X, newPoint.Y);
+            Pos newPos = Pos.FromPoint(newPoint);
 
             Matrix matrix = new Matrix();
 
@@ -800,8 +820,6 @@ namespace CircuitMaker.GUI
             if (board.CheckAllowed(bounds))
             {
                 dragComp.Place(newPos, dragNewRot, board);
-
-                //Console.WriteLine(newPos);
 
                 dragComp = null;
 
@@ -1065,7 +1083,7 @@ namespace CircuitMaker.GUI
         {
             base.OnMouseMove(e);
 
-            if (panning /* dragType == DragType.Pan */)
+            if (panning)
             {
                 PointF[] locs = new PointF[] { e.Location, panLastMouseLocation };
                 DetransformPointFs(locs);
@@ -1080,7 +1098,6 @@ namespace CircuitMaker.GUI
             if (dragType == DragType.MoveComponent)
             {
                 dragNewPoint = new Point(e.Location.X + dragOffset.X, e.Location.Y + dragOffset.Y);
-                //Console.WriteLine(dragNewPoint);
 
                 Invalidate();
             }
@@ -1109,7 +1126,6 @@ namespace CircuitMaker.GUI
             base.OnMouseWheel(e);
             if (dragType == DragType.MoveComponent) 
             {
-                //dragNewRot += (90 * Math.Sign(e.Delta));
                 dragNewRot = dragNewRot.AddRotation(e.Delta > 0 ? Rotation.CLOCKWISE : Rotation.ANTICLOCKWISE);
 
                 Invalidate();

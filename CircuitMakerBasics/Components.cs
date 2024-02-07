@@ -61,7 +61,6 @@ namespace CircuitMaker.Components
         }
 
         /* More Components:
-         * VisualDisplay (need better name. the most basic form of graphical interaction that boards will inherit)
          * SevenSeg
          */
     }
@@ -110,7 +109,7 @@ namespace CircuitMaker.Components
         {
             if (isPlaced)
             {
-                throw new Exception("Already placed, can't place again. This error shouldn't raise when finished.");
+                throw new PlacementException("Already placed, can't place again.");
             }
 
             ComponentPos = pos;
@@ -156,13 +155,12 @@ namespace CircuitMaker.Components
         protected void DrawInversionCircle(Graphics graphics, PointF point, ColourScheme colourScheme)
         {
             float rad = 0.2F;
-            graphics.FillEllipse(new SolidBrush(colourScheme.Background), point.X, point.Y - rad, 2 * rad, 2 * rad); // need to make this transparent
+            graphics.FillEllipse(new SolidBrush(colourScheme.Background), point.X, point.Y - rad, 2 * rad, 2 * rad);
             graphics.DrawEllipse(new Pen(colourScheme.ComponentEdge, 0.01F), point.X, point.Y - rad, 2 * rad, 2 * rad);
         }
 
         public abstract RectangleF GetComponentBounds();
 
-        //*
         protected RectangleF CreateSmallestRect(Pos[] containedPoints)
         {
             return RectangleF.FromLTRB(
@@ -177,7 +175,7 @@ namespace CircuitMaker.Components
             Pos[] offsets = GetAllPinOffsets().Append(new Pos(0, 0)).ToArray();
 
             return CreateSmallestRect(offsets);
-        }//*/
+        }
 
         public RectangleF GetOffsetComponentBounds()
         {
@@ -194,32 +192,6 @@ namespace CircuitMaker.Components
                 Math.Max(corners[0].Y, corners[1].Y)
             );
         }
-
-        /*
-        public virtual bool HasSettings() { return false; }
-
-        public void OpenSettings() // this function is calling BaseComponent's version of the surrounding functions, when it should call its current class's version
-        {
-            Console.WriteLine("opening settings");
-            Console.WriteLine(this);
-
-            if (!HasSettings())
-            {
-                Console.WriteLine("didn't have settings, canceling");
-                return;
-            }
-
-            Console.WriteLine(GetSettingDescriptions().Length);
-
-            SettingsDialog settingsDialog = new SettingsDialog($"{GetComponentID()} Settings", GetSettingDescriptions());
-            settingsDialog.ShowDialog();
-
-            ApplySettings();
-        }
-
-        public virtual ISettingDescription[] GetSettingDescriptions() { return new ISettingDescription[0]; }
-        public virtual void ApplySettings() { }
-        //*/
 
         public IComponent Copy()
         {
@@ -286,23 +258,16 @@ namespace CircuitMaker.Components
                 graphics.DrawLine(
                     new Pen(GetWireColour(simulating, pinOffset, colourScheme, comp), 0.01F),
                     pinOffset.X, pinOffset.Y, otherOffset.X, otherOffset.Y);
-                    //offset1.X, offset1.Y, offset2.X, offset2.Y);
             }
 
             public static void DrawInpLine(Graphics graphics, bool simulating, Pos inpOffset, ColourScheme colourScheme, IComponent comp)
             {
                 DrawInpOutpLine(graphics, simulating, inpOffset, new PointF(inpOffset.X + 1.5F, inpOffset.Y), colourScheme, comp);
-                //graphics.DrawLine(
-                //    new Pen(GetWireColour(inpOffset, colourScheme, comp), 0.01F), 
-                //    inpOffset.X, inpOffset.Y, inpOffset.X + 1.5F, inpOffset.Y);
             }
 
             public static void DrawOutpLine(Graphics graphics, bool simulating, Pos outpOffset, ColourScheme colourScheme, IComponent comp)
             {
                 DrawInpOutpLine(graphics, simulating, outpOffset, new PointF(outpOffset.X - 1.5F, outpOffset.Y), colourScheme, comp);
-                //graphics.DrawLine(
-                //    new Pen(GetWireColour(outpOffset, colourScheme, comp), 0.01F),
-                //    outpOffset.X, outpOffset.Y, outpOffset.X - 1.5F, outpOffset.Y);
             }
         }
 
@@ -806,7 +771,7 @@ namespace CircuitMaker.Components
             {
                 if (InpCount < 2)
                 {
-                    throw new Exception("Can't have less than 2 inputs.");
+                    throw new PlacementException("Can't have less than 2 inputs.");
                 }
 
                 InpOffsets = new Pos[InpCount];
@@ -982,7 +947,7 @@ namespace CircuitMaker.Components
                     return new VarInpAndComponent(inpCount);
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1022,7 +987,7 @@ namespace CircuitMaker.Components
                     return new VarInpOrComponent(inpCount);
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1062,7 +1027,7 @@ namespace CircuitMaker.Components
                     return new VarInpXorComponent(inpCount);
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1102,7 +1067,7 @@ namespace CircuitMaker.Components
                     return new VarInpNandComponent(inpCount);
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1143,7 +1108,7 @@ namespace CircuitMaker.Components
                     return new VarInpNorComponent(inpCount);
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1184,7 +1149,7 @@ namespace CircuitMaker.Components
                     return new VarInpXnorComponent(inpCount);
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1244,7 +1209,7 @@ namespace CircuitMaker.Components
                 return new FixedStateComponent((Pin.State)outputState);
             }
 
-            throw new Exception();
+            throw new PlacementException("Did not successfully parse int.");
         }
 
         public override IComponent NonStaticConstructor(string details)
@@ -1321,7 +1286,7 @@ namespace CircuitMaker.Components
                 return new UserToggleInpComponent((Pin.State)outputState);
             }
 
-            throw new Exception();
+            throw new PlacementException("Did not successfully parse int.");
         }
 
         public override IComponent NonStaticConstructor(string details)
@@ -1503,20 +1468,14 @@ namespace CircuitMaker.Components
                     if (GraphicalLocation.HasValue)
                     {
                         bw.Write(GraphicalLocation.Value.X);
-                        bw.Write(GraphicalLocation.Value.Y); // -1 is being recorded as 3f3f3f3f instead of ffffffff. I suspect ReadToEnd replaces anything without an ASCII character with a question mark (3f)
+                        bw.Write(GraphicalLocation.Value.Y);
                     }
 
                     stream.Position = 0;
 
                     using (BinaryReader br = new BinaryReader(stream))
                     {
-                        Console.WriteLine(GraphicalLocation?.Y);
-
-                        Func<string, string> WriteAndReturn = (str) => {
-                            Console.WriteLine($"'{str}' {str.Length}");
-                            return str;
-                        };
-                        return WriteAndReturn(ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length)));
+                        return ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
                     }
                 }
             }
@@ -1530,21 +1489,12 @@ namespace CircuitMaker.Components
                 {
                     LogicProbeComponent retVal = new LogicProbeComponent();
 
-                    Func<string, string> WriteAndReturn = (str) => {
-                        Console.WriteLine($"'{str}' {str.Length}");
-                        return str;
-                    };
-
-                    WriteAndReturn(ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length)));
-
                     stream.Position = 0;
 
                     if (br.ReadBoolean())
                     {
                         retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
                     }
-
-                    Console.WriteLine(retVal.GetGraphicalElementLocation()?.Y);
 
                     return retVal;
                 }
@@ -1686,7 +1636,7 @@ namespace CircuitMaker.Components
                     return new BoardInputComponent(strings[0], (Pin.State)stateInt, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)(byte)sideInt, distInt));
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1694,18 +1644,9 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            /*
-            public new void ResetToDefault()
-            {
-                OutputState = DefaultState;
-            }
-            //*/
-
-            public override ISettingDescription[] GetSettingDescriptions() // this is not being called, instead the base is being called.
+            public override ISettingDescription[] GetSettingDescriptions()
             {
                 nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
-
-                //Console.WriteLine((new ISettingDescription[] { nameSettingDesc }).Concat(base.GetSettingDescriptions()).ToArray());
 
                 return (new ISettingDescription[] { nameSettingDesc }).Concat(base.GetSettingDescriptions()).ToArray();
             }
@@ -1717,14 +1658,13 @@ namespace CircuitMaker.Components
                 ComponentName = nameSettingDesc.GetValue();
             }
 
-            //*
             public override RectangleF GetComponentBounds()
             {
                 RectangleF rect = base.GetComponentBounds();
                 rect.Width++;
                 rect.X--;
                 return rect;
-            }//*/
+            }
 
             public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
@@ -1744,7 +1684,7 @@ namespace CircuitMaker.Components
             }
         }
 
-        public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent, ISettingsComponent // create a probe component and inherit it here.
+        public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent, ISettingsComponent
         {
             private string ComponentName;
             protected Pin.State State;
@@ -1808,7 +1748,7 @@ namespace CircuitMaker.Components
                     return new BoardOutputComponent(strings[0], new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)(byte)sideInt, distInt));
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1978,7 +1918,7 @@ namespace CircuitMaker.Components
                     return new BoardBidirComponent(strings[0], (Pin.State)stateInt, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)sideInt, distInt));
                 }
 
-                throw new Exception();
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -2004,9 +1944,6 @@ namespace CircuitMaker.Components
             {
                 RectangleF rect = GetDefaultComponentBounds();
                 rect.Inflate(0.5F, 1);
-                //rect.Width++;
-                //rect.X -= 0.5F;
-                //rect.Y -= 0.5F;
                 rect.Height -= 0.5F;
                 rect.Y -= 0.5F;
                 return rect;
@@ -2034,7 +1971,7 @@ namespace CircuitMaker.Components
 
         public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent, IBoardContainerComponent
         {
-            public Board InternalBoard { get; }
+            public Board InternalBoard { get; private set; }
 
             private Rectangle Shape;
 
@@ -2085,10 +2022,35 @@ namespace CircuitMaker.Components
                 };
             }
 
+            private void ProvideInternalBoard(Board board)
+            {
+                if (InternalBoard == null)
+                {
+                    InternalBoard = board;
+
+                    Initialize();
+
+                    if (IsPlaced())
+                    {
+                        PlaceForInternalBoard();
+                    }
+                }
+            }
+
+            public BoardContainerComponent(string boardName)
+            {
+                ReadWriteImplementation.PromiseBoard(boardName, ProvideInternalBoard);
+            }
+
             public BoardContainerComponent(Board internalBoard)
             {
                 InternalBoard = internalBoard;
 
+                Initialize();
+            }
+
+            private void Initialize()
+            {
                 InternalBoard.SizeChanged += InternalBoard_SizeChanged;
 
                 ResetShape();
@@ -2135,13 +2097,7 @@ namespace CircuitMaker.Components
 
             public void ResetShape()
             {
-                //Console.WriteLine("resetting shape");
-                //Console.WriteLine(InternalBoard.ExternalSize);
-
                 Shape = new Rectangle(-InternalBoard.ExternalSize.Width / 2, -InternalBoard.ExternalSize.Height / 2, InternalBoard.ExternalSize.Width, InternalBoard.ExternalSize.Height);
-
-                //Console.WriteLine(Shape);
-                //Console.WriteLine("finished resetting shape");
             }
 
             public static string ID = "BOARD";
@@ -2153,24 +2109,7 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                /*
-                using (Stream stream = new MemoryStream())
-                {
-                    using (BinaryWriter bw = new BinaryWriter(stream))
-                    {
-                        bw.Write(InternalBoard);
-
-                        stream.Position = 0;
-
-                        using (BinaryReader br = new BinaryReader(stream))
-                        {
-                            return ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
-                        }
-                    }
-                }
-                //*/
-
-                return InternalBoard.Name; // return the file form of the board instead
+                return InternalBoard.Name;
             }
 
             private (Pos, Pos) GetOffset(Board.InterfaceLocation interfaceLocation)
@@ -2199,6 +2138,14 @@ namespace CircuitMaker.Components
             {
                 base.Place(pos, rotation, board);
 
+                if (InternalBoard != null)
+                {
+                    PlaceForInternalBoard();
+                }
+            }
+
+            private void PlaceForInternalBoard()
+            {
                 Pin[] inpPins = GetInpPins();
                 for (int i = 0; i < InpNames.Length; i++)
                 {
@@ -2211,7 +2158,7 @@ namespace CircuitMaker.Components
                     InternalBoard.GetOutputComponent(OutpNames[i]).SetExternalPin(outpPins[i]);
                 }
 
-                InternalBoard.SetOwnerBoard(board);
+                InternalBoard.SetOwnerBoard(GetComponentBoard());
             }
 
             public override void Remove()
@@ -2238,17 +2185,7 @@ namespace CircuitMaker.Components
 
             public static BoardContainerComponent Constructor(string details)
             {
-
-
-                /*
-                using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
-                {
-                    using (BinaryReader br = new BinaryReader(stream))
-                    {
-                        return new BoardContainerComponent(br.ReadBoard());
-                    }
-                }
-                //*/
+                return new BoardContainerComponent(details);
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -2263,23 +2200,25 @@ namespace CircuitMaker.Components
 
             public override RectangleF GetComponentBounds()
             {
-                //RectangleF rect = GetDefaultComponentBounds();
-                Pos[] offsets = GetAllPinOffsets().Concat(new Pos[] { new Pos(0, 0), new Pos(Shape.Left, Shape.Top), new Pos(Shape.Right, Shape.Bottom) }).ToArray();
+                Pos[] offsets = new Pos[] { new Pos(0, 0), new Pos(Shape.Left, Shape.Top), new Pos(Shape.Right, Shape.Bottom) };
+                
+                if (InternalBoard != null)
+                {
+                    offsets = offsets.Concat(GetAllPinOffsets()).ToArray();
+                }
+
                 RectangleF rect = CreateSmallestRect(offsets);
                 return rect;
             }
 
             public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
-                //base.Render(graphics, simulating, colourScheme);
-
                 Pos otherOffset;
                 (Pos, Pos) offsetInfo;
 
                 foreach (IBoardInterfaceComponent interfaceComp in InternalBoard.GetInterfaceComponents())
                 {
                     offsetInfo = GetOffset(interfaceComp.GetInterfaceLocation());
-                    //Console.WriteLine(offsetInfo);
 
                     otherOffset = offsetInfo.Item1.Add(new Pos(-offsetInfo.Item2.X, -offsetInfo.Item2.Y));
 
@@ -2308,12 +2247,6 @@ namespace CircuitMaker.Components
 
                     graphics.DrawString(interfaceComp.GetComponentName(), new Font("arial", 0.25F), Brushes.Black, new Point(offsetInfo.Item1.X, offsetInfo.Item1.Y), StringFormats[interfaceLocation.Side]);
                 }
-
-                //RectangleF rect = GetDefaultComponentBounds();
-                //rect.Inflate(-1, -1);
-
-                //graphics.FillRectangle(new SolidBrush(colourScheme.ComponentBackground), rect);
-                //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), rect.X, rect.Y, rect.Width, rect.Height);
             }
 
             public void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme)
@@ -2327,8 +2260,6 @@ namespace CircuitMaker.Components
 
                     if (loc.HasValue)
                     {
-                        Console.WriteLine(loc.Value);
-
                         matrix = new Matrix();
                         matrix.Translate(loc.Value.X, loc.Value.Y);
 

@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CircuitMaker.Basics;
-//using CircuitMaker.Components;
 
 namespace CircuitMaker.GUI.ExtApp
 {

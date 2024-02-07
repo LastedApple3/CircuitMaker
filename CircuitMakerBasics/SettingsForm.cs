@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-//using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -86,7 +85,6 @@ namespace CircuitMaker.GUI.Settings
     {
         protected string prompt;
         protected T defaultVal;
-        //protected Control inputControl;
 
         public string GetPrompt()
         {
@@ -191,68 +189,6 @@ namespace CircuitMaker.GUI.Settings
             return inputControl.Text;
         }
     }
-
-    /*
-    public class SignedIntSettingDescription : TextBoxSettingDescription<int>
-    {
-        public SignedIntSettingDescription(string prompt, int defaultVal = 0) : base(prompt, defaultVal) { }
-
-        public override bool AllowInput(string current, char newChar, int caretIdx)
-        {
-            if (newChar == '-' && caretIdx == 0 && !current.Contains('-'))
-            {
-                return true;
-            }
-
-            if ("0123456789".Contains(newChar))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public override int GetValue()
-        {
-            return int.Parse(inputControl.Text);
-        }
-    }
-
-    public class PositiveIntSettingDescription : TextBoxSettingDescription<int>
-    {
-        public PositiveIntSettingDescription(string prompt, int defaultVal = 0) : base(prompt, defaultVal) { }
-
-        public override bool AllowInput(string current, char newChar, int caretIdx)
-        {
-            if ("0123456789".Contains(newChar))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        public override int GetValue()
-        {
-            return int.Parse(inputControl.Text);
-        }
-    }
-
-    public class NameSettingDescription : TextBoxSettingDescription<string>
-    {
-        public NameSettingDescription(string prompt, string defaultVal) : base(prompt, defaultVal) { }
-
-        public override bool AllowInput(string current, char newChar, int caretIdx)
-        {
-            return ('A' <= newChar && newChar <= 'Z') || ('a' <= newChar && newChar <= 'z') || ('0' <= newChar && newChar <= '9');
-        }
-
-        public override string GetValue()
-        {
-            return inputControl.Text;
-        }
-    }
-    //*/
 
     public class EnumSettingDescription<E> : SettingDescription<E> where E : Enum {
         protected ComboBox inputControl;

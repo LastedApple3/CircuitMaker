@@ -49,7 +49,7 @@ namespace CircuitMaker.GUI.ExtApp
             public void SelectGraphicalComp(IGraphicalComponent comp, PointF? reset) { Reset(); isGraphicalComp = true; graphicalComp = comp; graphicalCompReset = reset; }
             public void SelectSize(Size reset) { Reset(); isSize = true; sizeReset = reset; }
 
-            public void Reset() { isInterfaceLoc = false; isGraphicalComp = false; isSize = false; /* interfaceLocName = null; graphicalComp = null; interfaceLocReset = null; graphicalCompReset = null; */ }
+            public void Reset() { isInterfaceLoc = false; isGraphicalComp = false; isSize = false; }
         }
 
         private IBoardContainerComponent boardContainerComp;
@@ -90,8 +90,6 @@ namespace CircuitMaker.GUI.ExtApp
 
         private void ResetSize()
         {
-            //boardContainerComp.ResetShape();
-
             Size size = boardContainerComp.GetInternalBoard().ExternalSize;
             size.Width += 2;
             size.Height += 2;
@@ -123,7 +121,7 @@ namespace CircuitMaker.GUI.ExtApp
 
             graphicalsTransformationMatrix.Reset();
             graphicalsTransformationMatrix.Scale(scale, scale);
-            graphicalsTransformationMatrix.Translate(graphicalsStart /*boardContainerComp.GetInternalBoard().ExternalSize.Width + 2.5F*/ /*graphicalsDisplayBounds.X*/ , 0);
+            graphicalsTransformationMatrix.Translate(graphicalsStart, 0);
         }
 
         public void SaveChanges()
@@ -212,8 +210,6 @@ namespace CircuitMaker.GUI.ExtApp
                 boundsF = graphicalComp.GetGraphicalElementBounds();
                 bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
 
-                //Console.WriteLine(bounds);
-
                 offset += bounds.Height;
 
                 matrix.Translate(-bounds.X, -bounds.Y);
@@ -223,8 +219,6 @@ namespace CircuitMaker.GUI.ExtApp
                 points = new PointF[] { point };
 
                 matrix.TransformPoints(points);
-
-                //Console.WriteLine($"{boundsF} - {points[0]}");
 
                 if (boundsF.Contains(points[0]))
                 {
@@ -244,7 +238,6 @@ namespace CircuitMaker.GUI.ExtApp
             graphics.ResetTransform();
 
             graphics.Clear(DefaultBackColor);
-            //graphics.Clear(Color.White);
 
             Rectangle compRect = compDisplayBounds;
             compRect.Width -= 1;
@@ -263,12 +256,8 @@ namespace CircuitMaker.GUI.ExtApp
             boardContainerComp.Render(graphics, false, colourScheme);
 
             graphics.ResetTransform();
-            //graphics.MultiplyTransform(GetInvertedCompTransformationMatrix());
 
             graphics.MultiplyTransform(graphicalsTransformationMatrix);
-
-            //int rad = 1; //194;
-            //graphics.FillEllipse(new SolidBrush(Color.Orange), -rad, -rad, 2 * rad, 2 * rad);
 
             int offset = 0;
             Matrix matrix = new Matrix();
@@ -277,16 +266,12 @@ namespace CircuitMaker.GUI.ExtApp
 
             foreach (IGraphicalComponent graphicalComp in GetUnplacedGraphicalComponents())
             {
-                //Console.WriteLine(graphicalComp.GetComponentID());
-
                 matrix.Reset();
 
                 matrix.Translate(0, offset);
 
                 boundsF = graphicalComp.GetGraphicalElementBounds();
                 bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
-
-                //Console.WriteLine(bounds);
 
                 offset += bounds.Height;
 
@@ -368,17 +353,11 @@ namespace CircuitMaker.GUI.ExtApp
                     {
                         bounds = graphicalComp.GetOffsetGraphicalElementBounds();
 
-                        if (bounds.HasValue)
+                        if (bounds.HasValue && bounds.Value.Contains(CompDetransformPointF(e.Location)))
                         {
-                            //Console.WriteLine(bounds.Value);
-                            //Console.WriteLine(e.Location);
+                            dragState.SelectGraphicalComp(graphicalComp, graphicalComp.GetGraphicalElementLocation());
 
-                            if (bounds.Value.Contains(CompDetransformPointF(e.Location)))
-                            {
-                                dragState.SelectGraphicalComp(graphicalComp, graphicalComp.GetGraphicalElementLocation());
-
-                                break;
-                            }
+                            break;
                         }
                     }
                 }
@@ -426,10 +405,6 @@ namespace CircuitMaker.GUI.ExtApp
                 Board internalBoard = boardContainerComp.GetInternalBoard();
                 Rectangle shape = boardContainerComp.GetShape();
 
-                //Console.WriteLine(mousePoint);
-                //Console.WriteLine(shape);
-                //Console.WriteLine();
-
                 if (dragState.IsSize())
                 {
                     float[] bounds = new float[] { 1, 1 };
@@ -442,16 +417,6 @@ namespace CircuitMaker.GUI.ExtApp
 
                         bounds[idx] = Math.Max(comp.GetInterfaceLocation().Distance + 1, bounds[idx]);
                     }
-
-                    /*
-                    IBoardInterfaceComponent[] interfaceComps = GetInterfaceComponents();
-                    Func<Board.InterfaceLocation.SideEnum, int> interfacesOnSide = side => interfaceComps.Where(comp => comp.GetInterfaceLocation().Side == side).Count();
-
-                    float[] bounds = new float[] {
-                        Math.Max(1, Math.Max(interfacesOnSide(Board.InterfaceLocation.SideEnum.Top), interfacesOnSide(Board.InterfaceLocation.SideEnum.Bottom)) + 1),
-                        Math.Max(1, Math.Max(interfacesOnSide(Board.InterfaceLocation.SideEnum.Left), interfacesOnSide(Board.InterfaceLocation.SideEnum.Right)) + 1)
-                    };
-                    //*/
 
                     RectangleF? possCompBounds;
                     RectangleF compBounds;
@@ -475,8 +440,6 @@ namespace CircuitMaker.GUI.ExtApp
                     internalBoard.ExternalSize = new Size(Math.Max(mousePoint.X - shape.X, (int)Math.Ceiling(bounds[0])), Math.Max(mousePoint.Y - shape.Y, (int)Math.Ceiling(bounds[1])));
 
                     ResetSize();
-
-                    //Console.WriteLine(internalBoard.ExternalSize);
                 }
                 else if (dragState.IsInterfaceLoc())
                 {

@@ -13,57 +13,8 @@ using System.IO;
 
 namespace CircuitMaker
 {
-
     internal class Program
     {
-        /*
-        private string EncodeInt(int decoded)
-        {
-            using (Stream stream = new MemoryStream())
-            {
-                using (BinaryWriter bw = new BinaryWriter(stream))
-                {
-                    bw.Write(decoded);
-                }
-
-                stream.Position = 0;
-
-                using (BinaryReader br = new BinaryReader(stream))
-                {
-                    return ByteEncoding.Byte.GetString(br.ReadBytes(decoded));
-                }
-            }
-        }
-        private string EncodeString(string decoded)
-        {
-            using (Stream stream = new MemoryStream())
-            {
-                using (BinaryWriter bw = new BinaryWriter(stream))
-                {
-                    bw.Write(decoded);
-                }
-
-                stream.Position = 0;
-
-                using (BinaryReader br = new BinaryReader(stream))
-                {
-                    return ByteEncoding.Byte.GetString(br.ReadBytes(decoded));
-                }
-            }
-        }
-
-        private string DecodeString(string encoded)
-        {
-            using (Stream stream = new MemoryStream())
-            {
-                using (BinaryReader br = new BinaryReader(stream))
-                {
-
-                }
-            }
-        }
-        //*/
-
         [STAThread]
         static void Main(string[] args)
         {
@@ -90,7 +41,7 @@ namespace CircuitMaker
             Q.Place(new Pos(16, 8), SRNorLatch);
             QBar.Place(new Pos(16, 3), SRNorLatch);
 
-            Wire[] wires = new Wire[]
+            _ = new Wire[]
             {
                 new Wire(Reset.GetAllPinPositions()[0], QNor.GetAllPinPositions()[1], SRNorLatch),
                 new Wire(Set.GetAllPinPositions()[0], QBarNor.GetAllPinPositions()[0], SRNorLatch),
@@ -115,7 +66,6 @@ namespace CircuitMaker
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new GUIForm());
-            //Application.Run(new ExtAppEditorForm());
             //*/
         }
     }

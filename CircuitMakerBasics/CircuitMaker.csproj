@@ -93,12 +93,15 @@
   <ItemGroup>
     <EmbeddedResource Include="ComponentSelectionForm.resx">
       <DependentUpon>ComponentSelectionForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="ExtAppEditor.resx">
       <DependentUpon>ExtAppEditor.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="ExtAppEditorForm.resx">
       <DependentUpon>ExtAppEditorForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="RenameBoardForm.resx">
       <DependentUpon>RenameBoardForm.cs</DependentUpon>

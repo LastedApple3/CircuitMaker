@@ -67,9 +67,64 @@ namespace CircuitMaker.Basics
         }
     }
 
-    //*
+    public class PlacementException : Exception
+    {
+        public PlacementException(string desc) : base(desc) { }
+    }
+
     public static class ReadWriteImplementation
     {
+        public static void PromiseBoard(string boardName, Action<Board> provider)
+        {
+            promises.Add(new BoardPromise(boardName, provider));
+        }
+
+        private class BoardPromise
+        {
+            public string BoardName;
+            private Action<Board> BoardProvider;
+
+            public BoardPromise(string boardName, Action<Board> provider)
+            {
+                BoardName = boardName;
+                BoardProvider = provider;
+            }
+
+            public void FulfillPromise(Board board)
+            {
+                BoardProvider(board);
+            }
+        }
+
+        private static List<BoardPromise> promises = new List<BoardPromise>();
+
+        private static void FulfillPromises(Board[] boards)
+        {
+            Dictionary<string, Board> namedBoards = new Dictionary<string, Board>();
+
+            foreach (Board board in boards)
+            {
+                namedBoards.Add(board.Name, board);
+            }
+
+            List<BoardPromise> unfulfilled = new List<BoardPromise>();
+
+            foreach (BoardPromise promise in promises)
+            {
+                if (namedBoards.ContainsKey(promise.BoardName))
+                {
+                    promise.FulfillPromise(namedBoards[promise.BoardName]);
+                }
+                else
+                {
+                    unfulfilled.Add(promise);
+                }
+            }
+
+            promises = unfulfilled;
+        }
+
+
         public static void Write<T>(this BinaryWriter bw, T enumVal) where T : Enum
         {
             bw.Write(enumVal.ToString());
@@ -114,18 +169,15 @@ namespace CircuitMaker.Basics
 
         public static IComponent ReadComponent(this BinaryReader br, Board board)
         {
-            if (Constructors.TryGetValue(br.ReadString(), out Func<string, IComponent> compFunc))
+            string compType = br.ReadString();
+            if (Constructors.TryGetValue(compType, out Func<string, IComponent> compFunc))
             {
                 IComponent comp = compFunc(br.ReadString());
                 comp.Place(br.ReadPos(), br.ReadEnum<Rotation>(), board);
                 return comp;
             }
 
-            br.ReadString(); // if couldn't find the chip, just ignore it.
-            br.ReadPos();
-            br.ReadEnum<Rotation>();
-
-            return null;
+            throw new PlacementException($"Could not find builtin component of type {compType}");
         }
 
 
@@ -169,10 +221,22 @@ namespace CircuitMaker.Basics
             Board board = ReadBoardBasic(br);
 
             int boardCount = br.ReadInt32();
+            Board[] boards = new Board[boardCount];
             for (int i = 0; i < boardCount; i++)
             {
-                // do something with these boards such that the BoardContainerComponent can access them later.
+                boards[i] = ReadBoardBasic(br);
             }
+
+            FulfillPromises(boards);
+
+            if (promises.Count > 0)
+            {
+                string[] names = promises.Select(promise => promise.BoardName).ToArray();
+
+                throw new PlacementException($"Board with name{(promises.Count > 1 ? "s" : "")} {names.Select(s => "'" + s + "'").Aggregate((s1, s2) => s1 + ", " + s2)} not found");
+            }
+
+            return board;
         }
 
         private static Board ReadBoardBasic(BinaryReader br)
@@ -197,7 +261,7 @@ namespace CircuitMaker.Basics
 
         public static Dictionary<string, Func<string, IComponent>> Constructors = new Dictionary<string, Func<string, IComponent>>();
         public static Dictionary<string, string> DefaultDetails = new Dictionary<string, string>();
-    }//*/
+    }
 
     class DefaultDictionary<TKey, TValue> : Dictionary<TKey, TValue>
     {
@@ -290,14 +354,13 @@ namespace CircuitMaker.Basics
         ZERO = 0, CLOCKWISE = 90, HALF = 180, ANTICLOCKWISE = 270
     }
 
-    //*
     static class RotationExtensions
     {
         public static Rotation AddRotation(this Rotation rot1, Rotation rot2)
         {
             return (Rotation)(((int)rot1 + (int)rot2) % 360);
         }
-    }//*/
+    }
 
     public class Wire
     {
@@ -391,8 +454,6 @@ namespace CircuitMaker.Basics
             {
                 return bounds.Left < pos.X && pos.X < bounds.Right && pos.Y == Pos1.Y;
             }
-            
-            // do angled lines?
 
             return false;
         }
@@ -455,11 +516,6 @@ namespace CircuitMaker.Basics
         RectangleF GetComponentBounds();
         RectangleF GetOffsetComponentBounds();
 
-        /*
-        bool HasSettings();
-        void OpenSettings();
-        //*/
-
         void Render(Graphics graphics, bool simulating, ColourScheme colourScheme);
         void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme);
     }
@@ -515,7 +571,6 @@ namespace CircuitMaker.Basics
     {
         Rectangle GetShape();
         void ResetShape();
-        //void SetShape(RectangleF shape);
 
         Board GetInternalBoard();
     }
@@ -728,8 +783,6 @@ namespace CircuitMaker.Basics
 
             public override int GetHashCode()
             {
-                //return base.GetHashCode();
-
                 return (int)Side ^ Distance;
             }
 
@@ -738,26 +791,6 @@ namespace CircuitMaker.Basics
                 return $"({Side},{Distance})";
             }
         }
-
-        /*
-        private class InterfaceComponentStore<T> : HashSet<T> where T : IBoardInterfaceComponent
-        {
-            public void Add(T component)
-            {
-                Add(component.GetComponentName(), component);
-            }
-
-            public bool Remove(T component)
-            {
-                return Remove(component.GetComponentName());
-            }
-
-            public new bool ContainsValue(T component)
-            {
-                return ContainsKey(component.GetComponentName());
-            }
-        }
-        //*/
 
         private DefaultDictionary<Pos, Pin> Pins = new DefaultDictionary<Pos, Pin>(() => new Pin());
 
@@ -769,7 +802,6 @@ namespace CircuitMaker.Basics
         private HashSet<IBoardOutputComponent> OutputComponents = new HashSet<IBoardOutputComponent>();
         private List<IGraphicalComponent> GraphicalComponents = new List<IGraphicalComponent>();
         private HashSet<IBoardContainerComponent> ContainerComponents = new HashSet<IBoardContainerComponent>();
-        //private HashSet<Board> InternalBoards = new HashSet<Board>();
 
         private Board owner;
 
@@ -927,13 +959,7 @@ namespace CircuitMaker.Basics
 
         public Board[] GetBoardList()
         {
-            //Console.WriteLine($"adding to unchecked: {Name}");
-
-            //Console.WriteLine("0, 0");
-
             List<Board> checkedBoardList = new List<Board>(), uncheckedBoardList = new List<Board> { this };
-
-            //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
 
             Func<Board, bool> notSeen = board => !checkedBoardList.Select(checkedBoard => checkedBoard.Name).Concat(uncheckedBoardList.Select(uncheckedBoard => uncheckedBoard.Name)).Contains(board.Name);
 
@@ -941,31 +967,15 @@ namespace CircuitMaker.Basics
             {
                 foreach (IBoardContainerComponent contComp in uncheckedBoardList[0].GetContainerComponents())
                 {
-                    //Console.WriteLine($"encountering {contComp.GetInternalBoard().Name}");
-
                     if (notSeen(contComp.GetInternalBoard()))
                     {
-                        //Console.WriteLine($"adding to unchecked: {contComp.GetInternalBoard().Name}");
-
-                        //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
-
                         uncheckedBoardList.Add(contComp.GetInternalBoard());
-
-                        //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
                     }
                 }
 
-                //Console.WriteLine($"moving to checked: {uncheckedBoardList[0].Name}");
-
-                //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
-
                 checkedBoardList.Add(uncheckedBoardList[0]);
                 uncheckedBoardList.RemoveAt(0);
-
-                //Console.WriteLine($"{checkedBoardList.Count()}, {uncheckedBoardList.Count()}");
             }
-
-            //Console.WriteLine($"checked {checkedBoardList.Count()}: {(checkedBoardList.Count() > 0 ? checkedBoardList.Select(board => board.Name).Aggregate((s1, s2) => s1 + ", " + s2) : "")}");
 
             return checkedBoardList.ToArray();
         }
@@ -1013,7 +1023,7 @@ namespace CircuitMaker.Basics
             {
                 if (otherComp.GetOffsetComponentBounds().IntersectsWith(bounds))
                 {
-                    throw new Exception("cant place on another component. this error shouldn't be in the final product");
+                    throw new PlacementException("cant place on another component. this error shouldn't be in the final product");
                 }
             }
 
@@ -1037,8 +1047,6 @@ namespace CircuitMaker.Basics
                 {
                     int[] existingLocs = GetInterfaceComponents().Where(thisComp => thisComp.GetInterfaceLocation().Side == interfaceLoc.Side).Select(thisComp => thisComp.GetInterfaceLocation().Distance).ToArray();
 
-                    //Console.WriteLine(existingLocs.Select(num => num.ToString()).Prepend("").Aggregate((str1, str2) => str1 + ", " + str2));
-
                     for (int newDist = 1; true; newDist += 2)
                     {
                         if (!existingLocs.Contains(newDist))
@@ -1055,34 +1063,15 @@ namespace CircuitMaker.Basics
                 interfaceComp.SetComponentName(GuaranteeUniqueName(interfaceComp.GetComponentName(), 
                     InputComponents.Select(thisComp => thisComp.GetComponentName()).Concat(OutputComponents.Select(thisComp => thisComp.GetComponentName())).ToArray()));
 
-                //InterfaceComponents.Add(interfaceComp.GetComponentName(), interfaceComp);
                 InterfaceComponents.Add(interfaceComp);
-
-                /*
-                InterfaceLocation? interfaceLocation;
-
-                do
-                {
-                    interfaceLocation = NextEmptyInterfaceLocation();
-
-                    if (!interfaceLocation.HasValue)
-                    {
-                        ExternalSize.Width++;
-                    }
-                } while (!interfaceLocation.HasValue);
-
-                InterfaceLocations.Add(interfaceComp.GetComponentName(), interfaceLocation.Value);
-                */
 
                 if (comp is IBoardInputComponent inpComp)
                 {
-                    //InputComponents.Add(inpComp.GetComponentName(), inpComp);
                     InputComponents.Add(inpComp);
                 }
 
                 if (comp is IBoardOutputComponent outpComp)
                 {
-                    //OutputComponents.Add(outpComp.GetComponentName(), outpComp);
                     OutputComponents.Add(outpComp);
                 }
 
@@ -1099,13 +1088,6 @@ namespace CircuitMaker.Basics
         {
             Components.Remove(comp);
 
-            /*
-            if (comp is IBoardInterfaceComponent interfaceComponent) {
-                InterfaceComponents.Remove(interfaceComponent.GetComponentName());
-            }
-            //*/
-
-            //*
             if (comp is IGraphicalComponent grapicalComp)
             {
                 GraphicalComponents.Remove(grapicalComp);
@@ -1130,7 +1112,6 @@ namespace CircuitMaker.Basics
             {
                 ContainerComponents.Remove(contComp);
             }
-            //*/
         }
 
         protected void ClearUnusedPins()
@@ -1148,7 +1129,6 @@ namespace CircuitMaker.Basics
                 keepPinPositions.Add(wire.Pos2);
             }
 
-            //*
             HashSet<Pos> removePinPositions = new HashSet<Pos>();
 
             removePinPositions.UnionWith(Pins.Keys);
@@ -1158,31 +1138,10 @@ namespace CircuitMaker.Basics
             {
                 Pins.Remove(pinPos);
             }
-            //*/
-
-            /*
-            foreach (Pos pinPos in Pins.Keys)
-            {
-                if (!Pins[pinPos].HasWires() && !keepPinPositions.Contains(pinPos))
-                {
-                    Pins.Remove(pinPos);
-                }
-            }
-            //*/
         }
 
         public void Render(Graphics graphics, bool simulating, Rectangle bounds, ColourScheme colourScheme)
         {
-            /*
-            for (int x = bounds.Left; x < bounds.Right; x++)
-            {
-                for (int y = bounds.Top; y < bounds.Bottom; y++)
-                {
-                    /graphics.FillEllipse(Brushes.Black, x - 0.005F, y - 0.005F, 0.01F, 0.01F); // should make this better
-                }
-            }//*/
-
-            //*
             for (int x = bounds.Left; x <= bounds.Right; x++)
             {
                 graphics.DrawLine(new Pen(colourScheme.Grid, 0.005F), x, bounds.Top, x, bounds.Bottom);
@@ -1192,7 +1151,6 @@ namespace CircuitMaker.Basics
             {
                 graphics.DrawLine(new Pen(colourScheme.Grid, 0.005F), bounds.Left, y, bounds.Right, y);
             }
-            //*/
 
             Pin pin;
             int connectionCount;
@@ -1228,7 +1186,7 @@ namespace CircuitMaker.Basics
                 }
             }
 
-            graphics.FillEllipse(Brushes.Black, -0.5F, -0.5F, 1, 1);
+            graphics.DrawEllipse(new Pen(Color.Black, 0.01F), -0.1F, -0.1F, 0.2F, 0.2F);
 
             Matrix matrix = new Matrix();
 
@@ -1248,24 +1206,18 @@ namespace CircuitMaker.Basics
 
                     RectangleF compBounds = comp.GetComponentBounds();
 
-                    //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), compBounds.X, compBounds.Y, compBounds.Width, compBounds.Height);
-                    //graphics.DrawRectangle(new Pen(Color.Red, 0.05F), comp.GetComponentBounds());
-                    //graphics.FillEllipse(Brushes.Red, -0.05F, -0.05F, 0.1F, 0.1F);
-
                     matrix.Invert();
                     graphics.MultiplyTransform(matrix);
                 }
             }
 
-            //*
             foreach (Wire wire in Wires)
             {
                 graphics.DrawLine(new Pen(simulating ? colourScheme.GetWireColour(wire.Pin1.GetStateForDisplay()) : colourScheme.Wire, 0.01F), new Point(wire.Pos1.X, wire.Pos1.Y), new Point(wire.Pos2.X, wire.Pos2.Y));
             }
-            //*/
         }
 
-        public bool CheckAllowed(RectangleF bounds) // needs to consider wires too. also, doesn't exactly work <--------------------
+        public bool CheckAllowed(RectangleF bounds)
         {
             foreach (IComponent comp in Components)
             {
@@ -1368,7 +1320,7 @@ namespace CircuitMaker.Basics
 
         public Board Copy(string copyName = null)
         {
-            Board copy = new Board(copyName ?? Name + " - Copy", new Size(ExternalSize.Width, ExternalSize.Height));
+            Board copy = new Board(copyName ?? Name, new Size(ExternalSize.Width, ExternalSize.Height));
 
             foreach (IComponent comp in Components)
             {
@@ -1382,5 +1334,5 @@ namespace CircuitMaker.Basics
 
             return copy;
         }
-    }//*/
+    }
 }
