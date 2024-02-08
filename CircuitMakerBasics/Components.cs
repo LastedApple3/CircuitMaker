@@ -29,6 +29,8 @@ namespace CircuitMaker.Components
 
             ReadWriteImplementation.Constructors.Add(LogicProbeComponent.ID, LogicProbeComponent.Constructor);
 
+            ReadWriteImplementation.Constructors.Add(SevenSegmentComponent.ID, SevenSegmentComponent.Constructor);
+
             ReadWriteImplementation.Constructors.Add(TristateBufferComponent.ID, TristateBufferComponent.Constructor);
 
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardInputComponent.ID, BoardContainerComponents.BoardInputComponent.Constructor);
@@ -51,6 +53,8 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.DefaultDetails.Add(UserToggleInpComponent.ID, UserToggleInpComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(LogicProbeComponent.ID, LogicProbeComponent.DefaultDetails);
+
+            ReadWriteImplementation.DefaultDetails.Add(SevenSegmentComponent.ID, SevenSegmentComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(TristateBufferComponent.ID, TristateBufferComponent.DefaultDetails);
 
@@ -1549,6 +1553,164 @@ namespace CircuitMaker.Components
         {
             return new RectangleF(-0.5F, -0.5F, 1, 1);
         }
+    }
+
+    class SevenSegmentComponent : InpOutpBaseComponents.MultInpNoneOutpBaseComponent, IGraphicalComponent
+    {
+        public override RectangleF GetComponentBounds()
+        {
+            return new Rectangle(-3, -4, 6, 8);
+        }
+
+        public override string GetComponentDetails()
+        {
+            return "";
+        }
+
+        public static string DefaultDetails = "";
+        public static string ID = "7SEG";
+
+        public override string GetComponentID()
+        {
+            return ID;
+        }
+
+        public RectangleF GetGraphicalElementBounds()
+        {
+            return new RectangleF(-2, -3.5F, 4, 7);
+        }
+
+        private Point? GraphicalLocation = null;
+
+        public Point? GetGraphicalElementLocation()
+        {
+            return GraphicalLocation;
+        }
+
+        public override Pos[] GetInpOffsets()
+        {
+            return new Pos[]
+            {
+                new Pos(-4, -3),
+                new Pos(-4, -2),
+                new Pos(-4, -1),
+                new Pos(-4, 0),
+                new Pos(-4, 1),
+                new Pos(-4, 2),
+                new Pos(-4, 3)
+            };
+        }
+
+        public bool HasGraphics()
+        {
+            return true;
+        }
+
+        public static SevenSegmentComponent Constructor(string details)
+        {
+            return new SevenSegmentComponent();
+        }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
+        }
+
+        private PointF[] GetDiamond(PointF around)
+        {
+            return new PointF[]
+            {
+                new PointF(around.X - 0.5F, around.Y),
+                new PointF(around.X, around.Y - 0.5F),
+                new PointF(around.X + 0.5F, around.Y),
+                new PointF(around.X, around.Y + 0.5F)
+            };
+        }
+
+        private void DrawSegment(Graphics graphics, bool simulating, ColourScheme colourScheme, PointF point1, PointF point2, Pin.State state)
+        {
+            GraphicsPath path;
+
+            Brush brush = new SolidBrush(colourScheme.GetWireColour(state));
+
+            PointF[] dia1 = GetDiamond(point1), dia2 = GetDiamond(point2);
+
+            path = new GraphicsPath();
+            path.AddLines(dia1);
+            path.CloseFigure();
+            graphics.FillPath(brush, path);
+
+            path = new GraphicsPath();
+            path.AddLines(dia2);
+            path.CloseFigure();
+            graphics.FillPath(brush, path);
+
+            path = new GraphicsPath();
+            path.AddLines(new PointF[]
+            {
+                dia1[0],
+                dia1[2],
+                dia2[2],
+                dia2[0]
+            });
+            path.CloseFigure();
+            graphics.FillPath(brush, path);
+
+            path = new GraphicsPath();
+            path.AddLines(new PointF[]
+            {
+                dia1[1],
+                dia1[3],
+                dia2[3],
+                dia2[1]
+            });
+            path.CloseFigure();
+            graphics.FillPath(brush, path);
+        }
+
+        public void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme)
+        {
+            Pin.State[] states;
+            if (simulating)
+            {
+                states = GetInpPins().Select(pin => pin.GetStateForDisplay()).ToArray();
+            } else
+            {
+                states = new Pin.State[7];
+            }
+
+            DrawSegment(graphics, simulating, colourScheme, new PointF(-0.5F, -3),  new PointF(0.5F, -3),   states[0]); // a
+            DrawSegment(graphics, simulating, colourScheme, new PointF(1.5F, -1),   new PointF(1.5F, -2),   states[1]); // b
+            DrawSegment(graphics, simulating, colourScheme, new PointF(1.5F, 1),    new PointF(1.5F, 2),    states[2]); // c
+            DrawSegment(graphics, simulating, colourScheme, new PointF(-0.5F, 3),   new PointF(0.5F, 3),    states[3]); // d
+            DrawSegment(graphics, simulating, colourScheme, new PointF(-1.5F, 1),   new PointF(-1.5F, 2),   states[4]); // e
+            DrawSegment(graphics, simulating, colourScheme, new PointF(-1.5F, -1),  new PointF(-1.5F, -2),  states[5]); // f
+            DrawSegment(graphics, simulating, colourScheme, new PointF(-0.5F, 0),   new PointF(0.5F, 0),    states[6]); // g
+        }
+
+        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+        {
+            RectangleF bounds = GetComponentBounds();
+
+            GraphicsPath path = new GraphicsPath();
+            path.AddLines(new PointF[]
+            {
+                new PointF(bounds.Left, bounds.Top),
+                new PointF(bounds.Left, bounds.Bottom),
+                new PointF(bounds.Right, bounds.Bottom),
+                new PointF(bounds.Right, bounds.Top)
+            });
+            path.CloseFigure();
+
+            DrawComponentFromPath(graphics, path, colourScheme);
+        }
+
+        public void SetGraphicalElementLocation(Point? location)
+        {
+            GraphicalLocation = location;
+        }
+
+        public override void Tick() { }
     }
 
     abstract class BoardContainerComponents

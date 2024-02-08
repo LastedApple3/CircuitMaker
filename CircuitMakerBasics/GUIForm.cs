@@ -175,7 +175,7 @@ namespace CircuitMaker.GUI
             None, MoveComponent, DrawWire
         }
 
-        private struct Selection // at some point, allow for multiple selections, containing a list of ComponentOrWire instead of just one.
+        private struct Selection
         {
             public struct ComponentOrWire
             {

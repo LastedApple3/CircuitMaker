@@ -89,6 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="SettingDescriptions.cd" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ComponentSelectionForm.resx">
