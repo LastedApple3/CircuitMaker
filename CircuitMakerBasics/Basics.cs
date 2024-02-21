@@ -546,6 +546,8 @@ namespace CircuitMaker.Basics
         void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme);
         RectangleF GetGraphicalElementBounds();
         Point? GetGraphicalElementLocation();
+        float GetGraphicalElementScale();
+        void SetGraphicalElementScale(float scale);
         void SetGraphicalElementLocation(Point? location);
     }
 
@@ -561,6 +563,27 @@ namespace CircuitMaker.Basics
                 rect.Offset(pos.Value);
 
                 return rect;
+            }
+
+            return null;
+        }
+
+        public static RectangleF? GetScaledGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
+        {
+            RectangleF? rect = comp.GetOffsetGraphicalElementBounds();
+
+            if (rect.HasValue)
+            {
+                float scale = comp.GetGraphicalElementScale();
+
+                RectangleF defRect = rect.Value;
+
+                defRect.X *= scale;
+                defRect.Y *= scale;
+                defRect.Width *= scale;
+                defRect.Height *= scale;
+
+                return defRect;
             }
 
             return null;

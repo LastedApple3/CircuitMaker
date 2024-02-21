@@ -65,7 +65,8 @@ namespace CircuitMaker.Components
         }
 
         /* More Components:
-         * SevenSeg
+         * Multiplexer?
+         * Specialised 7seg MUX?
          */
     }
 
@@ -1412,6 +1413,7 @@ namespace CircuitMaker.Components
             {
                 using (BinaryWriter bw = new BinaryWriter(stream))
                 {
+                    bw.Write(1F);
                     bw.Write(false);
 
                     stream.Position = 0;
@@ -1439,6 +1441,7 @@ namespace CircuitMaker.Components
         public static string DefaultDetails;
 
         private Point? GraphicalLocation = null;
+        private float GraphicalScale = 1;
 
         private StringFormat DisplayFormat;
 
@@ -1468,6 +1471,7 @@ namespace CircuitMaker.Components
             {
                 using (BinaryWriter bw = new BinaryWriter(stream))
                 {
+                    bw.Write(GraphicalScale);
                     bw.Write(GraphicalLocation.HasValue);
                     if (GraphicalLocation.HasValue)
                     {
@@ -1493,8 +1497,7 @@ namespace CircuitMaker.Components
                 {
                     LogicProbeComponent retVal = new LogicProbeComponent();
 
-                    stream.Position = 0;
-
+                    retVal.GraphicalScale = br.ReadSingle();
                     if (br.ReadBoolean())
                     {
                         retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
@@ -1553,21 +1556,69 @@ namespace CircuitMaker.Components
         {
             return new RectangleF(-0.5F, -0.5F, 1, 1);
         }
+
+        public float GetGraphicalElementScale()
+        {
+            return GraphicalScale;
+        }
+
+        public void SetGraphicalElementScale(float scale)
+        {
+            GraphicalScale = scale;
+        }
     }
 
     class SevenSegmentComponent : InpOutpBaseComponents.MultInpNoneOutpBaseComponent, IGraphicalComponent
     {
         public override RectangleF GetComponentBounds()
         {
-            return new Rectangle(-3, -4, 6, 8);
+            return new Rectangle(-4, -4, 7, 8);
         }
 
         public override string GetComponentDetails()
         {
-            return "";
+            using (Stream stream = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(stream))
+                {
+                    bw.Write(GraphicalScale);
+                    bw.Write(GraphicalLocation.HasValue);
+                    if (GraphicalLocation.HasValue)
+                    {
+                        bw.Write(GraphicalLocation.Value.X);
+                        bw.Write(GraphicalLocation.Value.Y);
+                    }
+
+                    stream.Position = 0;
+
+                    using (BinaryReader br = new BinaryReader(stream))
+                    {
+                        return ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
+                    }
+                }
+            }
         }
 
-        public static string DefaultDetails = "";
+        static SevenSegmentComponent()
+        {
+            using (Stream stream = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(stream))
+                {
+                    bw.Write(1F);
+                    bw.Write(false);
+
+                    stream.Position = 0;
+
+                    using (BinaryReader br = new BinaryReader(stream))
+                    {
+                        DefaultDetails = ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
+                    }
+                }
+            }
+        }
+
+        public static string DefaultDetails;
         public static string ID = "7SEG";
 
         public override string GetComponentID()
@@ -1580,7 +1631,18 @@ namespace CircuitMaker.Components
             return new RectangleF(-2, -3.5F, 4, 7);
         }
 
+        public float GetGraphicalElementScale()
+        {
+            return GraphicalScale;
+        }
+
+        public void SetGraphicalElementScale(float scale)
+        {
+            GraphicalScale = scale;
+        }
+
         private Point? GraphicalLocation = null;
+        private float GraphicalScale = 1;
 
         public Point? GetGraphicalElementLocation()
         {
@@ -1608,7 +1670,21 @@ namespace CircuitMaker.Components
 
         public static SevenSegmentComponent Constructor(string details)
         {
-            return new SevenSegmentComponent();
+            using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
+            {
+                using (BinaryReader br = new BinaryReader(stream))
+                {
+                    SevenSegmentComponent retVal = new SevenSegmentComponent();
+
+                    retVal.GraphicalScale = br.ReadSingle();
+                    if (br.ReadBoolean())
+                    {
+                        retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
+                    }
+
+                    return retVal;
+                }
+            }
         }
 
         public override IComponent NonStaticConstructor(string details)
@@ -1618,12 +1694,14 @@ namespace CircuitMaker.Components
 
         private PointF[] GetDiamond(PointF around)
         {
+            float dist = 0.75F;
+
             return new PointF[]
             {
-                new PointF(around.X - 0.5F, around.Y),
-                new PointF(around.X, around.Y - 0.5F),
-                new PointF(around.X + 0.5F, around.Y),
-                new PointF(around.X, around.Y + 0.5F)
+                new PointF(around.X - dist, around.Y),
+                new PointF(around.X, around.Y - dist),
+                new PointF(around.X + dist, around.Y),
+                new PointF(around.X, around.Y + dist)
             };
         }
 
@@ -1695,8 +1773,8 @@ namespace CircuitMaker.Components
             GraphicsPath path = new GraphicsPath();
             path.AddLines(new PointF[]
             {
-                new PointF(bounds.Left, bounds.Top),
-                new PointF(bounds.Left, bounds.Bottom),
+                new PointF(bounds.Left + 1, bounds.Top),
+                new PointF(bounds.Left + 1, bounds.Bottom),
                 new PointF(bounds.Right, bounds.Bottom),
                 new PointF(bounds.Right, bounds.Top)
             });
@@ -2147,6 +2225,7 @@ namespace CircuitMaker.Components
             private static Dictionary<Board.InterfaceLocation.SideEnum, StringFormat> StringFormats;
 
             private Point? GraphicalLocation = null;
+            private float GraphicalScale = 1;
 
             public override Pos[] GetInpOffsets()
             {
@@ -2271,7 +2350,27 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return InternalBoard.Name;
+                using (Stream stream = new MemoryStream())
+                {
+                    using (BinaryWriter bw = new BinaryWriter(stream))
+                    {
+                        bw.Write(InternalBoard.Name);
+                        bw.Write(GraphicalScale);
+                        bw.Write(GraphicalLocation.HasValue);
+                        if (GraphicalLocation.HasValue)
+                        {
+                            bw.Write(GraphicalLocation.Value.X);
+                            bw.Write(GraphicalLocation.Value.Y);
+                        }
+
+                        stream.Position = 0;
+
+                        using (BinaryReader br = new BinaryReader(stream))
+                        {
+                            return ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
+                        }
+                    }
+                }
             }
 
             private (Pos, Pos) GetOffset(Board.InterfaceLocation interfaceLocation)
@@ -2347,7 +2446,22 @@ namespace CircuitMaker.Components
 
             public static BoardContainerComponent Constructor(string details)
             {
-                return new BoardContainerComponent(details);
+                using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
+                {
+                    using (BinaryReader br = new BinaryReader(stream))
+                    {
+                        BoardContainerComponent retVal = new BoardContainerComponent(br.ReadString());
+
+                        retVal.GraphicalScale = br.ReadSingle();
+
+                        if (br.ReadBoolean())
+                        {
+                            retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
+                        }
+
+                        return retVal;
+                    }
+                }
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -2477,6 +2591,16 @@ namespace CircuitMaker.Components
                 }
 
                 return rect;
+            }
+
+            public float GetGraphicalElementScale()
+            {
+                return GraphicalScale;
+            }
+
+            public void SetGraphicalElementScale(float scale)
+            {
+                GraphicalScale = scale;
             }
         }
     } 

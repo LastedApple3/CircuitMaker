@@ -105,7 +105,7 @@ namespace CircuitMaker.GUI.ExtApp
 
             graphicalsStart += 0.5F;
 
-            int graphicalsWidth = GetUnplacedGraphicalComponents().Select(comp => (int)Math.Ceiling(comp.GetGraphicalElementBounds().Width)).Append(scale).Aggregate(Math.Max);
+            int graphicalsWidth = GetUnplacedGraphicalComponents().Select(comp => (int)Math.Ceiling(comp.GetGraphicalElementBounds().Width)).Append(1).Aggregate(Math.Max) * scale;
 
             graphicalsDisplayBounds = new Rectangle(size.Width, 0, graphicalsWidth, size.Height);
 
@@ -530,6 +530,16 @@ namespace CircuitMaker.GUI.ExtApp
                 }
 
                 Invalidate();
+            }
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+
+            if (e.Location.X > compDisplayBounds.Width)
+            {
+                graphicalsTransformationMatrix.Translate(0, Math.Sign(e.Delta) * scale);
             }
         }
     }
