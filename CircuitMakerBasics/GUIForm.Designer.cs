@@ -225,6 +225,7 @@ namespace CircuitMaker.GUI
             this.builder.Size = new Size(794, 370);
             this.builder.TabIndex = 0;
             this.builder.SimulatingChange += BtnSimulate_UpdateText;
+            this.builder.SimulatingChange += Builder_SimulatingChange;
             // 
             // btnSimulate
             // 

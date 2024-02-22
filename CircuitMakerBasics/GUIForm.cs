@@ -166,6 +166,15 @@ namespace CircuitMaker.GUI
         {
             Text = $"{builder.GetBoard().Name} - {(builder.Simulating ? "Simulating" : "Editing")}";
         }
+
+        private void Builder_SimulatingChange(bool simulating)
+        {
+            insertToolStripMenuItem.Enabled = !simulating;
+            editToolStripMenuItem.Enabled = !simulating;
+
+            //insertBoardComponentToolStripMenuItem.Enabled = !simulating;
+            //insertBuiltinComponentToolStripMenuItem.Enabled = !simulating;
+        }
     }
 
     public class Builder : UserControl
@@ -333,7 +342,8 @@ namespace CircuitMaker.GUI
                 WireLow = Color.DarkBlue,
                 WireHigh = Color.Blue,
                 WireIllegal = Color.Red,
-                Grid = Color.FromArgb(63, Color.Black)
+                Grid = Color.FromArgb(63, Color.Black),
+                Selection = Color.Red
             };
 
             int tps = 10;
@@ -693,7 +703,7 @@ namespace CircuitMaker.GUI
                     bounds = selection.SelectedWire.InflatedBounds();
                 }
 
-                graphics.DrawRectangle(new Pen(Color.Red, 0.05F), bounds.X, bounds.Y, bounds.Width, bounds.Height);
+                graphics.DrawRectangle(new Pen(colourScheme.Selection, 0.05F), bounds.X, bounds.Y, bounds.Width, bounds.Height);
             }
 
             Matrix matrix = new Matrix();
@@ -720,7 +730,7 @@ namespace CircuitMaker.GUI
 
             graphics.ResetTransform();
 
-            graphics.DrawRectangle(new Pen(Color.Red, 1), 0, 0, Width - 1, Height - 1);
+            graphics.DrawRectangle(new Pen(colourScheme.Selection, 1), 0, 0, Width - 1, Height - 1);
         }
 
         protected override void OnLayout(LayoutEventArgs e)

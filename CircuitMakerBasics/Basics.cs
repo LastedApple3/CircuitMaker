@@ -461,7 +461,7 @@ namespace CircuitMaker.Basics
 
     public struct ColourScheme
     {
-        public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WireHigh, WireIllegal, Grid;
+        public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WireHigh, WireIllegal, Grid, Selection;
 
         public Color GetWireColour(Pin.State state)
         {
@@ -553,11 +553,18 @@ namespace CircuitMaker.Basics
 
     public static class GraphicalComponentExtensions
     {
-        public static RectangleF? GetOffsetGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
+        private static RectangleF Scale(RectangleF rect, float scale)
         {
-            RectangleF rect = comp.GetGraphicalElementBounds();
-            Point? pos = comp.GetGraphicalElementLocation();
+            rect.X *= scale;
+            rect.Y *= scale;
+            rect.Width *= scale;
+            rect.Height *= scale;
 
+            return rect;
+        }
+
+        private static RectangleF? Offset(RectangleF rect, Point? pos)
+        {
             if (pos.HasValue)
             {
                 rect.Offset(pos.Value);
@@ -568,25 +575,19 @@ namespace CircuitMaker.Basics
             return null;
         }
 
-        public static RectangleF? GetScaledGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
+        public static RectangleF? GetOffsetGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
         {
-            RectangleF? rect = comp.GetOffsetGraphicalElementBounds();
+            return Offset(comp.GetGraphicalElementBounds(), comp.GetGraphicalElementLocation());
+        }
 
-            if (rect.HasValue)
-            {
-                float scale = comp.GetGraphicalElementScale();
+        public static RectangleF GetScaledGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
+        {
+            return Scale(comp.GetGraphicalElementBounds(), comp.GetGraphicalElementScale());
+        }
 
-                RectangleF defRect = rect.Value;
-
-                defRect.X *= scale;
-                defRect.Y *= scale;
-                defRect.Width *= scale;
-                defRect.Height *= scale;
-
-                return defRect;
-            }
-
-            return null;
+        public static RectangleF? GetOffsetScaledGraphicalElementBounds<T>(this T comp) where T : IGraphicalComponent
+        {
+            return Offset(Scale(comp.GetGraphicalElementBounds(), comp.GetGraphicalElementScale()), comp.GetGraphicalElementLocation());
         }
     }
 
@@ -1202,14 +1203,16 @@ namespace CircuitMaker.Basics
                         graphics.FillEllipse(new SolidBrush(colourScheme.GetWireColour(pin.GetStateForDisplay())), pinPos.X - 0.05F, pinPos.Y - 0.05F, 0.1F, 0.1F);
                     }
 
+                    /*
                     if (simulating)
                     {
                         graphics.DrawString(pin.GetStateForDisplay().ToString(), new Font("arial", 0.1F), Brushes.Black, pinPos.X, pinPos.Y);
                     }
+                    //*/
                 }
             }
 
-            graphics.DrawEllipse(new Pen(Color.Black, 0.01F), -0.1F, -0.1F, 0.2F, 0.2F);
+            graphics.DrawEllipse(new Pen(colourScheme.Grid, 0.01F), -0.1F, -0.1F, 0.2F, 0.2F);
 
             Matrix matrix = new Matrix();
 

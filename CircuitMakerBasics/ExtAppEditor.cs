@@ -102,10 +102,9 @@ namespace CircuitMaker.GUI.ExtApp
             compDisplayBounds = new Rectangle(Point.Empty, size);
 
             size.Width += scale / 2;
-
             graphicalsStart += 0.5F;
 
-            int graphicalsWidth = GetUnplacedGraphicalComponents().Select(comp => (int)Math.Ceiling(comp.GetGraphicalElementBounds().Width)).Append(1).Aggregate(Math.Max) * scale;
+            int graphicalsWidth = GetUnplacedGraphicalComponents().Select(comp => (int)Math.Ceiling(comp.GetScaledGraphicalElementBounds().Width * scale)).Append(scale).Aggregate(Math.Max);
 
             graphicalsDisplayBounds = new Rectangle(size.Width, 0, graphicalsWidth, size.Height);
 
@@ -207,7 +206,7 @@ namespace CircuitMaker.GUI.ExtApp
 
                 matrix.Translate(0, offset);
 
-                boundsF = graphicalComp.GetGraphicalElementBounds();
+                boundsF = graphicalComp.GetScaledGraphicalElementBounds();
                 bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
 
                 offset += bounds.Height;
@@ -263,6 +262,7 @@ namespace CircuitMaker.GUI.ExtApp
             Matrix matrix = new Matrix();
             RectangleF boundsF;
             Rectangle bounds;
+            float compScale;
 
             foreach (IGraphicalComponent graphicalComp in GetUnplacedGraphicalComponents())
             {
@@ -270,18 +270,21 @@ namespace CircuitMaker.GUI.ExtApp
 
                 matrix.Translate(0, offset);
 
-                boundsF = graphicalComp.GetGraphicalElementBounds();
+                boundsF = graphicalComp.GetScaledGraphicalElementBounds();
                 bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
+                compScale = graphicalComp.GetGraphicalElementScale();
 
                 offset += bounds.Height;
 
                 matrix.Translate(-bounds.X, -bounds.Y);
+                matrix.Scale(compScale, compScale);
 
                 graphics.MultiplyTransform(matrix, MatrixOrder.Append);
 
                 if (dragState.IsGraphicalComp() && dragState.GetGraphicalComp() == graphicalComp)
                 {
-                    graphics.FillRectangle(Brushes.Gray, boundsF);
+                    //graphics.DrawRectangle(new Pen(colourScheme.Selection, 0.5F), bounds);
+                    graphics.FillRectangle(new HatchBrush(HatchStyle.ForwardDiagonal, colourScheme.Selection, Color.Transparent), boundsF);
                 }
 
                 graphicalComp.RenderGraphicalElement(graphics, false, colourScheme);
@@ -351,7 +354,7 @@ namespace CircuitMaker.GUI.ExtApp
 
                     foreach (IGraphicalComponent graphicalComp in GetGraphicalComponents())
                     {
-                        bounds = graphicalComp.GetOffsetGraphicalElementBounds();
+                        bounds = graphicalComp.GetOffsetScaledGraphicalElementBounds();
 
                         if (bounds.HasValue && bounds.Value.Contains(CompDetransformPointF(e.Location)))
                         {
@@ -388,6 +391,8 @@ namespace CircuitMaker.GUI.ExtApp
             if (dragState.IsAnything())
             {
                 dragState.Reset();
+
+                ResetSize();
 
                 Invalidate();
             }
@@ -527,6 +532,8 @@ namespace CircuitMaker.GUI.ExtApp
                     {
                         graphicalComp.SetGraphicalElementLocation(null);
                     }
+
+                    ResetSize();
                 }
 
                 Invalidate();
@@ -536,11 +543,33 @@ namespace CircuitMaker.GUI.ExtApp
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             base.OnMouseWheel(e);
+            
+            Point farCorner = new Point(compDisplayBounds.Width - scale, compDisplayBounds.Height - scale);
 
             if (e.Location.X > compDisplayBounds.Width)
             {
-                graphicalsTransformationMatrix.Translate(0, Math.Sign(e.Delta) * scale);
+                graphicalsTransformationMatrix.Translate(0, Math.Sign(e.Delta));
+            } else
+            {
+                if (!(e.Location.X < scale || e.Location.X > farCorner.X || e.Location.Y < scale || e.Location.Y > farCorner.Y))
+                {
+                    RectangleF? bounds;
+
+                    foreach (IGraphicalComponent graphicalComp in GetGraphicalComponents())
+                    {
+                        bounds = graphicalComp.GetOffsetScaledGraphicalElementBounds();
+
+                        if (bounds.HasValue && bounds.Value.Contains(CompDetransformPointF(e.Location)))
+                        {
+                            graphicalComp.SetGraphicalElementScale(graphicalComp.GetGraphicalElementScale() * (1 + (0.1F * Math.Sign(e.Delta))));
+
+                            break;
+                        }
+                    }
+                }
             }
+
+            Invalidate();
         }
     }
 }

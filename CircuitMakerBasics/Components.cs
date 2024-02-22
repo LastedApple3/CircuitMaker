@@ -1628,7 +1628,7 @@ namespace CircuitMaker.Components
 
         public RectangleF GetGraphicalElementBounds()
         {
-            return new RectangleF(-2, -3.5F, 4, 7);
+            return new RectangleF(-2.25F, -3.75F, 4.5F, 7.5F);
         }
 
         public float GetGraphicalElementScale()
@@ -2529,15 +2529,18 @@ namespace CircuitMaker.Components
             {
                 Matrix matrix;
                 PointF? loc;
+                float scale;
 
                 foreach (IGraphicalComponent graphicalComp in InternalBoard.GetGraphicalComponents().Where(comp => comp.HasGraphics()))
                 {
                     loc = graphicalComp.GetGraphicalElementLocation();
+                    scale = graphicalComp.GetGraphicalElementScale();
 
                     if (loc.HasValue)
                     {
                         matrix = new Matrix();
                         matrix.Translate(loc.Value.X, loc.Value.Y);
+                        matrix.Scale(scale, scale);
 
                         graphics.MultiplyTransform(matrix);
 
