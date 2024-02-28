@@ -8,6 +8,7 @@ using CircuitMaker.GUI.Settings;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
+using System.Security.Policy;
 
 namespace CircuitMaker.Components
 {
@@ -22,7 +23,9 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.Constructors.Add(VarInpComponents.VarInpNorComponent.ID, VarInpComponents.VarInpNorComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(VarInpComponents.VarInpXnorComponent.ID, VarInpComponents.VarInpXnorComponent.Constructor);
 
-            ReadWriteImplementation.Constructors.Add(NotComponent.ID, NotComponent.Constructor);
+            ReadWriteImplementation.Constructors.Add(BufferComponents.BufferComponent.ID, BufferComponents.BufferComponent.Constructor);
+            ReadWriteImplementation.Constructors.Add(BufferComponents.NotComponent.ID, BufferComponents.NotComponent.Constructor);
+            ReadWriteImplementation.Constructors.Add(BufferComponents.TristateBufferComponent.ID, BufferComponents.TristateBufferComponent.Constructor);
 
             ReadWriteImplementation.Constructors.Add(FixedStateComponent.ID, FixedStateComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(UserToggleInpComponent.ID, UserToggleInpComponent.Constructor);
@@ -30,8 +33,6 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.Constructors.Add(LogicProbeComponent.ID, LogicProbeComponent.Constructor);
 
             ReadWriteImplementation.Constructors.Add(SevenSegmentComponent.ID, SevenSegmentComponent.Constructor);
-
-            ReadWriteImplementation.Constructors.Add(TristateBufferComponent.ID, TristateBufferComponent.Constructor);
 
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardInputComponent.ID, BoardContainerComponents.BoardInputComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BoardContainerComponents.BoardOutputComponent.ID, BoardContainerComponents.BoardOutputComponent.Constructor);
@@ -47,7 +48,9 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.DefaultDetails.Add(VarInpComponents.VarInpNorComponent.ID, VarInpComponents.VarInpNorComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(VarInpComponents.VarInpXnorComponent.ID, VarInpComponents.VarInpXnorComponent.DefaultDetails);
 
-            ReadWriteImplementation.DefaultDetails.Add(NotComponent.ID, NotComponent.DefaultDetails);
+            ReadWriteImplementation.DefaultDetails.Add(BufferComponents.BufferComponent.ID, BufferComponents.BufferComponent.DefaultDetails);
+            ReadWriteImplementation.DefaultDetails.Add(BufferComponents.NotComponent.ID, BufferComponents.NotComponent.DefaultDetails);
+            ReadWriteImplementation.DefaultDetails.Add(BufferComponents.TristateBufferComponent.ID, BufferComponents.TristateBufferComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(FixedStateComponent.ID, FixedStateComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(UserToggleInpComponent.ID, UserToggleInpComponent.DefaultDetails);
@@ -55,8 +58,6 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.DefaultDetails.Add(LogicProbeComponent.ID, LogicProbeComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(SevenSegmentComponent.ID, SevenSegmentComponent.DefaultDetails);
-
-            ReadWriteImplementation.DefaultDetails.Add(TristateBufferComponent.ID, TristateBufferComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(BoardContainerComponents.BoardInputComponent.ID, BoardContainerComponents.BoardInputComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(BoardContainerComponents.BoardOutputComponent.ID, BoardContainerComponents.BoardOutputComponent.DefaultDetails);
@@ -246,15 +247,11 @@ namespace CircuitMaker.Components
 
             public static Color GetWireColour(bool simulating, Pos offset, ColourScheme colourScheme, IComponent comp)
             {
-                if (!simulating)
+                if (simulating && comp.IsPlaced())
                 {
-                    return colourScheme.Wire;
+                    return colourScheme.GetWireColour(comp.GetComponentBoard()[offset.Rotate(comp.GetComponentRotation()).Add(comp.GetComponentPos())].GetStateForDisplay());
                 }
 
-                if (comp.IsPlaced())
-                {
-                    return colourScheme.GetWireColour(comp.GetComponentBoard()[offset.Add(comp.GetComponentPos())].GetStateForDisplay());
-                }
                 return colourScheme.Wire;
             }
 
@@ -275,6 +272,7 @@ namespace CircuitMaker.Components
                 DrawInpOutpLine(graphics, simulating, outpOffset, new PointF(outpOffset.X - 1.5F, outpOffset.Y), colourScheme, comp);
             }
         }
+
 
         public interface ISingInpComponent : IComponent
         {
@@ -309,7 +307,6 @@ namespace CircuitMaker.Components
         public interface ISingInpMultOutpComponent : ISingInpComponent, IMultOutpComponent { }
         public interface IMultInpSingOutpComponent : IMultInpComponent, ISingOutpComponent { }
         public interface IMultInpMultOutpComponent : IMultInpComponent, IMultOutpComponent { }
-
 
         public abstract class SingInpNoneOutpBaseComponent : BaseComponent, ISingInpComponent
         {
@@ -682,70 +679,198 @@ namespace CircuitMaker.Components
         }
     }
 
-    class NotComponent : InpOutpBaseComponents.SingInpSingOutpBaseComponent
+    abstract class BufferComponents
     {
-        public override Pos GetInpOffset()
+        public abstract class BaseBufferComponent : InpOutpBaseComponents.MultInpSingOutpBaseComponent
         {
-            return new Pos(-2, 0);
-        }
-
-        public override Pos GetOutpOffset()
-        {
-            return new Pos(2, 0);
-        }
-
-        public NotComponent() { }
-
-        public override void Tick()
-        {
-            GetOutpPin().SetState(GetInpPin().GetStateForComponent().Not());
-        }
-
-        public static string ID = "NOT";
-        public static string DefaultDetails = "";
-
-        public override string GetComponentID()
-        {
-            return ID;
-        }
-
-        public override string GetComponentDetails()
-        {
-            return "";
-        }
-
-        public static NotComponent Constructor(string details)
-        {
-            return new NotComponent();
-        }
-
-        public override IComponent NonStaticConstructor(string details)
-        {
-            return Constructor(details);
-        }
-
-        public override RectangleF GetComponentBounds()
-        {
-            RectangleF rect = GetDefaultComponentBounds();
-            rect.Inflate(0, 1);
-            return rect;
-        }
-
-        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
-        {
-            GraphicsPath path = new GraphicsPath();
-
-            path.AddLines(new PointF[]
+            public override Pos GetOutpOffset()
             {
+                return new Pos(2, 0);
+            }
+
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+            {
+                GraphicsPath path = new GraphicsPath();
+
+                path.AddLines(new PointF[]
+                {
                 new PointF(-1, -1),
                 new PointF(1, 0),
                 new PointF(-1, 1)
-            });
-            path.CloseFigure();
+                });
+                path.CloseFigure();
 
-            DrawComponentFromPath(graphics, path, colourScheme);
+                DrawComponentFromPath(graphics, path, colourScheme);
+            }
+        }
 
-            DrawInversionCircle(graphics, new PointF(1, 0), colourScheme);
+        public class BufferComponent : BaseBufferComponent
+        {
+            public override Pos[] GetInpOffsets()
+            {
+                return new Pos[] { new Pos(-2, 0) };
+            }
+
+            public BufferComponent() { }
+
+            public override void Tick()
+            {
+                GetOutpPin().SetState(GetInpPins()[0].GetStateForComponent());
+            }
+
+            public static string ID = "BUFFER";
+            public static string DefaultDetails = "";
+
+            public override string GetComponentID()
+            {
+                return ID;
+            }
+
+            public override string GetComponentDetails()
+            {
+                return "";
+            }
+
+            public static BufferComponent Constructor(string details)
+            {
+                return new BufferComponent();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
+
+            public override RectangleF GetComponentBounds()
+            {
+                RectangleF rect = GetDefaultComponentBounds();
+                rect.Inflate(0, 1);
+                return rect;
+            }
+        }
+
+        public class NotComponent : BaseBufferComponent
+        {
+            public override Pos[] GetInpOffsets()
+            {
+                return new Pos[] { new Pos(-2, 0) };
+            }
+
+            public NotComponent() { }
+
+            public override void Tick()
+            {
+                GetOutpPin().SetState(GetInpPins()[0].GetStateForComponent().Not());
+            }
+
+            public static string ID = "NOT";
+            public static string DefaultDetails = "";
+
+            public override string GetComponentID()
+            {
+                return ID;
+            }
+
+            public override string GetComponentDetails()
+            {
+                return "";
+            }
+
+            public static NotComponent Constructor(string details)
+            {
+                return new NotComponent();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
+
+            public override RectangleF GetComponentBounds()
+            {
+                RectangleF rect = GetDefaultComponentBounds();
+                rect.Inflate(0, 1);
+                return rect;
+            }
+
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+            {
+                base.RenderMainShape(graphics, simulating, colourScheme);
+
+                DrawInversionCircle(graphics, new PointF(1, 0), colourScheme);
+            }
+        }
+
+        public class TristateBufferComponent : BaseBufferComponent
+        {
+            public override Pos[] GetInpOffsets()
+            {
+                return new Pos[] {
+                    new Pos(-2, 0),
+                    new Pos(0, -2)
+                };
+            }
+
+            public TristateBufferComponent() { }
+
+            public override void Tick()
+            {
+                Pin.State activationState = GetInpPins()[1].GetStateForComponent();
+
+                if (activationState == Pin.State.HIGH)
+                {
+                    GetOutpPin().SetState(GetInpPins()[0].GetStateForComponent());
+                }
+                else if (activationState == Pin.State.LOW)
+                {
+                    GetOutpPin().SetState(Pin.State.FLOATING);
+                }
+                else
+                {
+                    GetOutpPin().SetState(Pin.State.ILLEGAL);
+                }
+            }
+
+            public static string ID = "TRISTATE";
+            public static string DefaultDetails = "";
+
+            public override string GetComponentID()
+            {
+                return ID;
+            }
+
+            public override string GetComponentDetails()
+            {
+                return "";
+            }
+
+            public static TristateBufferComponent Constructor(string details)
+            {
+                return new TristateBufferComponent();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
+
+            public override RectangleF GetComponentBounds()
+            {
+                RectangleF rect = GetDefaultComponentBounds();
+                rect.Height += 1;
+                return rect;
+            }
+
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
+            {
+                InpOutpBaseComponents.InpOutpTools.DrawInpLine(graphics, simulating, GetInpOffsets()[0], colourScheme, this);
+
+                InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, GetInpOffsets()[1], new PointF(0, 0), colourScheme, this);
+
+                InpOutpBaseComponents.InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
+
+                RenderMainShape(graphics, simulating, colourScheme);
+            }
         }
     }
 
@@ -1307,96 +1432,6 @@ namespace CircuitMaker.Components
         public new void ResetToDefault()
         {
             OutputState = DefaultState;
-        }
-    }
-
-    class TristateBufferComponent : InpOutpBaseComponents.MultInpSingOutpBaseComponent
-    {
-        public override Pos[] GetInpOffsets()
-        {
-            return new Pos[] {
-                new Pos(-2, 0),
-                new Pos(0, -2)
-            };
-        }
-
-        public override Pos GetOutpOffset()
-        {
-            return new Pos(2, 0);
-        }
-
-        public TristateBufferComponent() { }
-
-        public override void Tick()
-        {
-            Pin.State activationState = GetInpPins()[1].GetStateForComponent();
-
-            if (activationState == Pin.State.HIGH)
-            {
-                GetOutpPin().SetState(GetInpPins()[0].GetStateForComponent());
-            } else if (activationState == Pin.State.LOW)
-            {
-                GetOutpPin().SetState(Pin.State.FLOATING);
-            } else
-            {
-                GetOutpPin().SetState(Pin.State.ILLEGAL);
-            }
-        }
-
-        public static string ID = "TRISTATE";
-        public static string DefaultDetails = "";
-
-        public override string GetComponentID()
-        {
-            return ID;
-        }
-
-        public override string GetComponentDetails()
-        {
-            return "";
-        }
-
-        public static TristateBufferComponent Constructor(string details)
-        {
-            return new TristateBufferComponent();
-        }
-
-        public override IComponent NonStaticConstructor(string details)
-        {
-            return Constructor(details);
-        }
-
-        public override RectangleF GetComponentBounds()
-        {
-            RectangleF rect = GetDefaultComponentBounds();
-            rect.Height += 1;
-            return rect;
-        }
-
-        public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
-        {
-            InpOutpBaseComponents.InpOutpTools.DrawInpLine(graphics, simulating, GetInpOffsets()[0], colourScheme, this);
-
-            InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, GetInpOffsets()[1], new PointF(0, 0), colourScheme, this);
-
-            InpOutpBaseComponents.InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
-
-            RenderMainShape(graphics, simulating, colourScheme);
-        }
-
-        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
-        {
-            GraphicsPath path = new GraphicsPath();
-
-            path.AddLines(new PointF[]
-            {
-                new PointF(-1, -1),
-                new PointF(1, 0),
-                new PointF(-1, 1)
-            });
-            path.CloseFigure();
-
-            DrawComponentFromPath(graphics, path, colourScheme);
         }
     }
 

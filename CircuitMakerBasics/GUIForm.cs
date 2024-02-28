@@ -346,7 +346,7 @@ namespace CircuitMaker.GUI
                 Selection = Color.Red
             };
 
-            int tps = 10;
+            int tps = 1;
 
             simulationTimer = new Timer
             {
@@ -855,6 +855,8 @@ namespace CircuitMaker.GUI
 
         private void StartWire(Pos pos)
         {
+            board.SimplifyWires();
+
             Rectangle bounds;
 
             HashSet<Wire> removeWires = new HashSet<Wire>();
@@ -882,8 +884,6 @@ namespace CircuitMaker.GUI
             {
                 new Wire(wire.Item1, wire.Item2, board);
             }
-
-            board.SimplifyWires();
 
             wireStart = pos;
         }

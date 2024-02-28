@@ -87,6 +87,7 @@ namespace CircuitMaker
             }
 
             IBoardInputComponent[] inps = new IBoardInputComponent[inpCount];
+            IComponent[] inpBuffers = new IComponent[inpCount];
             IComponent[] inpNots = new IComponent[inpCount];
             Wire[] inpNotWires = new Wire[inpCount];
             List<int>[] wirePoints = new List<int>[2 * inpCount];
@@ -94,9 +95,11 @@ namespace CircuitMaker
             for (int i = 0; i < inpCount; i++)
             {
                 inps[i] = new BoardContainerComponents.BoardInputComponent($"I{inpCount - 1 - i}", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, i + inpOffset));
-                inpNots[i] = new NotComponent();
+                inpBuffers[i] = new BufferComponents.BufferComponent();
+                inpNots[i] = new BufferComponents.NotComponent();
 
                 inps[i].Place(new Pos(0, 4 * i), MUXBoard);
+                inpBuffers[i].Place(new Pos(4, 4 * i), MUXBoard);
                 inpNots[i].Place(new Pos(4, (4 * i) + 2), MUXBoard);
                 inpNotWires[i] = new Wire(inps[i].GetAllPinPositions()[0], inpNots[i].GetAllPinPositions()[0], MUXBoard);
 
@@ -178,9 +181,9 @@ namespace CircuitMaker
 
                     outpOrInpWires[i][j] = new Wire[]
                     {
-                        new Wire(andOutp, inter1, MUXBoard),
-                        new Wire(inter1, inter2, MUXBoard),
-                        new Wire(inter2, orInp, MUXBoard)
+                            new Wire(andOutp, inter1, MUXBoard),
+                            new Wire(inter1, inter2, MUXBoard),
+                            new Wire(inter2, orInp, MUXBoard)
                     };
                 }
 
@@ -200,7 +203,7 @@ namespace CircuitMaker
 
                 rails[i] = new Wire[wirePoints[i].Count];
 
-                wirePoints[i].Add(i < inpCount ? 2 : 6);
+                wirePoints[i].Add(6);
                 wirePoints[i].Sort();
 
                 for (int j = 0; j < wirePoints[i].Count - 1; j++)

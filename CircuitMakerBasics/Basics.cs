@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.Remoting.Messaging;
 
 namespace CircuitMaker.Basics
 {
@@ -196,6 +197,8 @@ namespace CircuitMaker.Basics
 
         private static void WriteBoardBasic(BinaryWriter bw, Board board)
         {
+            board.SimplifyWires();
+
             bw.Write(board.Name);
             bw.Write(board.ExternalSize.Width);
             bw.Write(board.ExternalSize.Height);
@@ -254,6 +257,8 @@ namespace CircuitMaker.Basics
             {
                 br.ReadWire(board);
             }
+
+            board.SimplifyWires();
 
             return board;
         }
@@ -455,7 +460,7 @@ namespace CircuitMaker.Basics
                 return bounds.Left < pos.X && pos.X < bounds.Right && pos.Y == Pos1.Y;
             }
 
-            return false;
+            return bounds.Contains(new Point(pos.X, pos.Y));
         }
     }
 
@@ -681,7 +686,7 @@ namespace CircuitMaker.Basics
 
         public State GetStateForComponent()
         {
-            return CurrentState;
+            return PrevState;
         }
 
         public State GetStateForWire()
@@ -690,6 +695,7 @@ namespace CircuitMaker.Basics
             {
                 return CurrentState;
             }
+
             return State.FLOATING;
         }
 
@@ -718,6 +724,7 @@ namespace CircuitMaker.Basics
             if (PrevState != CurrentState)
             {
                 PrevState = CurrentState;
+
                 if (WireUpdate != null)
                 {
                     WireUpdate.Invoke();
@@ -1203,7 +1210,7 @@ namespace CircuitMaker.Basics
                         graphics.FillEllipse(new SolidBrush(colourScheme.GetWireColour(pin.GetStateForDisplay())), pinPos.X - 0.05F, pinPos.Y - 0.05F, 0.1F, 0.1F);
                     }
 
-                    /*
+                    //*
                     if (simulating)
                     {
                         graphics.DrawString(pin.GetStateForDisplay().ToString(), new Font("arial", 0.1F), Brushes.Black, pinPos.X, pinPos.Y);
@@ -1276,13 +1283,31 @@ namespace CircuitMaker.Basics
 
         public void SimplifyWires()
         {
+            Pin pin;
             Wire[] wires;
+            List<Pos> compPins;
 
-            foreach (Pin pin in Pins.Values)
+            foreach (Pos pinPos in Pins.Keys)
             {
-                wires = pin.GetWires();
+                pin = Pins[pinPos];
 
-                if (wires.Length == 2 && wires[0].IsHori() == wires[1].IsHori() && wires[0].IsVert() == wires[1].IsVert() && (wires[0].IsHori() || wires[0].IsVert()))
+                foreach (Wire wire in pin.GetWires())
+                {
+                    if (wire.Pos1.Equals(wire.Pos2))
+                    {
+                        wire.Remove();
+                    }
+                }
+
+                wires = pin.GetWires();
+                compPins = new List<Pos>();
+
+                foreach (IComponent comp in Components)
+                {
+                    compPins.AddRange(comp.GetAllPinPositions());
+                }
+
+                if (wires.Length == 2 && compPins.Where(pinPos.Equals).Count() == 0 && wires[0].IsHori() == wires[1].IsHori() && wires[0].IsVert() == wires[1].IsVert() && (wires[0].IsHori() || wires[0].IsVert()))
                 {
                     if (wires[0].Pos1.Equals(wires[1].Pos1) && !wires[0].Pos2.Equals(wires[1].Pos2))
                     {
