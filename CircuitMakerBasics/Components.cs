@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.Security.Policy;
+using System.Reflection.Emit;
 
 namespace CircuitMaker.Components
 {
@@ -26,6 +27,9 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.Constructors.Add(BufferComponents.BufferComponent.ID, BufferComponents.BufferComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BufferComponents.NotComponent.ID, BufferComponents.NotComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BufferComponents.TristateBufferComponent.ID, BufferComponents.TristateBufferComponent.Constructor);
+
+            ReadWriteImplementation.Constructors.Add(PullComponents.PullUpComponent.ID, PullComponents.PullUpComponent.Constructor);
+            ReadWriteImplementation.Constructors.Add(PullComponents.PullDownComponent.ID, PullComponents.PullDownComponent.Constructor);
 
             ReadWriteImplementation.Constructors.Add(FixedStateComponent.ID, FixedStateComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(UserToggleInpComponent.ID, UserToggleInpComponent.Constructor);
@@ -51,6 +55,9 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.DefaultDetails.Add(BufferComponents.BufferComponent.ID, BufferComponents.BufferComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(BufferComponents.NotComponent.ID, BufferComponents.NotComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(BufferComponents.TristateBufferComponent.ID, BufferComponents.TristateBufferComponent.DefaultDetails);
+
+            ReadWriteImplementation.DefaultDetails.Add(PullComponents.PullUpComponent.ID, PullComponents.PullUpComponent.DefaultDetails);
+            ReadWriteImplementation.DefaultDetails.Add(PullComponents.PullDownComponent.ID, PullComponents.PullDownComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(FixedStateComponent.ID, FixedStateComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(UserToggleInpComponent.ID, UserToggleInpComponent.DefaultDetails);
@@ -138,7 +145,7 @@ namespace CircuitMaker.Components
         }
 
         public abstract void Tick();
-        public void ResetToDefault() { }
+        public virtual void ResetToDefault() { }
 
         public abstract Pos[] GetAllPinOffsets();
         public abstract Pos[] GetAllPinPositions();
@@ -821,7 +828,7 @@ namespace CircuitMaker.Components
                 {
                     GetOutpPin().SetState(GetInpPins()[0].GetStateForComponent());
                 }
-                else if (activationState == Pin.State.LOW)
+                else if (activationState == Pin.State.LOW || activationState == Pin.State.FLOATING)
                 {
                     GetOutpPin().SetState(Pin.State.FLOATING);
                 }
@@ -870,6 +877,113 @@ namespace CircuitMaker.Components
                 InpOutpBaseComponents.InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
                 RenderMainShape(graphics, simulating, colourScheme);
+            }
+        }
+    }
+
+    abstract class PullComponents
+    {
+        public abstract class BasePullComponent : InpOutpBaseComponents.SingInpSingOutpBaseComponent, IWireComponent
+        {
+            protected abstract Pin.State pullTo();
+            
+            private static Pos pinPos = new Pos(0, -2);
+
+            public override Pos GetInpOffset()
+            {
+                return pinPos;
+            }
+
+            public override Pos GetOutpOffset()
+            {
+                return pinPos;
+            }
+
+            public override RectangleF GetComponentBounds()
+            {
+                return new RectangleF(-0.5F, -2, 1, 3);
+            }
+
+            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
+            {
+                InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, pinPos, pinPos.Add(0, 2).ToPoint(), colourScheme, this);
+
+                RenderMainShape(graphics, simulating, colourScheme);
+            }
+
+            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+            {
+                GraphicsPath path = new GraphicsPath();
+
+                path.AddLines(new PointF[] { new PointF(0, -1), new PointF(0.5F, -0.5F), new PointF(0.5F, 0.5F), new PointF(-0.5F, 0.5F), new PointF(-0.5F, -0.5F) });
+                path.CloseFigure();
+
+                DrawComponentFromPath(graphics, path, colourScheme);
+            }
+
+            public static string DefaultDetails = "";
+
+            public override string GetComponentDetails()
+            {
+                return "";
+            }
+
+            public override void Tick()
+            {
+                if (GetInpPin().GetStateForWireComponent() == Pin.State.FLOATING)
+                {
+                    GetOutpPin().SetState(pullTo());
+                }
+            }
+        }
+
+        public class PullUpComponent : BasePullComponent
+        {
+            public static string ID = "PULLUP";
+
+            protected override Pin.State pullTo()
+            {
+                return Pin.State.HIGH;
+            }
+
+            public override string GetComponentID()
+            {
+                return ID;
+            }
+
+            public static PullUpComponent Constructor(string details)
+            {
+                return new PullUpComponent();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
+            }
+        }
+
+        public class PullDownComponent : BasePullComponent
+        {
+            public static string ID = "PULLDOWN";
+
+            protected override Pin.State pullTo()
+            {
+                return Pin.State.LOW;
+            }
+
+            public override string GetComponentID()
+            {
+                return ID;
+            }
+
+            public static PullDownComponent Constructor(string details)
+            {
+                return new PullDownComponent();
+            }
+
+            public override IComponent NonStaticConstructor(string details)
+            {
+                return Constructor(details);
             }
         }
     }
@@ -1896,7 +2010,7 @@ namespace CircuitMaker.Components
             {
                 if (externalPin != null)
                 {
-                    OutputState = externalPin.GetStateForComponent();
+                    OutputState = externalPin.GetStateForWireComponent();
                 }
 
                 base.Tick();
@@ -2048,7 +2162,7 @@ namespace CircuitMaker.Components
 
             public override void Tick()
             {
-                State = GetInpPin().GetStateForComponent();
+                State = GetInpPin().GetStateForWireComponent();
 
                 if (externalPin != null)
                 {
@@ -2174,10 +2288,10 @@ namespace CircuitMaker.Components
             {
                 if (externalPin == null)
                 {
-                    GetOutpPin().SetState(GetInpPin().GetStateForWire().WireJoin(DefaultExternalState));
+                    GetOutpPin().SetState(GetInpPin().GetStateForWireComponent().WireJoin(DefaultExternalState));
                 } else
                 {
-                    Pin.State state = GetInpPin().GetStateForWire().WireJoin(externalPin.GetStateForWire());
+                    Pin.State state = GetInpPin().GetStateForWireComponent().WireJoin(externalPin.GetStateForWireComponent());
 
                     GetOutpPin().SetState(state);
                     externalPin.SetState(state);
@@ -2476,7 +2590,7 @@ namespace CircuitMaker.Components
 
             public override void Tick()
             {
-                InternalBoard.Tick();
+                InternalBoard.TickComponents();
             }
 
             public static BoardContainerComponent Constructor(string details)
@@ -2639,6 +2753,11 @@ namespace CircuitMaker.Components
             public void SetGraphicalElementScale(float scale)
             {
                 GraphicalScale = scale;
+            }
+
+            public override void ResetToDefault()
+            {
+                InternalBoard.ResetForSimulation();
             }
         }
     } 

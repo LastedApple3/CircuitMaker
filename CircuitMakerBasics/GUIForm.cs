@@ -290,7 +290,7 @@ namespace CircuitMaker.GUI
         }
 
         public static Builder NewBoard(string name) {
-            return new Builder(new Board(name), ConstructDefaultFilename(name));
+            return new Builder(new Board(name));
         }
 
         public void OpenLoadBoard(string filename)
@@ -307,7 +307,7 @@ namespace CircuitMaker.GUI
         public void OpenNewBoard(string name)
         {
             board = new Board(name);
-            storedFilename = ConstructDefaultFilename(name);
+            storedFilename = null;
 
             selection.Deselect();
             SetSimulation(false);
@@ -317,11 +317,11 @@ namespace CircuitMaker.GUI
 
         public void SaveBoard(string filename = null)
         {
-            storedFilename = filename ?? storedFilename;
+            storedFilename = filename ?? storedFilename ?? ConstructDefaultFilename(board.Name);
             board.Save(storedFilename);
         }
 
-        private Builder(Board board, string filename)
+        private Builder(Board board, string filename = null)
         {
             storedFilename = filename;
 
@@ -346,7 +346,7 @@ namespace CircuitMaker.GUI
                 Selection = Color.Red
             };
 
-            int tps = 1;
+            int tps = 100;
 
             simulationTimer = new Timer
             {

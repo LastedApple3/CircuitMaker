@@ -7,6 +7,7 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.Remoting.Messaging;
+using CircuitMaker.Components;
 
 namespace CircuitMaker.Basics
 {
@@ -239,6 +240,8 @@ namespace CircuitMaker.Basics
                 throw new PlacementException($"Board with name{(promises.Count > 1 ? "s" : "")} {names.Select(s => "'" + s + "'").Aggregate((s1, s2) => s1 + ", " + s2)} not found");
             }
 
+            board.SimplifyWires();
+
             return board;
         }
 
@@ -257,8 +260,6 @@ namespace CircuitMaker.Basics
             {
                 br.ReadWire(board);
             }
-
-            board.SimplifyWires();
 
             return board;
         }
@@ -530,7 +531,9 @@ namespace CircuitMaker.Basics
         void Interact();
     }
 
-    public interface IBoardInterfaceComponent : IComponent
+    public interface IWireComponent : IComponent { }
+
+    public interface IBoardInterfaceComponent : IWireComponent
     {
         string GetComponentName();
         void SetComponentName(string compName);
@@ -689,6 +692,11 @@ namespace CircuitMaker.Basics
             return PrevState;
         }
 
+        public State GetStateForWireComponent()
+        {
+            return CurrentState;
+        }
+
         public State GetStateForWire()
         {
             if (StateChanged)
@@ -712,6 +720,13 @@ namespace CircuitMaker.Basics
 
         private bool StateChanged;
 
+        public void ResetToFloating()
+        {
+            CurrentState = Pin.State.FLOATING;
+            PrevState = Pin.State.FLOATING;
+            StateChanged = false;
+        }
+
         public void ResetStateChanged()
         {
             StateChanged = false;
@@ -730,6 +745,7 @@ namespace CircuitMaker.Basics
                     WireUpdate.Invoke();
                 }
             }
+
             return PrevState != CurrentState;
         }
 
@@ -828,6 +844,8 @@ namespace CircuitMaker.Basics
         private HashSet<Wire> Wires = new HashSet<Wire>();
 
         private HashSet<IComponent> Components = new HashSet<IComponent>();
+        private HashSet<IWireComponent> WireComponents = new HashSet<IWireComponent>();
+        private HashSet<IComponent> NonWireComponents = new HashSet<IComponent>();
         private HashSet<IBoardInterfaceComponent> InterfaceComponents = new HashSet<IBoardInterfaceComponent>();
         private HashSet<IBoardInputComponent> InputComponents = new HashSet<IBoardInputComponent>();
         private HashSet<IBoardOutputComponent> OutputComponents = new HashSet<IBoardOutputComponent>();
@@ -885,20 +903,6 @@ namespace CircuitMaker.Basics
             }
         }
 
-        public bool EmitWireUpdate()
-        {
-            bool returnVal = false;
-
-            ClearUnusedPins();
-
-            foreach (Pin pin in Pins.Values)
-            {
-                returnVal |= pin.EmitWireUpdate();
-            }
-
-            return returnVal;
-        }
-
         public void AddWire(Wire wire)
         {
             Wires.Add(wire);
@@ -917,6 +921,16 @@ namespace CircuitMaker.Basics
         public IComponent[] GetComponents()
         {
             return Components.ToArray();
+        }
+
+        public IWireComponent[] GetWireComponents()
+        {
+            return WireComponents.ToArray();
+        }
+
+        public IComponent[] GetNonWireComponents()
+        {
+            return NonWireComponents.ToArray();
         }
 
         public IBoardInterfaceComponent[] GetInterfaceComponents()
@@ -1011,20 +1025,66 @@ namespace CircuitMaker.Basics
             return checkedBoardList.ToArray();
         }
 
-        public void Tick()
+        public void TickSetup()
         {
+            ClearUnusedPins();
 
             foreach (Pin pin in Pins.Values)
             {
                 pin.ResetStateChanged();
             }
 
-            foreach (IComponent comp in Components)
+            foreach (IBoardContainerComponent boardContainerComp in ContainerComponents)
             {
-                comp.Tick();
+                boardContainerComp.GetInternalBoard().TickSetup();
+            }
+        }
+
+        public void TickComponents()
+        {
+            foreach (IComponent nonWireComp in NonWireComponents)
+            {
+                nonWireComp.Tick();
+            }
+        }
+
+        private bool TickWireComp(IWireComponent wireComp)
+        {
+            Pin.State[] startStates, endStates;
+
+            bool returnVal = false;
+
+            startStates = wireComp.GetAllPinPositions().Select(pos => this[pos].GetStateForWire()).ToArray();
+
+            wireComp.Tick();
+
+            endStates = wireComp.GetAllPinPositions().Select(pos => this[pos].GetStateForWire()).ToArray();
+
+            for (int i = 0; i < startStates.Length; i++)
+            {
+                returnVal |= startStates[i] != endStates[i];
             }
 
-            while (EmitWireUpdate()) { }
+            return returnVal;
+        }
+
+        public bool TickWires()
+        {
+            bool returnVal = false;
+
+            return ContainerComponents.Select(comp => comp.GetInternalBoard().TickWires())
+                .Concat(Pins.Values.Select(pin => pin.EmitWireUpdate()))
+                .Concat(WireComponents.Select(TickWireComp))
+                .Aggregate(returnVal, (b1, b2) => b1 || b2);
+        }
+
+        public void Tick()
+        {
+            TickSetup();
+
+            TickComponents();
+
+            while (TickWires()) { }
         }
 
         public Pin this[Pos pos] => Pins[pos];
@@ -1063,6 +1123,14 @@ namespace CircuitMaker.Basics
             if (comp is IGraphicalComponent graphicalComp)
             {
                 GraphicalComponents.Add(graphicalComp);
+            }
+
+            if (comp is IWireComponent wireComp)
+            {
+                WireComponents.Add(wireComp);
+            } else
+            {
+                NonWireComponents.Add(comp);
             }
 
             if (comp is IBoardContainerComponent contComp)
@@ -1119,9 +1187,17 @@ namespace CircuitMaker.Basics
         {
             Components.Remove(comp);
 
-            if (comp is IGraphicalComponent grapicalComp)
+            if (comp is IGraphicalComponent graphicalComp)
             {
-                GraphicalComponents.Remove(grapicalComp);
+                GraphicalComponents.Remove(graphicalComp);
+            }
+
+            if (comp is IWireComponent wireComp)
+            {
+                WireComponents.Remove(wireComp);
+            } else
+            {
+                NonWireComponents.Remove(comp);
             }
 
             if (comp is IBoardInterfaceComponent interfaceComp)
@@ -1267,7 +1343,7 @@ namespace CircuitMaker.Basics
         {
             foreach (Pin pin in Pins.Values)
             {
-                pin.SetState(Pin.State.FLOATING);
+                pin.ResetToFloating();
             }
         }
 
@@ -1326,6 +1402,11 @@ namespace CircuitMaker.Basics
                     wires[0].Remove();
                     wires[1].Remove();
                 }
+            }
+
+            foreach (IBoardContainerComponent boardContainerComp in ContainerComponents)
+            {
+                boardContainerComp.GetInternalBoard().SimplifyWires();
             }
         }
 

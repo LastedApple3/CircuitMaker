@@ -1,0 +1,18 @@
+BIDIR should describe its default state as testing:
+	What is the simulated external state of this component?
+INPUT should mention default:
+	What is the default state of this component?
+Shrink the buffers?
+	shape: (-1, -1), (-1, 1), (1, 0) -> (-0.5, -0.5), (-0.5, 0.5), (0.5, 0)
+	default input: (-2, 0) -> (-1, 0)
+	default output: (2, 0) -> (1, 0)
+	bounds
+	inversion circle?
+BIDIR pins on BOARDs are counted twice in the pin rendering code
+add a tag base class?
+	all the tags that exist:
+		INPUT, OUTPUT, BIDIR, TOGGLE, FIXED, PROBE
+		PULLUP, PULLDOWN when they exist.
+	need to allow variation of length, and rotation
+	text rendering builtin (used for INPUT, OUTPUT, BIDIR names and PROBE indicator)
+	add identifier symbols for TOGGLE and FIXED, and later PULLUP and PULLDOWN
