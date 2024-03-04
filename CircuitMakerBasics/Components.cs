@@ -28,11 +28,9 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.Constructors.Add(BufferComponents.NotComponent.ID, BufferComponents.NotComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(BufferComponents.TristateBufferComponent.ID, BufferComponents.TristateBufferComponent.Constructor);
 
-            ReadWriteImplementation.Constructors.Add(PullComponents.PullUpComponent.ID, PullComponents.PullUpComponent.Constructor);
-            ReadWriteImplementation.Constructors.Add(PullComponents.PullDownComponent.ID, PullComponents.PullDownComponent.Constructor);
-
             ReadWriteImplementation.Constructors.Add(FixedStateComponent.ID, FixedStateComponent.Constructor);
             ReadWriteImplementation.Constructors.Add(UserToggleInpComponent.ID, UserToggleInpComponent.Constructor);
+            ReadWriteImplementation.Constructors.Add(UserPulseInpComponent.ID, UserPulseInpComponent.Constructor);
 
             ReadWriteImplementation.Constructors.Add(LogicProbeComponent.ID, LogicProbeComponent.Constructor);
 
@@ -56,11 +54,9 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.DefaultDetails.Add(BufferComponents.NotComponent.ID, BufferComponents.NotComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(BufferComponents.TristateBufferComponent.ID, BufferComponents.TristateBufferComponent.DefaultDetails);
 
-            ReadWriteImplementation.DefaultDetails.Add(PullComponents.PullUpComponent.ID, PullComponents.PullUpComponent.DefaultDetails);
-            ReadWriteImplementation.DefaultDetails.Add(PullComponents.PullDownComponent.ID, PullComponents.PullDownComponent.DefaultDetails);
-
             ReadWriteImplementation.DefaultDetails.Add(FixedStateComponent.ID, FixedStateComponent.DefaultDetails);
             ReadWriteImplementation.DefaultDetails.Add(UserToggleInpComponent.ID, UserToggleInpComponent.DefaultDetails);
+            ReadWriteImplementation.DefaultDetails.Add(UserPulseInpComponent.ID, UserPulseInpComponent.DefaultDetails);
 
             ReadWriteImplementation.DefaultDetails.Add(LogicProbeComponent.ID, LogicProbeComponent.DefaultDetails);
 
@@ -165,9 +161,8 @@ namespace CircuitMaker.Components
             graphics.DrawPath(new Pen(colourScheme.ComponentEdge, 0.01F), path);
         }
 
-        protected void DrawInversionCircle(Graphics graphics, PointF point, ColourScheme colourScheme)
+        protected void DrawInversionCircle(Graphics graphics, PointF point, ColourScheme colourScheme, float rad = 0.2F)
         {
-            float rad = 0.2F;
             graphics.FillEllipse(new SolidBrush(colourScheme.Background), point.X, point.Y - rad, 2 * rad, 2 * rad);
             graphics.DrawEllipse(new Pen(colourScheme.ComponentEdge, 0.01F), point.X, point.Y - rad, 2 * rad, 2 * rad);
         }
@@ -203,7 +198,7 @@ namespace CircuitMaker.Components
                 Math.Min(corners[0].Y, corners[1].Y),
                 Math.Max(corners[0].X, corners[1].X),
                 Math.Max(corners[0].Y, corners[1].Y)
-            );
+            ).Round();
         }
 
         public IComponent Copy()
@@ -214,6 +209,26 @@ namespace CircuitMaker.Components
         public override string ToString()
         {
             return $"{GetComponentID()}:{GetComponentDetails()}@{ComponentPos}";
+        }
+
+        private Pos[] RemoveDuplicates(Pos[] positions)
+        {
+            List<Pos> posList = new List<Pos>();
+
+            foreach (Pos pos in positions)
+            {
+                if (!posList.Contains(pos))
+                {
+                    posList.Add(pos);
+                }
+            }
+
+            return posList.ToArray();
+        }
+
+        public Pos[] GetAllUniquePinPositions()
+        {
+            return RemoveDuplicates(GetAllPinPositions());
         }
     }
 
@@ -692,7 +707,7 @@ namespace CircuitMaker.Components
         {
             public override Pos GetOutpOffset()
             {
-                return new Pos(2, 0);
+                return new Pos(1, 0);
             }
 
             public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
@@ -701,13 +716,20 @@ namespace CircuitMaker.Components
 
                 path.AddLines(new PointF[]
                 {
-                new PointF(-1, -1),
-                new PointF(1, 0),
-                new PointF(-1, 1)
+                new PointF(-0.5F, -0.5F),
+                new PointF(0.5F, 0),
+                new PointF(-0.5F, 0.5F)
                 });
                 path.CloseFigure();
 
                 DrawComponentFromPath(graphics, path, colourScheme);
+            }
+
+            public override RectangleF GetComponentBounds()
+            {
+                RectangleF rect = GetDefaultComponentBounds();
+                rect.Inflate(0, 0.5F);
+                return rect;
             }
         }
 
@@ -715,7 +737,7 @@ namespace CircuitMaker.Components
         {
             public override Pos[] GetInpOffsets()
             {
-                return new Pos[] { new Pos(-2, 0) };
+                return new Pos[] { new Pos(-1, 0) };
             }
 
             public BufferComponent() { }
@@ -747,20 +769,13 @@ namespace CircuitMaker.Components
             {
                 return Constructor(details);
             }
-
-            public override RectangleF GetComponentBounds()
-            {
-                RectangleF rect = GetDefaultComponentBounds();
-                rect.Inflate(0, 1);
-                return rect;
-            }
         }
 
         public class NotComponent : BaseBufferComponent
         {
             public override Pos[] GetInpOffsets()
             {
-                return new Pos[] { new Pos(-2, 0) };
+                return new Pos[] { new Pos(-1, 0) };
             }
 
             public NotComponent() { }
@@ -793,18 +808,11 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
-            public override RectangleF GetComponentBounds()
-            {
-                RectangleF rect = GetDefaultComponentBounds();
-                rect.Inflate(0, 1);
-                return rect;
-            }
-
             public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
             {
                 base.RenderMainShape(graphics, simulating, colourScheme);
 
-                DrawInversionCircle(graphics, new PointF(1, 0), colourScheme);
+                DrawInversionCircle(graphics, new PointF(0.5F, 0), colourScheme, 0.1F);
             }
         }
 
@@ -813,8 +821,8 @@ namespace CircuitMaker.Components
             public override Pos[] GetInpOffsets()
             {
                 return new Pos[] {
-                    new Pos(-2, 0),
-                    new Pos(0, -2)
+                    new Pos(-1, 0),
+                    new Pos(0, -1)
                 };
             }
 
@@ -864,7 +872,7 @@ namespace CircuitMaker.Components
             public override RectangleF GetComponentBounds()
             {
                 RectangleF rect = GetDefaultComponentBounds();
-                rect.Height += 1;
+                rect.Height += 0.5F;
                 return rect;
             }
 
@@ -877,113 +885,6 @@ namespace CircuitMaker.Components
                 InpOutpBaseComponents.InpOutpTools.DrawOutpLine(graphics, simulating, GetOutpOffset(), colourScheme, this);
 
                 RenderMainShape(graphics, simulating, colourScheme);
-            }
-        }
-    }
-
-    abstract class PullComponents
-    {
-        public abstract class BasePullComponent : InpOutpBaseComponents.SingInpSingOutpBaseComponent, IWireComponent
-        {
-            protected abstract Pin.State pullTo();
-            
-            private static Pos pinPos = new Pos(0, -2);
-
-            public override Pos GetInpOffset()
-            {
-                return pinPos;
-            }
-
-            public override Pos GetOutpOffset()
-            {
-                return pinPos;
-            }
-
-            public override RectangleF GetComponentBounds()
-            {
-                return new RectangleF(-0.5F, -2, 1, 3);
-            }
-
-            public override void Render(Graphics graphics, bool simulating, ColourScheme colourScheme)
-            {
-                InpOutpBaseComponents.InpOutpTools.DrawInpOutpLine(graphics, simulating, pinPos, pinPos.Add(0, 2).ToPoint(), colourScheme, this);
-
-                RenderMainShape(graphics, simulating, colourScheme);
-            }
-
-            public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
-            {
-                GraphicsPath path = new GraphicsPath();
-
-                path.AddLines(new PointF[] { new PointF(0, -1), new PointF(0.5F, -0.5F), new PointF(0.5F, 0.5F), new PointF(-0.5F, 0.5F), new PointF(-0.5F, -0.5F) });
-                path.CloseFigure();
-
-                DrawComponentFromPath(graphics, path, colourScheme);
-            }
-
-            public static string DefaultDetails = "";
-
-            public override string GetComponentDetails()
-            {
-                return "";
-            }
-
-            public override void Tick()
-            {
-                if (GetInpPin().GetStateForWireComponent() == Pin.State.FLOATING)
-                {
-                    GetOutpPin().SetState(pullTo());
-                }
-            }
-        }
-
-        public class PullUpComponent : BasePullComponent
-        {
-            public static string ID = "PULLUP";
-
-            protected override Pin.State pullTo()
-            {
-                return Pin.State.HIGH;
-            }
-
-            public override string GetComponentID()
-            {
-                return ID;
-            }
-
-            public static PullUpComponent Constructor(string details)
-            {
-                return new PullUpComponent();
-            }
-
-            public override IComponent NonStaticConstructor(string details)
-            {
-                return Constructor(details);
-            }
-        }
-
-        public class PullDownComponent : BasePullComponent
-        {
-            public static string ID = "PULLDOWN";
-
-            protected override Pin.State pullTo()
-            {
-                return Pin.State.LOW;
-            }
-
-            public override string GetComponentID()
-            {
-                return ID;
-            }
-
-            public static PullDownComponent Constructor(string details)
-            {
-                return new PullDownComponent();
-            }
-
-            public override IComponent NonStaticConstructor(string details)
-            {
-                return Constructor(details);
             }
         }
     }
@@ -1037,9 +938,15 @@ namespace CircuitMaker.Components
                 DefineInpOffsets();
             }
 
+            protected abstract bool IsNegated();
+
             public override void Tick()
             {
-                GetOutpPin().SetState(GetInpPins().Select(inpPin => inpPin.GetStateForComponent()).Aggregate(Accumulator));
+                Pin.State state = GetInpPins().Select(inpPin => inpPin.GetStateForComponent()).Aggregate(Accumulator);
+
+                state = IsNegated() ? state.Not() : state;
+
+                GetOutpPin().SetState(state);
             }
 
             protected abstract Pin.State Accumulator(Pin.State state1, Pin.State state2);
@@ -1068,6 +975,18 @@ namespace CircuitMaker.Components
                 InpCount = inputSettingDesc.GetValue();
 
                 DefineInpOffsets();
+            }
+
+            protected static int ParseInpCount(string details)
+            {
+                int inpCount;
+
+                if (int.TryParse(details, out inpCount))
+                {
+                    return inpCount;
+                }
+
+                throw new PlacementException("Did not successfully parse int.");
             }
 
             protected GraphicsPath AddAndShape(GraphicsPath path)
@@ -1182,16 +1101,14 @@ namespace CircuitMaker.Components
                 return ID;
             }
 
+            protected override bool IsNegated()
+            {
+                return false;
+            }
+
             public static IComponent Constructor(string details)
             {
-                int inpCount;
-
-                if (int.TryParse(details, out inpCount))
-                {
-                    return new VarInpAndComponent(inpCount);
-                }
-
-                throw new PlacementException("Did not successfully parse int.");
+                return new VarInpAndComponent(ParseInpCount(details));
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1222,16 +1139,14 @@ namespace CircuitMaker.Components
                 return ID;
             }
 
+            protected override bool IsNegated()
+            {
+                return false;
+            }
+
             public static IComponent Constructor(string details)
             {
-                int inpCount;
-
-                if (int.TryParse(details, out inpCount))
-                {
-                    return new VarInpOrComponent(inpCount);
-                }
-
-                throw new PlacementException("Did not successfully parse int.");
+                return new VarInpOrComponent(ParseInpCount(details));
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1262,16 +1177,14 @@ namespace CircuitMaker.Components
                 return ID;
             }
 
+            protected override bool IsNegated()
+            {
+                return false;
+            }
+
             public static IComponent Constructor(string details)
             {
-                int inpCount;
-
-                if (int.TryParse(details, out inpCount))
-                {
-                    return new VarInpXorComponent(inpCount);
-                }
-
-                throw new PlacementException("Did not successfully parse int.");
+                return new VarInpXorComponent(ParseInpCount(details));
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1291,7 +1204,7 @@ namespace CircuitMaker.Components
 
             protected override Pin.State Accumulator(Pin.State state1, Pin.State state2)
             {
-                return state1.And(state2).Not();
+                return state1.And(state2);
             }
 
             public static string ID = "NAND";
@@ -1302,16 +1215,14 @@ namespace CircuitMaker.Components
                 return ID;
             }
 
+            protected override bool IsNegated()
+            {
+                return true;
+            }
+
             public static IComponent Constructor(string details)
             {
-                int inpCount;
-
-                if (int.TryParse(details, out inpCount))
-                {
-                    return new VarInpNandComponent(inpCount);
-                }
-
-                throw new PlacementException("Did not successfully parse int.");
+                return new VarInpNandComponent(ParseInpCount(details));
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1332,7 +1243,7 @@ namespace CircuitMaker.Components
 
             protected override Pin.State Accumulator(Pin.State state1, Pin.State state2)
             {
-                return state1.Or(state2).Not();
+                return state1.Or(state2);
             }
 
             public static string ID = "NOR";
@@ -1343,16 +1254,14 @@ namespace CircuitMaker.Components
                 return ID;
             }
 
+            protected override bool IsNegated()
+            {
+                return true;
+            }
+
             public static IComponent Constructor(string details)
             {
-                int inpCount;
-
-                if (int.TryParse(details, out inpCount))
-                {
-                    return new VarInpNorComponent(inpCount);
-                }
-
-                throw new PlacementException("Did not successfully parse int.");
+                return new VarInpNorComponent(ParseInpCount(details));
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1373,7 +1282,7 @@ namespace CircuitMaker.Components
 
             protected override Pin.State Accumulator(Pin.State state1, Pin.State state2)
             {
-                return state1.Xor(state2).Not();
+                return state1.Xor(state2);
             }
 
             public static string ID = "XNOR";
@@ -1384,16 +1293,14 @@ namespace CircuitMaker.Components
                 return ID;
             }
 
+            protected override bool IsNegated()
+            {
+                return true;
+            }
+
             public static IComponent Constructor(string details)
             {
-                int inpCount;
-
-                if (int.TryParse(details, out inpCount))
-                {
-                    return new VarInpXnorComponent(inpCount);
-                }
-
-                throw new PlacementException("Did not successfully parse int.");
+                return new VarInpXnorComponent(ParseInpCount(details));
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -1413,7 +1320,11 @@ namespace CircuitMaker.Components
     {
         protected Pin.State OutputState;
 
-        protected string stateDescriptor = "output";
+        protected virtual string getOutputDescriptor()
+        {
+            return "output";
+        }
+
         protected EnumSettingDescription<Pin.State> stateSettingDesc;
 
         public override Pos GetOutpOffset()
@@ -1472,7 +1383,7 @@ namespace CircuitMaker.Components
 
         public virtual ISettingDescription[] GetSettingDescriptions()
         {
-            stateSettingDesc = new EnumSettingDescription<Pin.State>("What is the output state for this component?", OutputState);
+            stateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the {getOutputDescriptor()} state for this component?", OutputState);
 
             return new ISettingDescription[] { stateSettingDesc };
         }
@@ -1497,7 +1408,10 @@ namespace CircuitMaker.Components
     {
         protected Pin.State DefaultState;
 
-        protected new string stateDescriptor = "default";
+        protected override string getOutputDescriptor()
+        {
+            return "current output";
+        }
 
         public UserToggleInpComponent(Pin.State startState) : base(startState)
         {
@@ -1546,6 +1460,117 @@ namespace CircuitMaker.Components
         public new void ResetToDefault()
         {
             OutputState = DefaultState;
+        }
+    }
+
+    class UserPulseInpComponent : InpOutpBaseComponents.NoneInpSingOutpBaseComponent, IInteractibleComponent, ISettingsComponent
+    {
+        public override Pos GetOutpOffset()
+        {
+            return new Pos(2, 0);
+        }
+
+        protected int PulseLength;
+        protected Pin.State NormalState, PulseState;
+
+        protected PositiveIntSettingDescription PulseLengthSettingDesc;
+        protected EnumSettingDescription<Pin.State> NormalStateSettingDesc, PulseStateSettingDesc;
+
+        public static string ID = "PULSE";
+        public static string DefaultDetails = $"{20},{(int)Pin.State.LOW},{(int)Pin.State.HIGH}";
+
+        public override string GetComponentID()
+        {
+            return ID;
+        }
+
+        public override string GetComponentDetails()
+        {
+            return $"{PulseLength},{(int)NormalState},{(int)PulseState}";
+        }
+
+        public UserPulseInpComponent(int pulseLength, Pin.State normalState, Pin.State pulseState)
+        {
+            PulseLength = pulseLength;
+            NormalState = normalState;
+            PulseState = pulseState;
+        }
+
+        private int ticksLeft = 0;
+
+        public override void Tick()
+        {
+            if (ticksLeft > 0)
+            {
+                ticksLeft--;
+                GetOutpPin().SetState(PulseState);
+            } else
+            {
+                GetOutpPin().SetState(NormalState);
+            }
+        }
+        public static IComponent Constructor(string details)
+        {
+            int pulseLength, normalState, pulseState;
+
+            string[] detailArr = details.Split(',');
+
+            if (int.TryParse(detailArr[0], out pulseLength) && int.TryParse(detailArr[1], out normalState) && int.TryParse(detailArr[2], out pulseState))
+            {
+                return new UserPulseInpComponent(pulseLength, (Pin.State)normalState, (Pin.State)pulseState);
+            }
+
+            throw new PlacementException("Did not successfully parse int.");
+        }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
+        }
+
+        public override RectangleF GetComponentBounds()
+        {
+            RectangleF rect = GetDefaultComponentBounds();
+            rect.Inflate(0, 0.5F);
+            rect.X -= 0.5F;
+            rect.Width += 0.5F;
+            return rect;
+        }
+
+        public virtual ISettingDescription[] GetSettingDescriptions()
+        {
+            PulseLengthSettingDesc = new PositiveIntSettingDescription("How many ticks should this component pulse for?", PulseLength);
+            NormalStateSettingDesc = new EnumSettingDescription<Pin.State>("What state should this component output while not pulsing?", NormalState);
+            PulseStateSettingDesc = new EnumSettingDescription<Pin.State>("What state should this component output while pulsing?", PulseState);
+
+            return new ISettingDescription[] { PulseLengthSettingDesc, NormalStateSettingDesc, PulseStateSettingDesc };
+        }
+
+        public virtual void ApplySettings()
+        {
+            PulseLength = PulseLengthSettingDesc.GetValue();
+            NormalState = NormalStateSettingDesc.GetValue();
+            PulseState = PulseStateSettingDesc.GetValue();
+        }
+
+        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+        {
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddLines(new PointF[] { new PointF(-0.5F, -0.5F), new PointF(0.5F, -0.5F), new PointF(1, 0), new PointF(0.5F, 0.5F), new PointF(-0.5F, 0.5F) });
+            path.CloseFigure();
+
+            DrawComponentFromPath(graphics, path, colourScheme);
+        }
+
+        public void Interact()
+        {
+            ticksLeft = PulseLength;
+        }
+
+        public override void ResetToDefault()
+        {
+            ticksLeft = 0;
         }
     }
 
@@ -1951,6 +1976,11 @@ namespace CircuitMaker.Components
 
             private Board.InterfaceLocation interfaceLocation;
 
+            protected override string getOutputDescriptor()
+            {
+                return "default output";
+            }
+
             public Board.InterfaceLocation GetInterfaceLocation()
             {
                 return interfaceLocation;
@@ -1999,11 +2029,13 @@ namespace CircuitMaker.Components
             public void SetExternalPin(Pin pin)
             {
                 externalPin = pin;
+                OutputState = DefaultState;
             }
 
             public void RemoveExternalPin()
             {
                 externalPin = null;
+                OutputState = DefaultState;
             }
 
             public override void Tick()
@@ -2076,7 +2108,7 @@ namespace CircuitMaker.Components
         public class BoardOutputComponent : InpOutpBaseComponents.SingInpNoneOutpBaseComponent, IBoardOutputComponent, ISettingsComponent
         {
             private string ComponentName;
-            protected Pin.State State;
+            //protected Pin.State State;
             private Pin externalPin = null;
 
             private NameSettingDescription nameSettingDesc;
@@ -2155,18 +2187,11 @@ namespace CircuitMaker.Components
                 externalPin = null;
             }
 
-            public Pin.State GetOutputState()
-            {
-                return State;
-            }
-
             public override void Tick()
             {
-                State = GetInpPin().GetStateForWireComponent();
-
                 if (externalPin != null)
                 {
-                    externalPin.SetState(State);
+                    externalPin.SetState(GetInpPin().GetStateForWireComponent());
                 }
             }
 
@@ -2318,7 +2343,7 @@ namespace CircuitMaker.Components
             public ISettingDescription[] GetSettingDescriptions()
             {
                 nameSettingDesc = new NameSettingDescription("What is this component called?", ComponentName);
-                defaultStateSettingDesc = new EnumSettingDescription<Pin.State>("What is the default state of this component?", DefaultExternalState);
+                defaultStateSettingDesc = new EnumSettingDescription<Pin.State>("What is the simulated external state of this component?", DefaultExternalState);
 
                 return new ISettingDescription[] { nameSettingDesc, defaultStateSettingDesc };
             }
@@ -2360,6 +2385,7 @@ namespace CircuitMaker.Components
 
         public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent, IBoardContainerComponent
         {
+            private string InternalBoardName;
             public Board InternalBoard { get; private set; }
 
             private Rectangle Shape;
@@ -2417,6 +2443,7 @@ namespace CircuitMaker.Components
                 if (InternalBoard == null)
                 {
                     InternalBoard = board;
+                    InternalBoardName = board.Name;
 
                     Initialize();
 
@@ -2429,12 +2456,14 @@ namespace CircuitMaker.Components
 
             public BoardContainerComponent(string boardName)
             {
+                InternalBoardName = boardName;
                 ReadWriteImplementation.PromiseBoard(boardName, ProvideInternalBoard);
             }
 
             public BoardContainerComponent(Board internalBoard)
             {
-                InternalBoard = internalBoard;
+                InternalBoard = internalBoard.Copy();
+                InternalBoardName = internalBoard.Name;
 
                 Initialize();
             }
@@ -2620,7 +2649,12 @@ namespace CircuitMaker.Components
 
             public new IComponent Copy()
             {
-                return new BoardContainerComponent(InternalBoard.Copy());
+                if (InternalBoard != null)
+                {
+                    return new BoardContainerComponent(InternalBoard);
+                }
+
+                return new BoardContainerComponent(InternalBoardName);
             }
 
             public override RectangleF GetComponentBounds()

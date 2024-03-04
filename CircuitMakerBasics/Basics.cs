@@ -8,9 +8,28 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Runtime.Remoting.Messaging;
 using CircuitMaker.Components;
+using System.Threading;
+using System.CodeDom;
+using System.Security.Permissions;
+using System.Runtime.CompilerServices;
 
 namespace CircuitMaker.Basics
 {
+    static class RectangleFExtensions
+    {
+        public static int dp = 5;
+
+        private static float Round(float val)
+        {
+            return (float)Math.Round(val, dp);
+        }
+
+        public static RectangleF Round(this RectangleF rect)
+        {
+            return new RectangleF(Round(rect.X), Round(rect.Y), Round(rect.Width), Round(rect.Height));
+        }
+    }
+
     public class ByteEncoding : Encoding
     {
         public override int GetByteCount(char[] chars, int index, int count)
@@ -94,7 +113,7 @@ namespace CircuitMaker.Basics
 
             public void FulfillPromise(Board board)
             {
-                BoardProvider(board);
+                BoardProvider(board.Copy());
             }
         }
 
@@ -111,16 +130,18 @@ namespace CircuitMaker.Basics
 
             List<BoardPromise> unfulfilled = new List<BoardPromise>();
 
-            foreach (BoardPromise promise in promises)
+            while (promises.Count > 0)
             {
-                if (namedBoards.ContainsKey(promise.BoardName))
+                if (namedBoards.ContainsKey(promises[0].BoardName))
                 {
-                    promise.FulfillPromise(namedBoards[promise.BoardName]);
+                    promises[0].FulfillPromise(namedBoards[promises[0].BoardName]);
                 }
                 else
                 {
-                    unfulfilled.Add(promise);
+                    unfulfilled.Add(promises[0]);
                 }
+
+                promises.RemoveAt(0);
             }
 
             promises = unfulfilled;
@@ -271,25 +292,37 @@ namespace CircuitMaker.Basics
 
     class DefaultDictionary<TKey, TValue> : Dictionary<TKey, TValue>
     {
-        private Func<TValue> gen_func;
+        private Func<TValue> BlindGenerator;
+        private Func<TKey, TValue> KeyBasedGenerator;
 
-        public DefaultDictionary(Func<TValue> gen_func)
+        public DefaultDictionary(Func<TValue> generator)
         {
-            this.gen_func = gen_func;
+            BlindGenerator = generator;
         }
 
-        public new TValue this[TKey k]
+        public DefaultDictionary(Func<TKey, TValue> generator)
+        {
+            KeyBasedGenerator = generator;
+        }
+
+        public new TValue this[TKey key]
         {
             get
             {
-                if (!ContainsKey(k))
+                if (!ContainsKey(key))
                 {
-                    Add(k, gen_func());
+                    if (BlindGenerator != null)
+                    {
+                        Add(key, BlindGenerator());
+                    } else if (KeyBasedGenerator != null)
+                    {
+                        Add(key, KeyBasedGenerator(key));
+                    }
                 }
 
-                return base[k];
+                return base[key];
             }
-            set => base[k] = value;
+            set => base[key] = value;
         }
     }
 
@@ -467,31 +500,20 @@ namespace CircuitMaker.Basics
 
     public struct ColourScheme
     {
-        public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WireHigh, WireIllegal, Grid, Selection;
+        public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WirePulledLow, WireHigh, WirePulledHigh, WireIllegal, Grid, Selection;
 
         public Color GetWireColour(Pin.State state)
         {
-            if (state == Pin.State.FLOATING)
+            switch (state)
             {
-                return WireFloating;
+                case Pin.State.FLOATING:    return WireFloating;
+                case Pin.State.LOW:         return WireLow;
+                case Pin.State.PULLEDLOW:   return WirePulledLow;
+                case Pin.State.HIGH:        return WireHigh;
+                case Pin.State.PULLEDHIGH:  return WirePulledHigh;
+                case Pin.State.ILLEGAL:     return WireIllegal;
+                default:                    return Wire;
             }
-
-            if (state == Pin.State.LOW)
-            {
-                return WireLow;
-            }
-
-            if (state == Pin.State.HIGH)
-            {
-                return WireHigh;
-            }
-
-            if (state == Pin.State.ILLEGAL)
-            {
-                return WireIllegal;
-            }
-
-            return Wire;
         }
     }
 
@@ -508,6 +530,7 @@ namespace CircuitMaker.Basics
 
         Pos[] GetAllPinOffsets();
         Pos[] GetAllPinPositions();
+        Pos[] GetAllUniquePinPositions();
 
         Pos GetComponentPos();
         Rotation GetComponentRotation();
@@ -609,87 +632,189 @@ namespace CircuitMaker.Basics
 
     static class StateExtensions
     {
-        private static Pin.State[] NotOpTable = new Pin.State[]
+        private struct BinOpInput
         {
-            Pin.State.FLOATING, Pin.State.HIGH, Pin.State.LOW, Pin.State.ILLEGAL
-        };
+            Pin.State State1, State2;
 
-        private static Pin.State[] AndDef = new Pin.State[] { Pin.State.LOW, Pin.State.LOW, Pin.State.HIGH };
-        private static Pin.State[] OrDef = new Pin.State[] { Pin.State.LOW, Pin.State.HIGH, Pin.State.HIGH };
-        private static Pin.State[] XorDef = new Pin.State[] { Pin.State.LOW, Pin.State.HIGH, Pin.State.LOW };
-
-        private static Pin.State CalculateBinOp(Pin.State state1, Pin.State state2, Pin.State[] binOpDef)
-        {
-            if (state1 > state2)
+            public BinOpInput((Pin.State state1, Pin.State state2) states)
             {
-                return CalculateBinOp(state2, state1, binOpDef);
-            } // state2 now higher than state1
-
-            if (state2 == Pin.State.ILLEGAL)
-            {
-                return Pin.State.ILLEGAL;
+                State1 = states.state1; State2 = states.state2;
             }
 
-            if (state1 == Pin.State.FLOATING)
+            public BinOpInput(Pin.State state1, Pin.State state2)
             {
-                return state2;
+                State1 = state1; State2 = state2;
             }
 
-            if (state1 == state2)
+            public override bool Equals(object obj)
             {
-                if (state1 == Pin.State.LOW)
+                if (obj is BinOpInput otherInp)
                 {
-                    return binOpDef[0];
-                } else
-                {
-                    return binOpDef[2];
+                    return (State1 == otherInp.State1 && State2 == otherInp.State2) || (State1 == otherInp.State2 && State2 == otherInp.State1);
                 }
-            } else
+
+                return base.Equals(obj);
+            }
+
+            public override int GetHashCode()
             {
-                return binOpDef[1];
+                return (int)State1 + (int)State2;
+            }
+
+            public static implicit operator BinOpInput((Pin.State state1, Pin.State state2) states)
+            {
+                return new BinOpInput(states.state1, states.state2);
+            }
+
+            /*
+            public static implicit operator ValueTuple<Pin.State, Pin.State>(BinOpInput binOpInput)
+            {
+                return (binOpInput.State1, binOpInput.State2);
+            }
+            //*/
+
+            public static bool operator ==(BinOpInput inp1, BinOpInput inp2)
+            {
+                return inp1.Equals(inp2);
+            }
+
+            public static bool operator !=(BinOpInput inp1, BinOpInput inp2)
+            {
+                return !inp1.Equals(inp2);
+            }
+
+            public override string ToString()
+            {
+                return $"{State1}, {State2}";
             }
         }
 
+        private class BinOpTable : Dictionary<BinOpInput, Pin.State>
+        {
+            public Pin.State this[Pin.State state1, Pin.State state2] => this[new BinOpInput(state1, state2)];
+            public Pin.State this[(Pin.State state1, Pin.State state2) states] => this[new BinOpInput(states)];
+
+            public BinOpTable(IDictionary<BinOpInput, Pin.State> dict) : base(dict) { }
+
+            public BinOpTable() : base() { }
+        }
+
+        private static Dictionary<Pin.State, Pin.State> NotOpTable = new Dictionary<Pin.State, Pin.State>
+        {
+            { Pin.State.FLOATING, Pin.State.FLOATING },
+            { Pin.State.LOW, Pin.State.HIGH },
+            { Pin.State.HIGH, Pin.State.LOW },
+            { Pin.State.ILLEGAL, Pin.State.ILLEGAL }
+        };
+
+        private static Dictionary<Pin.State, Pin.State> PullTable = new Dictionary<Pin.State, Pin.State>
+        {
+            { Pin.State.FLOATING, Pin.State.FLOATING },
+            { Pin.State.LOW, Pin.State.LOW },
+            { Pin.State.PULLEDLOW, Pin.State.LOW },
+            { Pin.State.HIGH, Pin.State.HIGH },
+            { Pin.State.PULLEDHIGH, Pin.State.HIGH },
+            { Pin.State.ILLEGAL, Pin.State.ILLEGAL }
+        };
+
+        private static Dictionary<BinOpInput, Pin.State> GenericOpTable = new Dictionary<BinOpInput, Pin.State>
+        {
+            { (Pin.State.FLOATING, Pin.State.FLOATING), Pin.State.FLOATING },
+            { (Pin.State.FLOATING, Pin.State.LOW), Pin.State.LOW },
+            { (Pin.State.FLOATING, Pin.State.HIGH), Pin.State.HIGH },
+            { (Pin.State.FLOATING, Pin.State.ILLEGAL), Pin.State.ILLEGAL },
+            { (Pin.State.ILLEGAL, Pin.State.LOW), Pin.State.ILLEGAL },
+            { (Pin.State.ILLEGAL, Pin.State.HIGH), Pin.State.ILLEGAL },
+            { (Pin.State.ILLEGAL, Pin.State.ILLEGAL), Pin.State.ILLEGAL }
+        };
+
+        private static BinOpTable AndOpTable = new BinOpTable((new Dictionary<BinOpInput, Pin.State>
+        {
+            { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
+            { (Pin.State.LOW, Pin.State.HIGH), Pin.State.LOW },
+            { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
+        }.Concat(GenericOpTable)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        private static BinOpTable OrOpTable = new BinOpTable((new Dictionary<BinOpInput, Pin.State>
+        {
+            { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
+            { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
+            { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
+        }.Concat(GenericOpTable)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        private static BinOpTable XorOpTable = new BinOpTable((new Dictionary<BinOpInput, Pin.State>
+        {
+            { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
+            { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
+            { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.LOW }
+        }.Concat(GenericOpTable)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+
+        private static BinOpTable WireJoinTable = new BinOpTable
+        {
+            { (Pin.State.FLOATING,      Pin.State.FLOATING),    Pin.State.FLOATING },
+            { (Pin.State.FLOATING,      Pin.State.LOW),         Pin.State.LOW },
+            { (Pin.State.FLOATING,      Pin.State.PULLEDLOW),   Pin.State.PULLEDLOW },
+            { (Pin.State.FLOATING,      Pin.State.HIGH),        Pin.State.HIGH },
+            { (Pin.State.FLOATING,      Pin.State.PULLEDHIGH),  Pin.State.PULLEDHIGH },
+            { (Pin.State.FLOATING,      Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
+            { (Pin.State.LOW,           Pin.State.LOW),         Pin.State.LOW },
+            { (Pin.State.LOW,           Pin.State.PULLEDLOW),   Pin.State.LOW },
+            { (Pin.State.LOW,           Pin.State.HIGH),        Pin.State.ILLEGAL },
+            { (Pin.State.LOW,           Pin.State.PULLEDHIGH),  Pin.State.LOW },
+            { (Pin.State.LOW,           Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
+            { (Pin.State.PULLEDLOW,     Pin.State.PULLEDLOW),   Pin.State.PULLEDLOW },
+            { (Pin.State.PULLEDLOW,     Pin.State.HIGH),        Pin.State.HIGH },
+            { (Pin.State.PULLEDLOW,     Pin.State.PULLEDHIGH),  Pin.State.FLOATING },
+            { (Pin.State.PULLEDLOW,     Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
+            { (Pin.State.HIGH,          Pin.State.HIGH),        Pin.State.HIGH },
+            { (Pin.State.HIGH,          Pin.State.PULLEDHIGH),  Pin.State.HIGH },
+            { (Pin.State.HIGH,          Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
+            { (Pin.State.PULLEDHIGH,    Pin.State.PULLEDHIGH),  Pin.State.PULLEDHIGH },
+            { (Pin.State.PULLEDHIGH,    Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
+            { (Pin.State.ILLEGAL,       Pin.State.ILLEGAL),     Pin.State.ILLEGAL }
+        };
+
         public static Pin.State WireJoin(this Pin.State state1, Pin.State state2)
         {
-            return state1 | state2;
+            return WireJoinTable[state1, state2];
         }
 
         public static Pin.State Not(this Pin.State state)
         {
-            return NotOpTable[(int)state];
+            return NotOpTable[state];
         }
 
         public static Pin.State And(this Pin.State state1, Pin.State state2)
         {
-            return CalculateBinOp(state1, state2, AndDef);
+            return AndOpTable[state1, state2];
         }
 
         public static Pin.State Or(this Pin.State state1, Pin.State state2)
         {
-            return CalculateBinOp(state1, state2, OrDef);
+            return OrOpTable[state1, state2];
         }
 
         public static Pin.State Xor(this Pin.State state1, Pin.State state2)
         {
-            return CalculateBinOp(state1, state2, XorDef);
+            return XorOpTable[state1, state2];
+        }
+
+        public static Pin.State Pulled(this Pin.State state)
+        {
+            return PullTable[state];
         }
     }
 
     public class Pin
     {
-        [Flags]
-        public enum State : byte
+        public enum State
         {
-            FLOATING = 0b00, LOW = 0b01, HIGH = 0b10, ILLEGAL = 0b11
+            FLOATING, LOW, PULLEDLOW, HIGH, PULLEDHIGH, ILLEGAL
         }
 
-        private State CurrentState = State.FLOATING;
-        private State PrevState = State.FLOATING;
+        private State CurrentState, OriginalState;
 
         public State GetStateForComponent()
         {
-            return PrevState;
+            return OriginalState.Pulled();
         }
 
         public State GetStateForWireComponent()
@@ -699,12 +824,7 @@ namespace CircuitMaker.Basics
 
         public State GetStateForWire()
         {
-            if (StateChanged)
-            {
-                return CurrentState;
-            }
-
-            return State.FLOATING;
+            return CurrentState;
         }
 
         public State GetStateForDisplay()
@@ -714,39 +834,40 @@ namespace CircuitMaker.Basics
 
         public void SetState(State state)
         {
-            StateChanged = true;
-            CurrentState = state;
+            //StateChanged = true;
+            CurrentState = CurrentState.WireJoin(state);
         }
 
-        private bool StateChanged;
+        //private bool StateChanged;
 
         public void ResetToFloating()
         {
-            CurrentState = Pin.State.FLOATING;
-            PrevState = Pin.State.FLOATING;
-            StateChanged = false;
+            CurrentState = State.FLOATING;
+            OriginalState = State.FLOATING;
+            //StateChanged = false;
         }
 
-        public void ResetStateChanged()
+        public void SetupForTick()
         {
-            StateChanged = false;
+            OriginalState = CurrentState;
+            CurrentState = Pin.State.FLOATING;
+            //StateChanged = false;
         }
 
         public event Action WireUpdate;
 
         public bool EmitWireUpdate()
         {
-            if (PrevState != CurrentState)
-            {
-                PrevState = CurrentState;
+            State stateBefore = CurrentState;
 
-                if (WireUpdate != null)
-                {
-                    WireUpdate.Invoke();
-                }
+            if (OriginalState != CurrentState)
+            {
+                //PrevState = CurrentState;
+
+                WireUpdate?.Invoke();
             }
 
-            return PrevState != CurrentState;
+            return stateBefore != CurrentState;
         }
 
         public bool HasWires()
@@ -1031,7 +1152,7 @@ namespace CircuitMaker.Basics
 
             foreach (Pin pin in Pins.Values)
             {
-                pin.ResetStateChanged();
+                pin.SetupForTick();
             }
 
             foreach (IBoardContainerComponent boardContainerComp in ContainerComponents)
@@ -1048,6 +1169,29 @@ namespace CircuitMaker.Basics
             }
         }
 
+        private Func<T, bool> ActAndCheck<T>(Func<T, bool> action) where T : IComponent
+        {
+            return (T comp) =>
+            {
+
+                Pin.State[] startStates, endStates;
+
+                startStates = comp.GetAllPinPositions().Select(pos => this[pos].GetStateForWire()).ToArray();
+
+                bool returnVal = action(comp);
+
+                endStates = comp.GetAllPinPositions().Select(pos => this[pos].GetStateForWire()).ToArray();
+
+                for (int i = 0; i < startStates.Length; i++)
+                {
+                    returnVal |= startStates[i] != endStates[i];
+                }
+
+                return returnVal;
+            };
+        }
+
+        /*
         private bool TickWireComp(IWireComponent wireComp)
         {
             Pin.State[] startStates, endStates;
@@ -1067,15 +1211,54 @@ namespace CircuitMaker.Basics
 
             return returnVal;
         }
+        //*/
 
-        public bool TickWires()
+        private static bool Or(bool b1, bool b2) { return b1 || b2; }
+
+        private bool SubTickJustWires()
         {
-            bool returnVal = false;
+            return Pins.Values.Select(pin => pin.EmitWireUpdate())
+                .Concat(ContainerComponents.Select(comp => comp.GetInternalBoard().SubTickJustWires()))
+                .Aggregate(false, Or);
+        }
 
+        private bool SubTickJustWireComps()
+        {
+            return WireComponents.Select(ActAndCheck<IWireComponent>(comp => { comp.Tick(); return false; }))
+                .Concat(ContainerComponents.Select(ActAndCheck<IBoardContainerComponent>(comp => comp.GetInternalBoard().SubTickJustWireComps())))
+                .Aggregate(false, Or);
+        }
+
+        public bool SubTickWires()
+        {
+            //*
+            try
+            {
+                return SubTickJustWires() | SubTickJustWireComps();
+            } finally
+            {
+                
+            }
+            //*/
+
+            /*
             return ContainerComponents.Select(comp => comp.GetInternalBoard().TickWires())
                 .Concat(Pins.Values.Select(pin => pin.EmitWireUpdate()))
                 .Concat(WireComponents.Select(TickWireComp))
-                .Aggregate(returnVal, (b1, b2) => b1 || b2);
+                .Aggregate(false, (b1, b2) => b1 || b2);
+            //*/
+        }
+
+        public void TickWires()
+        {
+            bool repeat;
+            do
+            {
+                repeat = false;
+
+                while (SubTickJustWires()) { repeat = true; }
+                while (SubTickJustWireComps()) { repeat = true; }
+            } while (repeat);
         }
 
         public void Tick()
@@ -1084,7 +1267,8 @@ namespace CircuitMaker.Basics
 
             TickComponents();
 
-            while (TickWires()) { }
+            TickWires();
+            //while (SubTickWires()) { }
         }
 
         public Pin this[Pos pos] => Pins[pos];
@@ -1265,7 +1449,7 @@ namespace CircuitMaker.Basics
 
             foreach (IComponent comp in Components)
             {
-                compPins.AddRange(comp.GetAllPinPositions());
+                compPins.AddRange(comp.GetAllUniquePinPositions());
             }
 
             foreach (Pos pinPos in Pins.Keys)
@@ -1380,7 +1564,7 @@ namespace CircuitMaker.Basics
 
                 foreach (IComponent comp in Components)
                 {
-                    compPins.AddRange(comp.GetAllPinPositions());
+                    compPins.AddRange(comp.GetAllUniquePinPositions());
                 }
 
                 if (wires.Length == 2 && compPins.Where(pinPos.Equals).Count() == 0 && wires[0].IsHori() == wires[1].IsHori() && wires[0].IsVert() == wires[1].IsVert() && (wires[0].IsHori() || wires[0].IsVert()))
@@ -1408,6 +1592,11 @@ namespace CircuitMaker.Basics
             {
                 boardContainerComp.GetInternalBoard().SimplifyWires();
             }
+        }
+
+        public Dictionary<Pos, Pin.State> GetStateToCheckForChanges()
+        {
+            return Pins.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetStateForDisplay());
         }
 
         public override string ToString()
@@ -1456,8 +1645,17 @@ namespace CircuitMaker.Basics
 
             foreach (IComponent comp in Components)
             {
-                comp.Copy().Place(comp.GetComponentPos(), copy);
+                comp.Copy().Place(comp.GetComponentPos(), comp.GetComponentRotation(), copy);
             }
+            
+            //private HashSet<IComponent> Components = new HashSet<IComponent>();
+            //private HashSet<IWireComponent> WireComponents = new HashSet<IWireComponent>();
+            //private HashSet<IComponent> NonWireComponents = new HashSet<IComponent>();
+            //private HashSet<IBoardInterfaceComponent> InterfaceComponents = new HashSet<IBoardInterfaceComponent>();
+            //private HashSet<IBoardInputComponent> InputComponents = new HashSet<IBoardInputComponent>();
+            //private HashSet<IBoardOutputComponent> OutputComponents = new HashSet<IBoardOutputComponent>();
+            //private List<IGraphicalComponent> GraphicalComponents = new List<IGraphicalComponent>();
+            //private HashSet<IBoardContainerComponent> ContainerComponents = new HashSet<IBoardContainerComponent>();
 
             foreach (Wire wire in Wires)
             {

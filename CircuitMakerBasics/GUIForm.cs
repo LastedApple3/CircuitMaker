@@ -272,6 +272,20 @@ namespace CircuitMaker.GUI
 
         public bool Simulating { get; private set; } = false;
 
+        private int tps = 100;
+        public int TPS
+        {
+            get
+            {
+                return tps;
+            }
+            set
+            {
+                tps = value;
+                simulationTimer.Interval = (int)Math.Round((double)(1000 / tps));
+            }
+        }
+
         private Timer simulationTimer;
 
         public Board GetBoard()
@@ -339,14 +353,14 @@ namespace CircuitMaker.GUI
                 ComponentBackground = Color.LightYellow,
                 Wire = Color.Black,
                 WireFloating = Color.Gray,
-                WireLow = Color.DarkBlue,
+                WireLow = Color.SkyBlue,
+                WirePulledLow = Color.LightSkyBlue,
                 WireHigh = Color.Blue,
+                WirePulledHigh = Color.LightBlue,
                 WireIllegal = Color.Red,
                 Grid = Color.FromArgb(63, Color.Black),
                 Selection = Color.Red
             };
-
-            int tps = 100;
 
             simulationTimer = new Timer
             {
@@ -608,9 +622,20 @@ namespace CircuitMaker.GUI
 
         private void SimulationTick(object sender, EventArgs e)
         {
+            Dictionary<Pos, Pin.State> before = board.GetStateToCheckForChanges();
+
             board.Tick();
 
-            Invalidate();
+            Dictionary<Pos, Pin.State> after = board.GetStateToCheckForChanges();
+
+            foreach (Pos pos in before.Keys)
+            {
+                if (!after.ContainsKey(pos) || before[pos] != after[pos])
+                {
+                    Invalidate();
+                    break;
+                }
+            }
         }
 
         private Matrix GetInvertedTransformationMatrix()
