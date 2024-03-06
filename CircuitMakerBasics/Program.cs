@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,11 @@ namespace CircuitMaker
 {
     readonly struct WirePointInfo
     {
+        public enum WirePointType
+        {
+            OrdInfo, SkipBack
+        }
+
         [Flags]
         public enum OrdInfo
         {
@@ -30,12 +36,16 @@ namespace CircuitMaker
             OffsetNext = Offset | Next,
         }
 
-        public readonly int? StoredX, StoredY;
+        public readonly WirePointType PointType;
+
+        public readonly int? SkipBackBy, StoredX, StoredY;
 
         public readonly OrdInfo XInfo, YInfo;
 
-        public WirePointInfo(OrdInfo xInfo = OrdInfo.ExactStored, OrdInfo yInfo = OrdInfo.ExactStored, int? xStore = null, int? yStore = null)
+        public WirePointInfo(WirePointType type = WirePointType.OrdInfo, int? skipBack = null, OrdInfo xInfo = OrdInfo.ExactStored, OrdInfo yInfo = OrdInfo.ExactStored, int? xStore = null, int? yStore = null)
         {
+            PointType = type;
+            SkipBackBy = skipBack;
             XInfo = xInfo;
             YInfo = yInfo;
             StoredX = xStore;
@@ -80,7 +90,16 @@ namespace CircuitMaker
 
         public override string ToString()
         {
-            return $"{FormatOrdinate(XInfo, StoredX)}, {FormatOrdinate(YInfo, StoredY)}";
+            switch (PointType)
+            {
+                case WirePointType.OrdInfo:
+                    return $"{FormatOrdinate(XInfo, StoredX)}, {FormatOrdinate(YInfo, StoredY)}";
+                case WirePointType.SkipBack:
+                    return $"Skip Back {SkipBackBy} places";
+                default:
+                    return "WirePointInfo";
+            }
+            
         }
 
         public static implicit operator WirePointInfo(Pos pos)
@@ -133,44 +152,97 @@ namespace CircuitMaker
             return new WirePointInfo(xInfo: tup.xInfo, xStore: tup.xStore, yInfo: tup.yInfo, yStore: tup.yStore);
         }
 
+        public static implicit operator WirePointInfo((WirePointType type, int xStore, int yStore) tup)
+        {
+            return new WirePointInfo(type: tup.type, xStore: tup.xStore, yStore: tup.yStore);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, int xStore, OrdInfo yInfo) tup)
+        {
+            return new WirePointInfo(type: tup.type, xStore: tup.xStore, yInfo: tup.yInfo);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, int xStore, OrdInfo yInfo, int yStore) tup)
+        {
+            return new WirePointInfo(type: tup.type, xStore: tup.xStore, yInfo: tup.yInfo, yStore: tup.yStore);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, OrdInfo xInfo, int yStore) tup)
+        {
+            return new WirePointInfo(type: tup.type, xInfo: tup.xInfo, yStore: tup.yStore);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, OrdInfo xInfo, OrdInfo yInfo) tup)
+        {
+            return new WirePointInfo(type: tup.type, xInfo: tup.xInfo, yInfo: tup.yInfo);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, OrdInfo xInfo, OrdInfo yInfo, int yStore) tup)
+        {
+            return new WirePointInfo(type: tup.type, xInfo: tup.xInfo, yInfo: tup.yInfo, yStore: tup.yStore);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, OrdInfo xInfo, int xStore, int yStore) tup)
+        {
+            return new WirePointInfo(type: tup.type, xInfo: tup.xInfo, xStore: tup.xStore, yStore: tup.yStore);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, OrdInfo xInfo, int xStore, OrdInfo yInfo) tup)
+        {
+            return new WirePointInfo(type: tup.type, xInfo: tup.xInfo, xStore: tup.xStore, yInfo: tup.yInfo);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, OrdInfo xInfo, int xStore, OrdInfo yInfo, int yStore) tup)
+        {
+            return new WirePointInfo(type: tup.type, xInfo: tup.xInfo, xStore: tup.xStore, yInfo: tup.yInfo, yStore: tup.yStore);
+        }
+
+        public static implicit operator WirePointInfo((WirePointType type, int skipBack) tup)
+        {
+            return new WirePointInfo(type: tup.type, skipBack: tup.skipBack);
+        }
+
     }
 
     static class WirePointInfoExtensions
     {
-        private static int[] ResolveOrds((WirePointInfo.OrdInfo info, int? stored)[] ordDatas)
+        private static int[] ResolveOrds((WirePointInfo.WirePointType type, int? skipBack, WirePointInfo.OrdInfo info, int? stored)[] ordDatas)
         {
             int?[] rawData = new int?[ordDatas.Length];
-            (WirePointInfo.OrdInfo info, int? stored) ordData;
+            (WirePointInfo.WirePointType type, int? skipBack, WirePointInfo.OrdInfo info, int? stored) ordData;
 
             for (int i = 0; i < ordDatas.Length; i++)
             {
                 ordData = ordDatas[i];
 
-                if (i == 0 && (ordData.info.HasFlag(WirePointInfo.OrdInfo.Prev)))
+                if (ordData.type == WirePointInfo.WirePointType.OrdInfo)
                 {
-                    throw new ArgumentException("the first element cannot contain a reference to the previous element");
-                }
-
-                if (i == ordDatas.Length - 1 && (ordData.info.HasFlag(WirePointInfo.OrdInfo.Next)))
-                {
-                    throw new ArgumentException("the last element cannot contain a reference to the next element");
-                }
-
-                if (ordData.info.HasFlag(WirePointInfo.OrdInfo.ExactStored))
-                {
-                    if (ordData.stored.HasValue)
+                    if (i == 0 && (ordData.info.HasFlag(WirePointInfo.OrdInfo.Prev)))
                     {
-                        rawData[i] = ordData.stored.Value;
+                        throw new ArgumentException("the first element cannot contain a reference to the previous element");
                     }
-                    else
+
+                    if (i == ordDatas.Length - 1 && (ordData.info.HasFlag(WirePointInfo.OrdInfo.Next)))
+                    {
+                        throw new ArgumentException("the last element cannot contain a reference to the next element");
+                    }
+
+                    if (ordData.info.HasFlag(WirePointInfo.OrdInfo.ExactStored))
+                    {
+                        if (ordData.stored.HasValue)
+                        {
+                            rawData[i] = ordData.stored.Value;
+                        }
+                        else
+                        {
+                            throw new ArgumentException("no element can reference a stored ordinate it doesn't have");
+                        }
+                    }
+
+                    if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Offset) && !ordData.stored.HasValue)
                     {
                         throw new ArgumentException("no element can reference a stored ordinate it doesn't have");
                     }
-                }
-
-                if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Offset) && !ordData.stored.HasValue)
-                {
-                    throw new ArgumentException("no element can reference a stored ordinate it doesn't have");
                 }
             }
 
@@ -189,26 +261,44 @@ namespace CircuitMaker
 
                     if (!rawData[i].HasValue)
                     {
-                        if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Prev) && rawData[i - 1].HasValue)
+                        if (ordData.type == WirePointInfo.WirePointType.OrdInfo)
                         {
-                            refInt = rawData[i - 1].Value;
-                        }
-
-                        if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Next) && rawData[i + 1].HasValue)
-                        {
-                            refInt = rawData[i + 1].Value;
-                        }
-
-                        if (refInt.HasValue)
-                        {
-                            if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Exact))
+                            if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Prev) && rawData[i - 1].HasValue)
                             {
-                                rawData[i] = refInt;
+                                refInt = rawData[i - 1].Value;
                             }
 
-                            if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Offset))
+                            if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Next) && rawData[i + 1].HasValue)
                             {
-                                rawData[i] = refInt + ordData.stored;
+                                refInt = rawData[i + 1].Value;
+                            }
+
+                            if (refInt.HasValue)
+                            {
+                                if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Exact))
+                                {
+                                    rawData[i] = refInt;
+                                }
+
+                                if (ordData.info.HasFlag(WirePointInfo.OrdInfo.Offset))
+                                {
+                                    rawData[i] = refInt + ordData.stored;
+                                }
+                            }
+                        } else if (ordData.type == WirePointInfo.WirePointType.SkipBack)
+                        {
+                            if (!ordData.skipBack.HasValue)
+                            {
+                                throw new ArgumentException("Cannot skip back without an amount to skip back by.");
+                            } else if (i < ordData.skipBack)
+                            {
+                                throw new ArgumentException("Cannot skip back to a point that is before the start of the list.");
+                            } else if (ordData.skipBack <= 0)
+                            {
+                                throw new ArgumentException("Cannot skip forward or to the same point.");
+                            } else if (rawData[i - ordData.skipBack.Value].HasValue)
+                            {
+                                rawData[i] = rawData[i - ordData.skipBack.Value];
                             }
                         }
                     }
@@ -223,11 +313,26 @@ namespace CircuitMaker
             throw new ArgumentException("the WirePointInfo[] could not resolve at least one ordinate");
         }
 
-        public static Pos[] ResolveWirePoints(this WirePointInfo[] wirePointInfos)
+        private static ImmutableList<ImmutableList<Pos>> WirePointSplittingAggregator(ImmutableList<ImmutableList<Pos>> agg, (Pos pos, bool skipBack) next)
         {
-            return ResolveOrds(wirePointInfos.Select(pointInfo => (pointInfo.XInfo, pointInfo.StoredX)).ToArray())
-                .Zip(ResolveOrds(wirePointInfos.Select(pointInfo => (pointInfo.YInfo, pointInfo.StoredY)).ToArray())
-                , (x, y) => new Pos(x, y)).ToArray();
+            if (next.skipBack)
+            {
+                return agg.Add(ImmutableList.Create(next.pos));
+            }
+
+            return agg.Replace(agg.Last(), agg.Last().Add(next.pos));
+        }
+
+        public static Pos[][] ResolveWirePoints(this WirePointInfo[] wirePointInfos)
+        {
+            return ResolveOrds(wirePointInfos.Select(pointInfo => (pointInfo.PointType, pointInfo.SkipBackBy, pointInfo.XInfo, pointInfo.StoredX)).ToArray())
+                .Zip(ResolveOrds(wirePointInfos.Select(pointInfo => (pointInfo.PointType, pointInfo.SkipBackBy, pointInfo.YInfo, pointInfo.StoredY)).ToArray())
+                , (x, y) => new Pos(x, y))
+                .Zip(wirePointInfos.Select(wirePointInfo => wirePointInfo.PointType == WirePointInfo.WirePointType.SkipBack)
+                , (pos, skipBack) => (pos, skipBack))
+                .Aggregate(ImmutableList.Create(ImmutableList.Create<Pos>()), WirePointSplittingAggregator)
+                .Select(list => list.ToArray())
+                .ToArray();
         }
     }
 
@@ -251,9 +356,12 @@ namespace CircuitMaker
 
         static void PlaceWires(WirePointInfo[][] wires, Board board)
         {
-            foreach (WirePointInfo[] wire in wires)
+            foreach (WirePointInfo[] wirePointInfoArr in wires)
             {
-                PlaceWire(wire.ResolveWirePoints(), board);
+                foreach (Pos[] wire in wirePointInfoArr.ResolveWirePoints())
+                {
+                    PlaceWire(wire, board);
+                }
             }
         }
 
@@ -265,35 +373,145 @@ namespace CircuitMaker
             IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
             IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
 
-            IComponent QNor = new VarInpComponents.VarInpNorComponent(2);
-            IComponent QBarNor = new VarInpComponents.VarInpNorComponent(2);
+            IComponent SExtBuffer = new BufferComponents.BufferComponent();
+            IComponent RExtBuffer = new BufferComponents.BufferComponent();
 
-            IComponent QSyncBuffer = new BufferComponents.BufferComponent();
-            IComponent QBarSyncBuffer = new BufferComponents.BufferComponent();
+            IComponent QNor = new VarInpComponents.VarInpNorComponent(3);
+            IComponent QBarNor = new VarInpComponents.VarInpNorComponent(3);
 
-            IComponent QSyncOr = new VarInpComponents.VarInpOrComponent(2);
-            IComponent QBarSyncOr = new VarInpComponents.VarInpOrComponent(2);
+            IComponent QSyncNot = new BufferComponents.NotComponent();
+            IComponent QBarSyncNot = new BufferComponents.NotComponent();
+
+            IComponent QSyncBuffer1 = new BufferComponents.BufferComponent();
+            IComponent QBarSyncBuffer1 = new BufferComponents.BufferComponent();
+
+            IComponent QSyncBuffer2 = new BufferComponents.BufferComponent();
+            IComponent QBarSyncBuffer2 = new BufferComponents.BufferComponent();
+
+            IComponent QSyncBuffer3 = new BufferComponents.BufferComponent();
+            IComponent QBarSyncBuffer3 = new BufferComponents.BufferComponent();
+
+            IComponent QSyncBuffer4 = new BufferComponents.BufferComponent();
+            IComponent QBarSyncBuffer4 = new BufferComponents.BufferComponent();
+
+            IComponent QSync2And = new VarInpComponents.VarInpAndComponent(2);
+            IComponent QBarSync2And = new VarInpComponents.VarInpAndComponent(2);
+
+            IComponent QSync3And = new VarInpComponents.VarInpAndComponent(3);
+            IComponent QBarSync3And = new VarInpComponents.VarInpAndComponent(3);
+
+            IComponent QSyncOr = new VarInpComponents.VarInpOrComponent(3);
+            IComponent QBarSyncOr = new VarInpComponents.VarInpOrComponent(3);
 
             IBoardOutputComponent QOutp = new BoardContainerComponents.BoardOutputComponent("Q", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 1));
             IBoardOutputComponent QBarOutp = new BoardContainerComponents.BoardOutputComponent("QBAR", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 3));
 
-            SInp.Place(new Pos(0, 0), SRNorLatch);
-            RInp.Place(new Pos(0, 7), SRNorLatch);
+            SInp.Place(new Pos(-2, 0), SRNorLatch);
+            RInp.Place(new Pos(-2, 7), SRNorLatch);
 
-            QNor.Place(new Pos(4, 6), SRNorLatch);
-            QBarNor.Place(new Pos(4, 1), SRNorLatch);
+            SExtBuffer.Place(new Pos(1, -2), SRNorLatch);
+            RExtBuffer.Place(new Pos(1, 9), SRNorLatch);
 
-            QSyncBuffer.Place(new Pos(7, 8), SRNorLatch);
-            QBarSyncBuffer.Place(new Pos(7, 1), SRNorLatch);
+            QNor.Place(new Pos(4, 0), SRNorLatch);
+            QBarNor.Place(new Pos(4, 7), SRNorLatch);
 
-            QSyncOr.Place(new Pos(10, 7), SRNorLatch);
-            QBarSyncOr.Place(new Pos(10, 0), SRNorLatch);
+            QSyncNot.Place(new Pos(7, 0), SRNorLatch);
+            QBarSyncNot.Place(new Pos(8, 7), SRNorLatch);
 
-            QOutp.Place(new Pos(14, 7), SRNorLatch);
-            QBarOutp.Place(new Pos(14, 0), SRNorLatch);
+            QSyncBuffer1.Place(new Pos(9, 3), SRNorLatch);
+            QBarSyncBuffer1.Place(new Pos(9, 4), SRNorLatch);
+
+            QSyncBuffer2.Place(new Pos(11, 3), SRNorLatch);
+            QBarSyncBuffer2.Place(new Pos(11, 4), SRNorLatch);
+
+            QSyncBuffer3.Place(new Pos(13, -1), Rotation.ANTICLOCKWISE, SRNorLatch);
+            QBarSyncBuffer3.Place(new Pos(13, 8), Rotation.CLOCKWISE, SRNorLatch);
+
+            QSyncBuffer4.Place(new Pos(13, -4), SRNorLatch);
+            QBarSyncBuffer4.Place(new Pos(13, 11), SRNorLatch);
+
+            QSync2And.Place(new Pos(16, 2), SRNorLatch);
+            QBarSync2And.Place(new Pos(16, 5), SRNorLatch);
+
+            QSync3And.Place(new Pos(16, -2), SRNorLatch);
+            QBarSync3And.Place(new Pos(16, 9), SRNorLatch);
+
+            QSyncOr.Place(new Pos(20, -2), SRNorLatch);
+            QBarSyncOr.Place(new Pos(20, 9), SRNorLatch);
+
+            QOutp.Place(new Pos(24, -2), SRNorLatch);
+            QBarOutp.Place(new Pos(24, 9), SRNorLatch);
 
             PlaceWires(new WirePointInfo[][]
             {
+                new WirePointInfo[]
+                {
+                    SExtBuffer.GetAllPinPositions()[0],
+                    SInp.GetAllPinPositions()[0],
+                    QNor.GetAllPinPositions()[1],
+                },
+                new WirePointInfo[]
+                {
+                    RExtBuffer.GetAllPinPositions()[0],
+                    RInp.GetAllPinPositions()[0],
+                    QBarNor.GetAllPinPositions()[1]
+                },
+                new WirePointInfo[]
+                {
+                    QNor.GetAllPinPositions()[3],
+                    (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.ExactNext),
+                    QBarSyncBuffer1.GetAllPinPositions()[0],
+                    (WirePointInfo.WirePointType.SkipBack, 2),
+                    (WirePointInfo.OrdInfo.ExactNext, WirePointInfo.OrdInfo.ExactPrev),
+                    QBarNor.GetAllPinPositions()[0]
+                },
+                new WirePointInfo[]
+                {
+                    QBarNor.GetAllPinPositions()[3],
+                    QBarSyncNot.GetAllPinPositions()[0],
+                    (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.ExactNext),
+                    QSyncBuffer1.GetAllPinPositions()[0],
+                    (WirePointInfo.WirePointType.SkipBack, 2),
+                    (WirePointInfo.OrdInfo.ExactNext, WirePointInfo.OrdInfo.ExactPrev),
+                    QNor.GetAllPinPositions()[2]
+                },
+                new WirePointInfo[]
+                {
+                    QSyncNot.GetAllPinPositions()[1],
+                    QSyncBuffer3.GetAllPinPositions()[0],
+                    QSync3And.GetAllPinPositions()[2],
+                    QSync2And.GetAllPinPositions()[0]
+                },
+                new WirePointInfo[]
+                {
+                    QBarSyncNot.GetAllPinPositions()[1],
+                    QBarSyncBuffer3.GetAllPinPositions()[0],
+                    QBarSync3And.GetAllPinPositions()[0],
+                    QBarSync2And.GetAllPinPositions()[1]
+                },
+                new WirePointInfo[] { QSyncBuffer3.GetAllPinPositions()[1], QSync3And.GetAllPinPositions()[1] },
+                new WirePointInfo[] { QBarSyncBuffer3.GetAllPinPositions()[1], QBarSync3And.GetAllPinPositions()[1] },
+                new WirePointInfo[]
+                {
+                    QSync2And.GetAllPinPositions()[1],
+                    QSyncBuffer2.GetAllPinPositions()[1],
+                    QSyncBuffer4.GetAllPinPositions()[0],
+                    (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.OffsetPrev, -1),
+                    (WirePointInfo.OrdInfo.ExactNext, WirePointInfo.OrdInfo.ExactPrev),
+                    QSyncOr.GetAllPinPositions()[0]
+                },
+                new WirePointInfo[]
+                {
+                    QBarSync2And.GetAllPinPositions()[0],
+                    QBarSyncBuffer2.GetAllPinPositions()[1],
+                    QBarSyncBuffer4.GetAllPinPositions()[0],
+                    (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.OffsetPrev, 1),
+                    (WirePointInfo.OrdInfo.ExactNext, WirePointInfo.OrdInfo.ExactPrev),
+                    QBarSyncOr.GetAllPinPositions()[2]
+                },
+                new WirePointInfo[] { QSync2And.GetAllPinPositions()[2], QSyncOr.GetAllPinPositions()[2] },
+                new WirePointInfo[] { QBarSync2And.GetAllPinPositions()[2], QBarSyncOr.GetAllPinPositions()[0] }
+                /*
                 new WirePointInfo[] {
                     QSyncBuffer.GetAllPinPositions()[0],
                     QNor.GetAllPinPositions()[2],
@@ -311,6 +529,7 @@ namespace CircuitMaker
                     (WirePointInfo.OrdInfo.ExactNext, WirePointInfo.OrdInfo.OffsetNext, -1),
                     QNor.GetAllPinPositions()[0]
                 }
+                //*/
             }, SRNorLatch);
 
             SRNorLatch.Save("Boards/SR Latch.brd");
@@ -418,6 +637,7 @@ namespace CircuitMaker
         static Board BuildDFlipFlop(Board DLatchBoard)
         {
             Board DFlipFlop = new Board("D Flip Flop", new System.Drawing.Size(4, 4));
+            const int timingBuffers = 8;
 
             IBoardInputComponent DInp = new BoardContainerComponents.BoardInputComponent("D", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
             IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLK", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
@@ -426,6 +646,13 @@ namespace CircuitMaker
             IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
 
             IComponent ClkNot1 = new BufferComponents.NotComponent();
+
+            IComponent[] ClkBuffers = new IComponent[timingBuffers];
+            for (int i = 0; i < timingBuffers; i++)
+            {
+                ClkBuffers[i] = new BufferComponents.BufferComponent();
+            }
+
             IComponent ClkNot2 = new BufferComponents.NotComponent();
 
             IBoardContainerComponent MasterDLatch = new BoardContainerComponents.BoardContainerComponent(DLatchBoard);
@@ -438,25 +665,26 @@ namespace CircuitMaker
             ClkInp.Place(new Pos(-2, 5), DFlipFlop); // 1
 
             SInp.Place(new Pos(3, -3), DFlipFlop); // 2
-            RInp.Place(new Pos(3, 6), DFlipFlop); // 3
+            RInp.Place(new Pos(-1, 4), DFlipFlop); // 3
 
             ClkNot1.Place(new Pos(1, 5), DFlipFlop);
-            ClkNot2.Place(new Pos(8, 5), DFlipFlop);
+
+            for (int i = 0; i < timingBuffers; i++)
+            {
+                ClkBuffers[i].Place(new Pos(3 + (2 * i), 5), DFlipFlop);
+            }
+
+            ClkNot2.Place(new Pos(Math.Max(8, 3 + (2 * timingBuffers)), 5), DFlipFlop);
 
             MasterDLatch.Place(new Pos(5, 1), DFlipFlop);
-            SlaveDLatch.Place(new Pos(12, 1), DFlipFlop);
+            SlaveDLatch.Place(new Pos(Math.Max(12, 7 + (2 * timingBuffers)), 1), DFlipFlop);
 
-            QOutp.Place(new Pos(17, 0), DFlipFlop); // 4
-            QBarOutp.Place(new Pos(17, 2), DFlipFlop); // 5
+            QOutp.Place(new Pos(Math.Max(17, 12 + (2 * timingBuffers)), 0), DFlipFlop); // 4
+            QBarOutp.Place(new Pos(Math.Max(17, 12 + (2 * timingBuffers)), 2), DFlipFlop); // 5
 
             PlaceWires(new Pos[][]
             {
-                new Pos[]
-                {
-                    MasterDLatch.GetAllPinPositions()[1],
-                    ClkNot1.GetAllPinPositions()[1],
-                    ClkNot2.GetAllPinPositions()[0]
-                },
+                new Pos[] { MasterDLatch.GetAllPinPositions()[1], ClkNot1.GetAllPinPositions()[1] },
                 new Pos[] { ClkNot2.GetAllPinPositions()[1], SlaveDLatch.GetAllPinPositions()[1] },
                 new Pos[] { MasterDLatch.GetAllPinPositions()[4], SlaveDLatch.GetAllPinPositions()[0] },
                 new Pos[]
@@ -549,104 +777,20 @@ namespace CircuitMaker
 
             return SingleCounterElement;
         }
-        //*/
 
-        /*
-        static Board BuildAsyncCounterSingleElement(Board DFlipFlop)
+        static Board BuildBCDDigitCounter(Board SingleCounterElement)
         {
-            Board SingleCounterElement = new Board("Single Async Counter Element", new System.Drawing.Size(4, 4));
-            
-            IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLKin", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
-            IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
+            Board BCDDigitCounter = new Board("BCD Digit Counter", new System.Drawing.Size(2, 6));
 
-            IBoardContainerComponent dFlipFlop = new BoardContainerComponents.BoardContainerComponent(DFlipFlop);
+            IBoardInputComponent IncInp = new BoardContainerComponents.BoardInputComponent("INC", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 1));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 5));
 
-            IBoardOutputComponent OOutp = new BoardContainerComponents.BoardOutputComponent("O", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 1));
-            IBoardOutputComponent ClkOutp = new BoardContainerComponents.BoardOutputComponent("CLKout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 3));
+            // wires
 
-            ClkInp.Place(new Pos(1, 4), SingleCounterElement); // 0
-            SInp.Place(new Pos(0, 0), SingleCounterElement); // 1
-            RInp.Place(new Pos(4, 7), SingleCounterElement); // 2
+            BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
 
-            dFlipFlop.Place(new Pos(6, 3), SingleCounterElement);
-
-            OOutp.Place(new Pos(13, 2), SingleCounterElement); // 3
-            ClkOutp.Place(new Pos(12, 4), SingleCounterElement); // 4
-
-            PlaceWires(new WirePointInfo[][]
-            {
-                new WirePointInfo[] { SInp.GetAllPinPositions()[0], dFlipFlop.GetAllPinPositions()[2] },
-                new WirePointInfo[] { RInp.GetAllPinPositions()[0], dFlipFlop.GetAllPinPositions()[3] },
-                new WirePointInfo[] { dFlipFlop.GetAllPinPositions()[4], OOutp.GetAllPinPositions()[0] },
-                new WirePointInfo[]
-                {
-                    dFlipFlop.GetAllPinPositions()[5],
-                    ClkOutp.GetAllPinPositions()[0],
-                    (WirePointInfo.OrdInfo.ExactPrev, -1),
-                    (WirePointInfo.OrdInfo.ExactNext, WirePointInfo.OrdInfo.ExactPrev),
-                    dFlipFlop.GetAllPinPositions()[0]
-                }
-            }, SingleCounterElement);
-
-            SingleCounterElement.Save("Boards/Single Async Counter Element.brd");
-
-            return SingleCounterElement;
+            return BCDDigitCounter;
         }
-
-        static Board BuildNBitAsyncCounter(Board SingleElement, int bits)
-        {
-            Board AsyncCounter = new Board($"{bits}-bit Async Counter", new System.Drawing.Size(2, bits + 1));
-
-            IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLK", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 2));
-
-            ClkInp.Place(new Pos(-5, 1), AsyncCounter); // 0
-            RInp.Place(new Pos(0, 5), Rotation.ANTICLOCKWISE, AsyncCounter); // 1
-
-            IBoardContainerComponent[] singElements = new IBoardContainerComponent[bits];
-            IComponent[][] bitOutpBuffers = new IComponent[bits][];
-            IBoardOutputComponent[] bitOutps = new IBoardOutputComponent[bits];
-            Pos[][] outpWires = new Pos[bits][];
-            Pos[] resetWire = new Pos[bits];
-
-            for (int i = 0; i < bits; i++)
-            {
-                singElements[i] = new BoardContainerComponents.BoardContainerComponent(SingleElement);
-
-                bitOutpBuffers[i] = new IComponent[(bits - i) * 7];
-
-                for (int j = 0; j < bitOutpBuffers[i].Length; j++)
-                {
-                    bitOutpBuffers[i][j] = new BufferComponents.BufferComponent();
-
-                    bitOutpBuffers[i][j].Place(new Pos(3 + (6 * i), (-2 * j) - 5), Rotation.ANTICLOCKWISE, AsyncCounter);
-                }
-
-                // (bits - i) * 7 buffers
-
-                bitOutps[i] = new BoardContainerComponents.BoardOutputComponent($"O{i}", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, bits - i));
-
-                singElements[i].Place(new Pos(6 * i, 0), AsyncCounter);
-                bitOutps[i].Place(new Pos(3 + (6 * i), (-14 * (bits - i)) - 6), Rotation.ANTICLOCKWISE, AsyncCounter); // 2+i
-
-                outpWires[i] = new Pos[]
-                {
-                    singElements[i].GetAllPinPositions()[3],
-                    //bitOutps[i].GetAllPinPositions()[0]
-                    (bitOutpBuffers.Length > 0 ? bitOutpBuffers[i][0] : bitOutps[i]).GetAllPinPositions()[0],
-                };
-
-                resetWire[i] = singElements[i].GetAllPinPositions()[2];
-            }
-
-            PlaceWire(resetWire, AsyncCounter);
-            PlaceWires(outpWires, AsyncCounter);
-
-            AsyncCounter.Save($"Boards/{bits}-bit Async Counter.brd");
-
-            return AsyncCounter;
-        } // needs buffer components sufficient to synchronise the outputs
         //*/
 
         //*
@@ -815,20 +959,19 @@ namespace CircuitMaker
                 SRNorLatch = BuildSRNorLatch(),
                 DLatch = BuildDLatch(SRNorLatch), 
                 DFlipFlop = BuildDFlipFlop(DLatch), 
-                SingleCounterElement = BuildSingleCounterElement(DFlipFlop);
-            //Board AsyncSingleCounterElement = BuildAsyncCounterSingleElement(DFlipFlop);
-            //Board Async4BitCounter = BuildNBitAsyncCounter(AsyncSingleCounterElement, 4);
+                SingleCounterElement = BuildSingleCounterElement(DFlipFlop),
+                //BCDDigitCounter = BuildBCDDigitCounter(SingleCounterElement),
 
-            Board SevenSegDecoder = BuildMUX(4, new int[][][]
-            {
-                new int[][] { new int[]{ 1, -2, -3 }, new int[] { -1, 2, 4 }, new int[] { -2, -4 }, new int[] { -1, 3 }, new int[] { 1, -4 }, new int[] { 2, 3 } },
-                new int[][] { new int[]{ -1, -3, -4 }, new int[] { -1, 3, 4 }, new int[] { 1, -3, 4 }, new int[] { -2, -4 }, new int[] { -1, -2 } },
-                new int[][] { new int[]{ -3, 4 }, new int[] { -1, 2 }, new int[] { 1, -2 }, new int[] { -1, 4 }, new int[] { -1, -3 } },
-                new int[][] { new int[]{ 2, -3, 4 }, new int[] { 1, -3 }, new int[] { 2, 3, -4 }, new int[] { -2, 3, 4 }, new int[] { -1, -2, -4 } },
-                new int[][] { new int[]{ -2, -4 }, new int[] { 3, -4 }, new int[] { 1, 3 }, new int[] { 1, 2 } },
-                new int[][] { new int[]{ -1, 2, -3 }, new int[] { -3, -4 }, new int[] { 2, -4 }, new int[] { 1, -2 }, new int[] { 1, 3 } },
-                new int[][] { new int[]{ -2, 3 }, new int[] { 1, -2 }, new int[] { 1, 4 }, new int[] { 3, -4 }, new int[] { -1, 2, -3, } }
-            }, "7seg decoder");
+                SevenSegDecoder = BuildMUX(4, new int[][][]
+                {
+                    new int[][] { new int[]{ 1, -2, -3 }, new int[] { -1, 2, 4 }, new int[] { -2, -4 }, new int[] { -1, 3 }, new int[] { 1, -4 }, new int[] { 2, 3 } },
+                    new int[][] { new int[]{ -1, -3, -4 }, new int[] { -1, 3, 4 }, new int[] { 1, -3, 4 }, new int[] { -2, -4 }, new int[] { -1, -2 } },
+                    new int[][] { new int[]{ -3, 4 }, new int[] { -1, 2 }, new int[] { 1, -2 }, new int[] { -1, 4 }, new int[] { -1, -3 } },
+                    new int[][] { new int[]{ 2, -3, 4 }, new int[] { 1, -3 }, new int[] { 2, 3, -4 }, new int[] { -2, 3, 4 }, new int[] { -1, -2, -4 } },
+                    new int[][] { new int[]{ -2, -4 }, new int[] { 3, -4 }, new int[] { 1, 3 }, new int[] { 1, 2 } },
+                    new int[][] { new int[]{ -1, 2, -3 }, new int[] { -3, -4 }, new int[] { 2, -4 }, new int[] { 1, -2 }, new int[] { 1, 3 } },
+                    new int[][] { new int[]{ -2, 3 }, new int[] { 1, -2 }, new int[] { 1, 4 }, new int[] { 3, -4 }, new int[] { -1, 2, -3, } }
+                }, "7seg decoder");
             //*/
 
             //*

@@ -272,7 +272,7 @@ namespace CircuitMaker.GUI
 
         public bool Simulating { get; private set; } = false;
 
-        private int tps = 1;
+        private int tps = 1000;
         public int TPS
         {
             get
@@ -282,7 +282,7 @@ namespace CircuitMaker.GUI
             set
             {
                 tps = value;
-                simulationTimer.Interval = (int)Math.Round((double)(1000 / tps));
+                simulationTimer.Interval = (int)Math.Round((double)(5000 / tps));
             }
         }
 
