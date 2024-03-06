@@ -282,7 +282,7 @@ namespace CircuitMaker.GUI
             set
             {
                 tps = value;
-                simulationTimer.Interval = (int)Math.Round((double)(5000 / tps));
+                simulationTimer.Interval = (int)Math.Round((double)(1000 / tps));
             }
         }
 
@@ -939,7 +939,7 @@ namespace CircuitMaker.GUI
                         dragType = DragType.None;
                     } else if (dragType == DragType.DrawWire)
                     {
-                        if (!wireStart.Equals(wireEnd))
+                        if (wireStart != wireEnd)
                         {
                             new Wire(wireStart, wireEnd, board);
                         }

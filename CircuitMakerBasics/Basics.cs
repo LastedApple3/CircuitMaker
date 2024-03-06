@@ -292,8 +292,16 @@ namespace CircuitMaker.Basics
 
     class DefaultDictionary<TKey, TValue> : Dictionary<TKey, TValue>
     {
-        private Func<TValue> BlindGenerator;
-        private Func<TKey, TValue> KeyBasedGenerator;
+        private readonly Func<TValue> BlindGenerator;
+        private readonly Func<TKey, TValue> KeyBasedGenerator;
+
+        private readonly Func<TKey, bool> KeyKeepChecker;
+        private readonly Func<TValue, bool> ValKeepChecker;
+
+        public DefaultDictionary()
+        {
+            ValKeepChecker = val => val.Equals(default(TValue));
+        }
 
         public DefaultDictionary(Func<TValue> generator)
         {
@@ -305,28 +313,90 @@ namespace CircuitMaker.Basics
             KeyBasedGenerator = generator;
         }
 
+        public DefaultDictionary(Func<TValue> generator, Func<TValue, bool> valKeepChecker)
+        {
+            BlindGenerator = generator;
+            ValKeepChecker = valKeepChecker;
+        }
+
+        public DefaultDictionary(Func<TKey, TValue> generator, Func<TValue, bool> valKeepChecker)
+        {
+            KeyBasedGenerator = generator;
+            ValKeepChecker = valKeepChecker;
+        }
+
+        public DefaultDictionary(Func<TValue> generator, Func<TKey, bool> keyKeepChecker)
+        {
+            BlindGenerator = generator;
+            KeyKeepChecker = keyKeepChecker;
+        }
+
+        public DefaultDictionary(Func<TKey, TValue> generator, Func<TKey, bool> keyKeepChecker)
+        {
+            KeyBasedGenerator = generator;
+            KeyKeepChecker = keyKeepChecker;
+        }
+
+        public void TrimDown()
+        {
+            if (ValKeepChecker != null)
+            {
+                foreach (TKey key in Keys)
+                {
+                    if (!ValKeepChecker(this[key]))
+                    {
+                        Remove(key);
+                    }
+                }
+            } else if (KeyKeepChecker != null)
+            {
+                foreach (TKey key in Keys)
+                {
+                    if (!KeyKeepChecker(key))
+                    {
+                        Remove(key);
+                    }
+                }
+            }
+        }
+
         public new TValue this[TKey key]
         {
             get
             {
-                if (!ContainsKey(key))
+                try
                 {
-                    if (BlindGenerator != null)
+                    if (!ContainsKey(key))
                     {
-                        Add(key, BlindGenerator());
-                    } else if (KeyBasedGenerator != null)
-                    {
-                        Add(key, KeyBasedGenerator(key));
+                        if (BlindGenerator != null)
+                        {
+                            Add(key, BlindGenerator());
+                        }
+                        else if (KeyBasedGenerator != null)
+                        {
+                            Add(key, KeyBasedGenerator(key));
+                        }
+                        else
+                        {
+                            Add(key, default);
+                        }
                     }
-                }
 
-                return base[key];
+                    return base[key];
+                } finally
+                {
+                    TrimDown();
+                }
             }
-            set => base[key] = value;
+            set
+            {
+                base[key] = value;
+                TrimDown();
+            }
         }
     }
 
-    public readonly struct Pos : IEquatable<Pos>
+    public readonly struct Pos// : IEquatable<Pos>
     {
         public readonly int X;
         public readonly int Y;
@@ -337,10 +407,12 @@ namespace CircuitMaker.Basics
             this.Y = Y;
         }
 
+        //*
         public bool Equals(Pos other)
         {
             return X == other.X && Y == other.Y;
         }
+        //*/
 
         public Pos Add(int X, int Y)
         {
@@ -355,6 +427,31 @@ namespace CircuitMaker.Basics
         public override string ToString()
         {
             return $"({X}, {Y})";
+        }
+
+        public static bool operator ==(Pos pos1, Pos pos2)
+        {
+            return pos1.X == pos2.X && pos1.Y == pos2.Y;
+        }
+
+        public static bool operator !=(Pos pos1, Pos pos2)
+        {
+            return pos1.X != pos2.X || pos1.Y != pos2.Y;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Pos pos)
+            {
+                return this == pos;
+            }
+
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
         }
 
         public Pos Rotate(Rotation rotation)
@@ -408,14 +505,32 @@ namespace CircuitMaker.Basics
 
         private readonly Board board;
 
+        public bool IsPlaced { get; private set; }
+
         public Pin Pin1
         {
-            get { return board[Pos1]; }
+            get
+            {
+                if (!IsPlaced)
+                {
+                    throw new ObjectDisposedException("This wire has already been removed.");
+                }
+
+                return board[Pos1];
+            }
         }
 
         public Pin Pin2
         {
-            get { return board[Pos2]; }
+            get 
+            {
+                if (!IsPlaced)
+                {
+                    throw new ObjectDisposedException("This wire has already been removed.");
+                }
+
+                return board[Pos2];
+            }
         }
 
         public Wire(Pos pos1, Pos pos2, Board board)
@@ -425,35 +540,102 @@ namespace CircuitMaker.Basics
 
             this.board = board;
 
-            Pin1.WireUpdate += OnWireUpdate;
-            Pin2.WireUpdate += OnWireUpdate;
+            //Pin1.WireUpdate += OnWireUpdate;
+            //Pin2.WireUpdate += OnWireUpdate;
 
             board.AddWire(this);
+
+            IsPlaced = true;
         }
 
         public void OnWireUpdate()
         {
-            Pin.State new_state = Pin1.GetStateForWire().WireJoin(Pin2.GetStateForWire());
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
 
-            Pin1.SetState(new_state);
-            Pin2.SetState(new_state);
+            //Pin.State new_state = Pin1.GetStateForWire().WireJoin(Pin2.GetStateForWire());
+
+            //Pin1.SetState(new_state);
+            //Pin2.SetState(new_state);
+
+            Pin1.SetState(Pin2.GetStateForWire());
+            Pin2.SetState(Pin1.GetStateForWire());
+        }
+
+        public bool TrySplitWire(Pos pos)
+        {
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
+
+            if (Collision(pos))
+            {
+                new Wire(Pos1, pos, board);
+                new Wire(Pos2, pos, board);
+
+                Remove();
+
+                return true;
+            }
+
+            return false;
         }
 
         public void Remove()
         {
-            Pin1.WireUpdate -= OnWireUpdate;
-            Pin2.WireUpdate -= OnWireUpdate;
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
+
+            //Pin1.WireUpdate -= OnWireUpdate;
+            //Pin2.WireUpdate -= OnWireUpdate;
 
             board.RemoveWire(this);
+
+            IsPlaced = false;
         }
 
         public override string ToString()
         {
-            return $"[{Pos1}, {Pos2}]";
+            return IsPlaced ? $"[{Pos1}, {Pos2}]" : "Removed Wire";
+        }
+
+        public static bool operator ==(Wire wire1, Wire wire2)
+        {
+            return (wire1.Pos1 == wire2.Pos1 && wire1.Pos2 == wire2.Pos2) || (wire1.Pos1 == wire2.Pos2 && wire1.Pos2 == wire2.Pos1);
+        }
+
+        public static bool operator !=(Wire wire1, Wire wire2)
+        {
+            return (wire1.Pos1 != wire2.Pos1 || wire1.Pos2 != wire2.Pos2) && (wire1.Pos1 != wire2.Pos2 || wire1.Pos2 != wire2.Pos1);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Wire wire)
+            {
+                return this == wire;
+            }
+
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return Pos1.GetHashCode() + Pos2.GetHashCode();
         }
 
         public Rectangle Bounds()
         {
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
+
             return Rectangle.FromLTRB(
                 Math.Min(Pos1.X, Pos2.X), 
                 Math.Min(Pos1.Y, Pos2.Y),
@@ -463,6 +645,11 @@ namespace CircuitMaker.Basics
 
         public RectangleF InflatedBounds()
         {
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
+
             RectangleF bounds = Bounds();
 
             bounds.Inflate(0.25F, 0.25F);
@@ -472,16 +659,31 @@ namespace CircuitMaker.Basics
 
         public bool IsVert()
         {
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
+
             return Pos1.X == Pos2.X;
         }
 
         public bool IsHori()
         {
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
+
             return Pos1.Y == Pos2.Y;
         }
 
         public bool Collision(Pos pos)
         {
+            if (!IsPlaced)
+            {
+                throw new ObjectDisposedException("This wire has already been removed.");
+            }
+
             Rectangle bounds = Bounds();
 
             if (IsVert())
@@ -854,6 +1056,7 @@ namespace CircuitMaker.Basics
             //StateChanged = false;
         }
 
+        /*
         public event Action WireUpdate;
 
         public bool EmitWireUpdate()
@@ -889,6 +1092,7 @@ namespace CircuitMaker.Basics
 
             return WireUpdate.GetInvocationList().Select(del => (Wire)del.Target).ToArray();
         }
+        //*/
     }
 
     public static class SideEnumExtensions
@@ -960,9 +1164,9 @@ namespace CircuitMaker.Basics
             }
         }
 
-        private DefaultDictionary<Pos, Pin> Pins = new DefaultDictionary<Pos, Pin>(() => new Pin());
-
+        private DefaultDictionary<Pos, Pin> Pins;
         private HashSet<Wire> Wires = new HashSet<Wire>();
+        private DefaultDictionary<Pos, int> ConnectionsToPin = new DefaultDictionary<Pos, int>();
 
         private HashSet<IComponent> Components = new HashSet<IComponent>();
         private HashSet<IWireComponent> WireComponents = new HashSet<IWireComponent>();
@@ -1018,20 +1222,29 @@ namespace CircuitMaker.Basics
         public Board(string name, Size? externalSize = null)
         {
             Name = name;
+
             if (externalSize.HasValue)
             {
                 ExternalSize = externalSize.Value;
             }
+
+            Pins = new DefaultDictionary<Pos, Pin>(() => new Pin(), (pos) => ConnectionsToPin[pos] != 0);
         }
 
         public void AddWire(Wire wire)
         {
             Wires.Add(wire);
+
+            ConnectionsToPin[wire.Pos1]++;
+            ConnectionsToPin[wire.Pos2]++;
         }
 
         public void RemoveWire(Wire wire)
         {
             Wires.Remove(wire);
+
+            ConnectionsToPin[wire.Pos1]--;
+            ConnectionsToPin[wire.Pos2]--;
         }
 
         public Wire[] GetAllWires()
@@ -1215,9 +1428,23 @@ namespace CircuitMaker.Basics
 
         private static bool Or(bool b1, bool b2) { return b1 || b2; }
 
+        private bool SubTickWire(Wire wire)
+        {
+            if (wire.Pin1.GetStateForWire() != wire.Pin2.GetStateForWire())
+            {
+                wire.Pin1.SetState(wire.Pin2.GetStateForWire());
+                wire.Pin2.SetState(wire.Pin1.GetStateForWire());
+
+                return true;
+            }
+
+            return false;
+        }
+
         private bool SubTickJustWires()
         {
-            return Pins.Values.Select(pin => pin.EmitWireUpdate())
+            return //Pins.Values.Select(pin => pin.EmitWireUpdate())
+                Wires.Select(SubTickWire)
                 .Concat(ContainerComponents.Select(comp => comp.GetInternalBoard().SubTickJustWires()))
                 .Aggregate(false, Or);
         }
@@ -1292,15 +1519,15 @@ namespace CircuitMaker.Basics
 
         internal void AddComponent(IComponent comp)
         {
-            RectangleF bounds = comp.GetOffsetComponentBounds();
-
             foreach (IComponent otherComp in Components)
             {
-                if (otherComp.GetOffsetComponentBounds().IntersectsWith(bounds))
+                if (otherComp.GetOffsetComponentBounds().IntersectsWith(comp.GetOffsetComponentBounds()))
                 {
                     throw new PlacementException("cant place on another component. this error shouldn't be in the final product");
                 }
             }
+
+            comp.GetAllUniquePinPositions().Select(pos => ConnectionsToPin[pos]++);
 
             Components.Add(comp);
 
@@ -1369,6 +1596,8 @@ namespace CircuitMaker.Basics
 
         internal void RemoveComponent(IComponent comp)
         {
+            comp.GetAllUniquePinPositions().Select(pos => ConnectionsToPin[pos]--);
+
             Components.Remove(comp);
 
             if (comp is IGraphicalComponent graphicalComp)
@@ -1444,13 +1673,6 @@ namespace CircuitMaker.Basics
             }
 
             Pin pin;
-            int connectionCount;
-            List<Pos> compPins = new List<Pos>();
-
-            foreach (IComponent comp in Components)
-            {
-                compPins.AddRange(comp.GetAllUniquePinPositions());
-            }
 
             foreach (Pos pinPos in Pins.Keys)
             {
@@ -1458,14 +1680,12 @@ namespace CircuitMaker.Basics
                 {
                     pin = Pins[pinPos];
 
-                    connectionCount = pin.GetWires().Length + compPins.Where(pinPos.Equals).Count();
-
-                    if (connectionCount == 0)
+                    if (ConnectionsToPin[pinPos] == 0)
                     {
                         continue;
                     }
 
-                    if (connectionCount != 2)
+                    if (ConnectionsToPin[pinPos] != 2)
                     {
                         graphics.FillEllipse(new SolidBrush(colourScheme.GetWireColour(pin.GetStateForDisplay())), pinPos.X - 0.05F, pinPos.Y - 0.05F, 0.1F, 0.1F);
                     }
@@ -1541,6 +1761,7 @@ namespace CircuitMaker.Basics
             }
         }
 
+        /*
         public void SimplifyWires()
         {
             Pin pin;
@@ -1553,7 +1774,7 @@ namespace CircuitMaker.Basics
 
                 foreach (Wire wire in pin.GetWires())
                 {
-                    if (wire.Pos1.Equals(wire.Pos2))
+                    if (wire.Pos1 == wire.Pos2)
                     {
                         wire.Remove();
                     }
@@ -1569,22 +1790,148 @@ namespace CircuitMaker.Basics
 
                 if (wires.Length == 2 && compPins.Where(pinPos.Equals).Count() == 0 && wires[0].IsHori() == wires[1].IsHori() && wires[0].IsVert() == wires[1].IsVert() && (wires[0].IsHori() || wires[0].IsVert()))
                 {
-                    if (wires[0].Pos1.Equals(wires[1].Pos1) && !wires[0].Pos2.Equals(wires[1].Pos2))
+                    if (wires[0].Pos1 == wires[1].Pos1 && wires[0].Pos2 != wires[1].Pos2)
                     {
                         new Wire(wires[0].Pos2, wires[1].Pos2, this);
-                    } else if (wires[0].Pos2.Equals(wires[1].Pos1) && !wires[0].Pos1.Equals(wires[1].Pos2))
+                    } else if (wires[0].Pos2 == wires[1].Pos1 && wires[0].Pos1 != wires[1].Pos2)
                     {
                         new Wire(wires[0].Pos1, wires[1].Pos2, this);
-                    } else if (wires[0].Pos1.Equals(wires[1].Pos2) && !wires[0].Pos2.Equals(wires[1].Pos1))
+                    } else if (wires[0].Pos1 == wires[1].Pos2 && wires[0].Pos2 != wires[1].Pos1)
                     {
                         new Wire(wires[0].Pos2, wires[1].Pos1, this);
-                    } else if (wires[0].Pos2.Equals(wires[1].Pos2) && !wires[0].Pos1.Equals(wires[1].Pos1))
+                    } else if (wires[0].Pos2 == wires[1].Pos2 && wires[0].Pos1 != wires[1].Pos1)
                     {
                         new Wire(wires[0].Pos1, wires[1].Pos1, this);
                     }
 
                     wires[0].Remove();
                     wires[1].Remove();
+                }
+            }
+
+            foreach (IBoardContainerComponent boardContainerComp in ContainerComponents)
+            {
+                boardContainerComp.GetInternalBoard().SimplifyWires();
+            }
+        }
+        //*/
+
+        public void SimplifyWires()
+        {
+            //DefaultDictionary<Pos, int> wiresOnPoint = new DefaultDictionary<Pos, int>();
+
+            HashSet<Wire> removeWires = new HashSet<Wire>();
+
+            foreach (Wire wire in Wires)
+            {
+                if (wire.Pos1 == wire.Pos2)
+                {
+                    removeWires.Add(wire);
+                }
+            }
+
+            foreach (Wire removeWire in removeWires)
+            {
+                removeWire.Remove();
+            }
+
+            removeWires.Clear();
+
+            Wire[] wires;
+
+            HashSet<Wire> addWires = new HashSet<Wire>();
+
+            //bool removed;
+
+        restart: 
+            wires = new Wire[Wires.Count];
+            Wires.CopyTo(wires);
+
+            //removed = false;
+
+            bool merged;
+            Func<Pos, int> getCompOrd, getOtherOrd;
+            Func<int, int, Pos> backToPos;
+            int[] compOrd;
+            int min, max, otherOrd;
+
+            for (int i = 0; i < wires.Length - 1; i++)
+            {
+                for (int j = i + 1; j < wires.Length; j++)
+                {
+                    if (wires[i].TrySplitWire(wires[j].Pos1) ||
+                        wires[i].TrySplitWire(wires[j].Pos2) ||
+                        wires[j].TrySplitWire(wires[i].Pos1) ||
+                        wires[j].TrySplitWire(wires[i].Pos2))
+                    {
+                        goto restart;
+                    }
+
+                    //*
+                    if (wires[i].IsHori() == wires[j].IsHori() && wires[i].IsVert() == wires[j].IsVert())
+                    {
+                        merged = true;
+
+                        if (wires[i].Pos1 == wires[j].Pos1 && ConnectionsToPin[wires[i].Pos1] == 2)
+                        {
+                            new Wire(wires[i].Pos2, wires[j].Pos2, this);
+                        } else if (wires[i].Pos1 == wires[j].Pos2 && ConnectionsToPin[wires[i].Pos1] == 2)
+                        {
+                            new Wire(wires[i].Pos2, wires[j].Pos1, this);
+                        } else if(wires[i].Pos2 == wires[j].Pos1 && ConnectionsToPin[wires[i].Pos2] == 2)
+                        {
+                            new Wire(wires[i].Pos1, wires[j].Pos2, this);
+                        } else if(wires[i].Pos2 == wires[j].Pos2 && ConnectionsToPin[wires[i].Pos2] == 2)
+                        {
+                            new Wire(wires[i].Pos1, wires[j].Pos1, this);
+                        } else
+                        {
+                            merged = false;
+                        }
+
+                        if (merged)
+                        {
+                            wires[i].Remove();
+                            wires[j].Remove();
+
+                            goto restart;
+                        }
+                    }
+                    //*/
+
+                    if ((ConnectionsToPin[wires[i].Pos1] == 2 && (wires[i].Pos1 == wires[j].Pos1 || wires[i].Pos1 == wires[j].Pos2)) ||
+                        (ConnectionsToPin[wires[i].Pos2] == 2 && (wires[i].Pos2 == wires[j].Pos1 || wires[i].Pos2 == wires[j].Pos2)))
+                    {
+                        if (wires[i].IsHori() && wires[j].IsHori())
+                        {
+                            getCompOrd = pos => pos.Y;
+                            getOtherOrd = pos => pos.X;
+                            backToPos = (comp, other) => new Pos(other, comp);
+                        } else if (wires[i].IsHori() && wires[j].IsHori())
+                        {
+                            getCompOrd = pos => pos.X;
+                            getOtherOrd = pos => pos.Y;
+                            backToPos = (comp, other) => new Pos(comp, other);
+                        } else
+                        {
+                            goto skip;
+                        }
+
+                        compOrd = new int[] { getCompOrd(wires[i].Pos1), getCompOrd(wires[i].Pos2), getCompOrd(wires[j].Pos1), getCompOrd(wires[j].Pos2) };
+                        otherOrd = getOtherOrd(wires[i].Pos1);
+
+                        min = compOrd.Aggregate(Math.Min);
+                        max = compOrd.Aggregate(Math.Max);
+
+                        new Wire(backToPos(min, otherOrd), backToPos(max, otherOrd), this);
+
+                        wires[i].Remove();
+                        wires[j].Remove();
+
+                        goto restart;
+                    }
+
+                skip:;
                 }
             }
 
