@@ -339,13 +339,15 @@ namespace CircuitMaker.Basics
 
         public void TrimDown()
         {
+            HashSet<TKey> removeKeys = new HashSet<TKey>();
+
             if (ValKeepChecker != null)
             {
                 foreach (TKey key in Keys)
                 {
-                    if (!ValKeepChecker(this[key]))
+                    if (!ValKeepChecker(base[key]))
                     {
-                        Remove(key);
+                        removeKeys.Add(key);
                     }
                 }
             } else if (KeyKeepChecker != null)
@@ -354,10 +356,12 @@ namespace CircuitMaker.Basics
                 {
                     if (!KeyKeepChecker(key))
                     {
-                        Remove(key);
+                        removeKeys.Add(key);
                     }
                 }
             }
+
+            removeKeys.Select(Remove);
         }
 
         public new TValue this[TKey key]
@@ -606,11 +610,28 @@ namespace CircuitMaker.Basics
 
         public static bool operator ==(Wire wire1, Wire wire2)
         {
+            if (wire1 is null && wire2 is null)
+            {
+                return true;
+            }
+            else if (wire1 is null || wire2 is null)
+            {
+                return false;
+            }
+
             return (wire1.Pos1 == wire2.Pos1 && wire1.Pos2 == wire2.Pos2) || (wire1.Pos1 == wire2.Pos2 && wire1.Pos2 == wire2.Pos1);
         }
 
         public static bool operator !=(Wire wire1, Wire wire2)
         {
+            if (wire1 is null && wire2 is null)
+            {
+                return false;
+            } else if (wire1 is null || wire2 is null)
+            {
+                return true;
+            }
+
             return (wire1.Pos1 != wire2.Pos1 || wire1.Pos2 != wire2.Pos2) && (wire1.Pos1 != wire2.Pos2 || wire1.Pos2 != wire2.Pos1);
         }
 
@@ -830,27 +851,30 @@ namespace CircuitMaker.Basics
         void ResetShape();
 
         Board GetInternalBoard();
+
+        void PromiseDetails(Action<IComponent> detailProvider);
     }
 
     static class StateExtensions
     {
-        private struct BinOpInput
+        /*
+        private struct (Pin.State state1, Pin.State state2)
         {
             Pin.State State1, State2;
 
-            public BinOpInput((Pin.State state1, Pin.State state2) states)
+            public (Pin.State state1, Pin.State state2)((Pin.State state1, Pin.State state2) states)
             {
                 State1 = states.state1; State2 = states.state2;
             }
 
-            public BinOpInput(Pin.State state1, Pin.State state2)
+            public (Pin.State state1, Pin.State state2)(Pin.State state1, Pin.State state2)
             {
                 State1 = state1; State2 = state2;
             }
 
             public override bool Equals(object obj)
             {
-                if (obj is BinOpInput otherInp)
+                if (obj is (Pin.State state1, Pin.State state2) otherInp)
                 {
                     return (State1 == otherInp.State1 && State2 == otherInp.State2) || (State1 == otherInp.State2 && State2 == otherInp.State1);
                 }
@@ -863,24 +887,17 @@ namespace CircuitMaker.Basics
                 return (int)State1 + (int)State2;
             }
 
-            public static implicit operator BinOpInput((Pin.State state1, Pin.State state2) states)
+            public static implicit operator (Pin.State state1, Pin.State state2)((Pin.State state1, Pin.State state2) states)
             {
-                return new BinOpInput(states.state1, states.state2);
+                return new (Pin.State state1, Pin.State state2)(states.state1, states.state2);
             }
 
-            /*
-            public static implicit operator ValueTuple<Pin.State, Pin.State>(BinOpInput binOpInput)
-            {
-                return (binOpInput.State1, binOpInput.State2);
-            }
-            //*/
-
-            public static bool operator ==(BinOpInput inp1, BinOpInput inp2)
+            public static bool operator ==((Pin.State state1, Pin.State state2) inp1, (Pin.State state1, Pin.State state2) inp2)
             {
                 return inp1.Equals(inp2);
             }
 
-            public static bool operator !=(BinOpInput inp1, BinOpInput inp2)
+            public static bool operator !=((Pin.State state1, Pin.State state2) inp1, (Pin.State state1, Pin.State state2) inp2)
             {
                 return !inp1.Equals(inp2);
             }
@@ -890,13 +907,34 @@ namespace CircuitMaker.Basics
                 return $"{State1}, {State2}";
             }
         }
+        //*/
 
-        private class BinOpTable : Dictionary<BinOpInput, Pin.State>
+        private class BinOpTable : Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
-            public Pin.State this[Pin.State state1, Pin.State state2] => this[new BinOpInput(state1, state2)];
-            public Pin.State this[(Pin.State state1, Pin.State state2) states] => this[new BinOpInput(states)];
+            private (Pin.State state1, Pin.State state2) simplifyStates((Pin.State state1, Pin.State state2) states)
+            {
+                if (states.state1 > states.state2)
+                {
+                    return (states.state2, states.state1);
+                }
 
-            public BinOpTable(IDictionary<BinOpInput, Pin.State> dict) : base(dict) { }
+                return states;
+            }
+
+            public new Pin.State this[(Pin.State state1, Pin.State state2) states]
+            {
+                get => base[simplifyStates(states)];
+                set => base[simplifyStates(states)] = value;
+            }
+
+            public Pin.State this[Pin.State state1, Pin.State state2]
+            {
+                get => base[simplifyStates((state1, state2))];
+                set => base[simplifyStates((state1, state2))] = value;
+            }
+            public BinOpTable(IEnumerable<KeyValuePair<(Pin.State state1, Pin.State state2), Pin.State>> kvps) : base(kvps.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)) { }
+
+            public BinOpTable(IDictionary<(Pin.State state1, Pin.State state2), Pin.State> dict) : base(dict) { }
 
             public BinOpTable() : base() { }
         }
@@ -919,7 +957,7 @@ namespace CircuitMaker.Basics
             { Pin.State.ILLEGAL, Pin.State.ILLEGAL }
         };
 
-        private static Dictionary<BinOpInput, Pin.State> GenericOpTable = new Dictionary<BinOpInput, Pin.State>
+        private static Dictionary<(Pin.State state1, Pin.State state2), Pin.State> GenericOpTable = new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
             { (Pin.State.FLOATING, Pin.State.FLOATING), Pin.State.FLOATING },
             { (Pin.State.FLOATING, Pin.State.LOW), Pin.State.LOW },
@@ -930,24 +968,24 @@ namespace CircuitMaker.Basics
             { (Pin.State.ILLEGAL, Pin.State.ILLEGAL), Pin.State.ILLEGAL }
         };
 
-        private static BinOpTable AndOpTable = new BinOpTable((new Dictionary<BinOpInput, Pin.State>
+        private static BinOpTable AndOpTable = new BinOpTable((new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
             { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
             { (Pin.State.LOW, Pin.State.HIGH), Pin.State.LOW },
             { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
-        }.Concat(GenericOpTable)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
-        private static BinOpTable OrOpTable = new BinOpTable((new Dictionary<BinOpInput, Pin.State>
+        }.Concat(GenericOpTable)));
+        private static BinOpTable OrOpTable = new BinOpTable((new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
             { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
             { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
             { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
-        }.Concat(GenericOpTable)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
-        private static BinOpTable XorOpTable = new BinOpTable((new Dictionary<BinOpInput, Pin.State>
+        }.Concat(GenericOpTable)));
+        private static BinOpTable XorOpTable = new BinOpTable((new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
             { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
             { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
             { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.LOW }
-        }.Concat(GenericOpTable)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
+        }.Concat(GenericOpTable)));
 
         private static BinOpTable WireJoinTable = new BinOpTable
         {
@@ -964,7 +1002,7 @@ namespace CircuitMaker.Basics
             { (Pin.State.LOW,           Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
             { (Pin.State.PULLEDLOW,     Pin.State.PULLEDLOW),   Pin.State.PULLEDLOW },
             { (Pin.State.PULLEDLOW,     Pin.State.HIGH),        Pin.State.HIGH },
-            { (Pin.State.PULLEDLOW,     Pin.State.PULLEDHIGH),  Pin.State.FLOATING },
+            { (Pin.State.PULLEDLOW,     Pin.State.PULLEDHIGH),  Pin.State.ILLEGAL },
             { (Pin.State.PULLEDLOW,     Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
             { (Pin.State.HIGH,          Pin.State.HIGH),        Pin.State.HIGH },
             { (Pin.State.HIGH,          Pin.State.PULLEDHIGH),  Pin.State.HIGH },
@@ -1036,24 +1074,19 @@ namespace CircuitMaker.Basics
 
         public void SetState(State state)
         {
-            //StateChanged = true;
             CurrentState = CurrentState.WireJoin(state);
         }
-
-        //private bool StateChanged;
 
         public void ResetToFloating()
         {
             CurrentState = State.FLOATING;
             OriginalState = State.FLOATING;
-            //StateChanged = false;
         }
 
         public void SetupForTick()
         {
             OriginalState = CurrentState;
             CurrentState = Pin.State.FLOATING;
-            //StateChanged = false;
         }
 
         /*
@@ -1430,10 +1463,18 @@ namespace CircuitMaker.Basics
 
         private bool SubTickWire(Wire wire)
         {
-            if (wire.Pin1.GetStateForWire() != wire.Pin2.GetStateForWire())
+            Pin pin1 = wire.Pin1, pin2 = wire.Pin2;
+            Pin.State state1 = pin1.GetStateForWire(), state2 = pin2.GetStateForWire();
+
+            if (state1 != state2)
             {
-                wire.Pin1.SetState(wire.Pin2.GetStateForWire());
-                wire.Pin2.SetState(wire.Pin1.GetStateForWire());
+                //return false;
+
+                //wire.Pin1.SetState(wire.Pin2.GetStateForWire());
+                //wire.Pin2.SetState(wire.Pin1.GetStateForWire());
+
+                pin1.SetState(state2);
+                pin2.SetState(state1);
 
                 return true;
             }
@@ -1517,6 +1558,11 @@ namespace CircuitMaker.Basics
             return current;
         }
 
+        private void CountComponentPins(IComponent comp)
+        {
+            comp.GetAllUniquePinPositions().Select(pos => ConnectionsToPin[pos]++);
+        }
+
         internal void AddComponent(IComponent comp)
         {
             foreach (IComponent otherComp in Components)
@@ -1526,8 +1572,6 @@ namespace CircuitMaker.Basics
                     throw new PlacementException("cant place on another component. this error shouldn't be in the final product");
                 }
             }
-
-            comp.GetAllUniquePinPositions().Select(pos => ConnectionsToPin[pos]++);
 
             Components.Add(comp);
 
@@ -1547,6 +1591,11 @@ namespace CircuitMaker.Basics
             if (comp is IBoardContainerComponent contComp)
             {
                 ContainerComponents.Add(contComp);
+
+                contComp.PromiseDetails(CountComponentPins);
+            } else
+            {
+                CountComponentPins(comp);
             }
 
             if (comp is IBoardInterfaceComponent interfaceComp)
