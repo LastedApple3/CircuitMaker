@@ -2468,6 +2468,13 @@ namespace CircuitMaker.Components
                 Initialize();
             }
 
+            private List<Action<IComponent>> detailsProviders = new List<Action<IComponent>>();
+
+            public void PromiseDetails(Action<IComponent> detailsProvider)
+            {
+                detailsProviders.Add(detailsProvider);
+            }
+
             private void Initialize()
             {
                 InternalBoard.SizeChanged += InternalBoard_SizeChanged;
@@ -2507,6 +2514,13 @@ namespace CircuitMaker.Components
                 InpNames = inpNameList.ToArray();
                 OutpOffsets = outpOffsetList.ToArray();
                 OutpNames = outpNameList.ToArray();
+
+                while (detailsProviders.Count > 0)
+                {
+                    detailsProviders[0](this);
+
+                    detailsProviders.RemoveAt(0);
+                }
             }
 
             private void InternalBoard_SizeChanged()
