@@ -5,3 +5,6 @@ add a tag base class?
 	need to allow variation of length, and rotation
 	text rendering builtin (used for INPUT, OUTPUT, BIDIR names and PROBE indicator)
 	add identifier symbols for TOGGLE and FIXED
+
+update TOGGLE to take two settings: starting and other state
+ext app is not saving.
