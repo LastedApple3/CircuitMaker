@@ -370,8 +370,8 @@ namespace CircuitMaker
         {
             Board SRNorLatch = new Board("SR Latch", new System.Drawing.Size(4, 4));
 
-            IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
+            IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
 
             IComponent SExtBuffer = new BufferComponents.BufferComponent();
             IComponent RExtBuffer = new BufferComponents.BufferComponent();
@@ -541,8 +541,8 @@ namespace CircuitMaker
         {
             Board DLatch = new Board("D Latch", new System.Drawing.Size(4, 4));
 
-            IBoardInputComponent DInp = new BoardContainerComponents.BoardInputComponent("D", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
-            IBoardInputComponent EInp = new BoardContainerComponents.BoardInputComponent("E", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
+            IBoardInputComponent DInp = new BoardContainerComponents.BoardInputComponent("D", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
+            IBoardInputComponent EInp = new BoardContainerComponents.BoardInputComponent("E", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
 
             IComponent DBuffer = new BufferComponents.BufferComponent();
             IComponent DNot = new BufferComponents.NotComponent();
@@ -550,8 +550,8 @@ namespace CircuitMaker
             IComponent SAnd = new VarInpComponents.VarInpAndComponent(2);
             IComponent RAnd = new VarInpComponents.VarInpAndComponent(2);
 
-            IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
+            IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
 
             IComponent SOr = new VarInpComponents.VarInpOrComponent(2);
             IComponent ROr = new VarInpComponents.VarInpOrComponent(2);
@@ -639,11 +639,11 @@ namespace CircuitMaker
             Board DFlipFlop = new Board("D Flip Flop", new System.Drawing.Size(4, 4));
             const int timingBuffers = 8;
 
-            IBoardInputComponent DInp = new BoardContainerComponents.BoardInputComponent("D", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
-            IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLK", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
+            IBoardInputComponent DInp = new BoardContainerComponents.BoardInputComponent("D", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
+            IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLK", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
 
-            IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.FLOATING, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
+            IBoardInputComponent SInp = new BoardContainerComponents.BoardInputComponent("S", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
 
             IComponent ClkNot1 = new BufferComponents.NotComponent();
 
@@ -712,12 +712,12 @@ namespace CircuitMaker
 
             //CarryInp, DXor, ClkInp, RInp, DFlipFlop, ClkOutp, DOutp, CarryAnd, CarryOutp
 
-            IBoardInputComponent CarryInp = new BoardContainerComponents.BoardInputComponent("Cin", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
+            IBoardInputComponent CarryInp = new BoardContainerComponents.BoardInputComponent("Cin", Pin.State.FLOATING, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
 
             IComponent DXor = new VarInpComponents.VarInpXorComponent(2);
 
-            IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLKin", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 2));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("Rin", Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
+            IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLKin", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 2));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("Rin", Pin.State.HIGH, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
 
             IBoardContainerComponent DFlipFlop = new BoardContainerComponents.BoardContainerComponent(DFlipFlopBoard);
 
@@ -782,8 +782,8 @@ namespace CircuitMaker
         {
             Board BCDDigitCounter = new Board("BCD Digit Counter", new System.Drawing.Size(2, 6));
 
-            IBoardInputComponent IncInp = new BoardContainerComponents.BoardInputComponent("INC", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 1));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 5));
+            IBoardInputComponent IncInp = new BoardContainerComponents.BoardInputComponent("INC", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 1));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 5));
 
             // wires
 
@@ -825,7 +825,7 @@ namespace CircuitMaker
 
             for (int i = 0; i < inpCount; i++)
             {
-                inps[i] = new BoardContainerComponents.BoardInputComponent($"I{inpCount - 1 - i}", Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, i + inpOffset));
+                inps[i] = new BoardContainerComponents.BoardInputComponent($"I{inpCount - 1 - i}", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, i + inpOffset));
                 inpBuffers[i] = new BufferComponents.BufferComponent();
                 inpNots[i] = new BufferComponents.NotComponent();
 

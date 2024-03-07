@@ -261,7 +261,7 @@ namespace CircuitMaker.Basics
                 throw new PlacementException($"Board with name{(promises.Count > 1 ? "s" : "")} {names.Select(s => "'" + s + "'").Aggregate((s1, s2) => s1 + ", " + s2)} not found");
             }
 
-            board.SimplifyWires();
+            //board.SimplifyWires();
 
             return board;
         }
@@ -1865,26 +1865,63 @@ namespace CircuitMaker.Basics
         }
         //*/
 
+        private bool TrySimplifyWirePair(Wire wire1, Wire wire2)
+        {
+            Func<Pos, int> getCompOrd, getOtherOrd;
+            Func<int, int, Pos> backToPos;
+            int[] compOrd;
+            int min, max, otherOrd;
+
+            if (wire1.TrySplitWire(wire2.Pos1) ||
+                wire1.TrySplitWire(wire2.Pos2) ||
+                wire2.TrySplitWire(wire1.Pos1) ||
+                wire2.TrySplitWire(wire1.Pos2))
+            {
+                return true;
+            }
+
+            if ((ConnectionsToPin[wire1.Pos1] == 2 && (wire1.Pos1 == wire2.Pos1 || wire1.Pos1 == wire2.Pos2)) ||
+                (ConnectionsToPin[wire1.Pos2] == 2 && (wire1.Pos2 == wire2.Pos1 || wire1.Pos2 == wire2.Pos2)))
+            {
+                if (wire1.IsHori() && wire2.IsHori())
+                {
+                    getCompOrd = pos => pos.Y;
+                    getOtherOrd = pos => pos.X;
+                    backToPos = (comp, other) => new Pos(other, comp);
+                }
+                else if (wire1.IsHori() && wire2.IsHori())
+                {
+                    getCompOrd = pos => pos.X;
+                    getOtherOrd = pos => pos.Y;
+                    backToPos = (comp, other) => new Pos(comp, other);
+                }
+                else
+                {
+                    return false;
+                }
+
+                compOrd = new int[] { getCompOrd(wire1.Pos1), getCompOrd(wire1.Pos2), getCompOrd(wire2.Pos1), getCompOrd(wire2.Pos2) };
+                otherOrd = getOtherOrd(wire1.Pos1);
+
+                min = compOrd.Aggregate(Math.Min);
+                max = compOrd.Aggregate(Math.Max);
+
+                new Wire(backToPos(min, otherOrd), backToPos(max, otherOrd), this);
+
+                wire1.Remove();
+                wire2.Remove();
+
+                return true;
+            }
+
+            return false;
+        }
+
         public void SimplifyWires()
         {
             //DefaultDictionary<Pos, int> wiresOnPoint = new DefaultDictionary<Pos, int>();
 
             HashSet<Wire> removeWires = new HashSet<Wire>();
-
-            foreach (Wire wire in Wires)
-            {
-                if (wire.Pos1 == wire.Pos2)
-                {
-                    removeWires.Add(wire);
-                }
-            }
-
-            foreach (Wire removeWire in removeWires)
-            {
-                removeWire.Remove();
-            }
-
-            removeWires.Clear();
 
             Wire[] wires;
 
@@ -1892,97 +1929,51 @@ namespace CircuitMaker.Basics
 
             //bool removed;
 
-        restart: 
-            wires = new Wire[Wires.Count];
-            Wires.CopyTo(wires);
 
             //removed = false;
 
-            bool merged;
-            Func<Pos, int> getCompOrd, getOtherOrd;
-            Func<int, int, Pos> backToPos;
-            int[] compOrd;
-            int min, max, otherOrd;
+            bool changeMade;
 
-            for (int i = 0; i < wires.Length - 1; i++)
+            do
             {
-                for (int j = i + 1; j < wires.Length; j++)
+                changeMade = false;
+
+                foreach (Wire wire in Wires)
                 {
-                    if (wires[i].TrySplitWire(wires[j].Pos1) ||
-                        wires[i].TrySplitWire(wires[j].Pos2) ||
-                        wires[j].TrySplitWire(wires[i].Pos1) ||
-                        wires[j].TrySplitWire(wires[i].Pos2))
+                    if (wire.Pos1 == wire.Pos2)
                     {
-                        goto restart;
+                        removeWires.Add(wire);
                     }
-
-                    //*
-                    if (wires[i].IsHori() == wires[j].IsHori() && wires[i].IsVert() == wires[j].IsVert())
-                    {
-                        merged = true;
-
-                        if (wires[i].Pos1 == wires[j].Pos1 && ConnectionsToPin[wires[i].Pos1] == 2)
-                        {
-                            new Wire(wires[i].Pos2, wires[j].Pos2, this);
-                        } else if (wires[i].Pos1 == wires[j].Pos2 && ConnectionsToPin[wires[i].Pos1] == 2)
-                        {
-                            new Wire(wires[i].Pos2, wires[j].Pos1, this);
-                        } else if(wires[i].Pos2 == wires[j].Pos1 && ConnectionsToPin[wires[i].Pos2] == 2)
-                        {
-                            new Wire(wires[i].Pos1, wires[j].Pos2, this);
-                        } else if(wires[i].Pos2 == wires[j].Pos2 && ConnectionsToPin[wires[i].Pos2] == 2)
-                        {
-                            new Wire(wires[i].Pos1, wires[j].Pos1, this);
-                        } else
-                        {
-                            merged = false;
-                        }
-
-                        if (merged)
-                        {
-                            wires[i].Remove();
-                            wires[j].Remove();
-
-                            goto restart;
-                        }
-                    }
-                    //*/
-
-                    if ((ConnectionsToPin[wires[i].Pos1] == 2 && (wires[i].Pos1 == wires[j].Pos1 || wires[i].Pos1 == wires[j].Pos2)) ||
-                        (ConnectionsToPin[wires[i].Pos2] == 2 && (wires[i].Pos2 == wires[j].Pos1 || wires[i].Pos2 == wires[j].Pos2)))
-                    {
-                        if (wires[i].IsHori() && wires[j].IsHori())
-                        {
-                            getCompOrd = pos => pos.Y;
-                            getOtherOrd = pos => pos.X;
-                            backToPos = (comp, other) => new Pos(other, comp);
-                        } else if (wires[i].IsHori() && wires[j].IsHori())
-                        {
-                            getCompOrd = pos => pos.X;
-                            getOtherOrd = pos => pos.Y;
-                            backToPos = (comp, other) => new Pos(comp, other);
-                        } else
-                        {
-                            goto skip;
-                        }
-
-                        compOrd = new int[] { getCompOrd(wires[i].Pos1), getCompOrd(wires[i].Pos2), getCompOrd(wires[j].Pos1), getCompOrd(wires[j].Pos2) };
-                        otherOrd = getOtherOrd(wires[i].Pos1);
-
-                        min = compOrd.Aggregate(Math.Min);
-                        max = compOrd.Aggregate(Math.Max);
-
-                        new Wire(backToPos(min, otherOrd), backToPos(max, otherOrd), this);
-
-                        wires[i].Remove();
-                        wires[j].Remove();
-
-                        goto restart;
-                    }
-
-                skip:;
                 }
-            }
+
+                foreach (Wire removeWire in removeWires)
+                {
+                    removeWire.Remove();
+                }
+
+                removeWires.Clear();
+
+                wires = new Wire[Wires.Count];
+                Wires.CopyTo(wires);
+
+                for (int i = 0; i < wires.Length - 1; i++)
+                {
+                    for (int j = i + 1; j < wires.Length; j++)
+                    {
+                        changeMade = TrySimplifyWirePair(wires[i], wires[j]);
+
+                        if (changeMade)
+                        {
+                            break;
+                        }
+                    }
+
+                    if (changeMade)
+                    {
+                        break;
+                    }
+                }
+            } while (changeMade);
 
             foreach (IBoardContainerComponent boardContainerComp in ContainerComponents)
             {

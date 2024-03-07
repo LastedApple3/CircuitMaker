@@ -7,4 +7,3 @@ add a tag base class?
 	add identifier symbols for TOGGLE and FIXED
 
 update TOGGLE to take two settings: starting and other state
-ext app is not saving.

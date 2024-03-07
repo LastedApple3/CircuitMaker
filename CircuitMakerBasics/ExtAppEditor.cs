@@ -488,7 +488,7 @@ namespace CircuitMaker.GUI.ExtApp
                                 actualSide ^= Board.InterfaceLocation.SideEnum.BottomRight;
                             } else if (sideProg == 3)
                             {
-                                throw new Exception("no space"); // logically would never happen, as the empty slot it was originally in should still exist
+                                actualSide = closestSide; // logically would never happen, as the empty slot it was originally in should still exist. default so edge cases don't crash
                             }
 
                             if (actualSide.IsLeftRight() == closestSide.IsLeftRight())
@@ -508,9 +508,8 @@ namespace CircuitMaker.GUI.ExtApp
 
                         lastOutside = thisOutside;
                     }
-                    
-                    GetInterfaceComponent(dragState.GetInterfaceLocName()).SetInterfaceLocation(new Board.InterfaceLocation(actualSide, actualDist));
 
+                    GetInterfaceComponent(dragState.GetInterfaceLocName()).SetInterfaceLocation(new Board.InterfaceLocation(actualSide, actualDist));
                 } else if (dragState.IsGraphicalComp())
                 {
                     IGraphicalComponent graphicalComp = dragState.GetGraphicalComp();

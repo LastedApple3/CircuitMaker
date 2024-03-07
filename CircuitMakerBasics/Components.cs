@@ -1404,44 +1404,24 @@ namespace CircuitMaker.Components
         }
     }
 
+    /*
     class UserToggleInpComponent : FixedStateComponent, IInteractibleComponent
     {
-        protected Pin.State DefaultState;
-
-        protected override string getOutputDescriptor()
-        {
-            return "current output";
-        }
-
-        public UserToggleInpComponent(Pin.State startState) : base(startState)
-        {
-            DefaultState = startState;
-        }
-
-        public void Interact()
-        {
-            OutputState = OutputState.Not();
-        }
-
-        public static new string ID = "TOGGLE";
-
-        public override string GetComponentID()
-        {
-            return ID;
-        }
 
         public override string GetComponentDetails()
         {
-            return $"{(int)DefaultState}";
+            return $"{(int)StartState},{(int)OtherState}";
         }
 
         public static new IComponent Constructor(string details)
         {
-            int outputState;
+            int startState, otherState;
 
-            if (int.TryParse(details, out outputState))
+            string[] states = details.Split(',');
+
+            if (int.TryParse(states[0], out startState) && int.TryParse(states[1], out otherState))
             {
-                return new UserToggleInpComponent((Pin.State)outputState);
+                return new UserToggleInpComponent((Pin.State)startState, (Pin.State)otherState);
             }
 
             throw new PlacementException("Did not successfully parse int.");
@@ -1452,14 +1432,131 @@ namespace CircuitMaker.Components
             return Constructor(details);
         }
 
+        EnumSettingDescription<Pin.State> otherStateSettingDesc;
+
+        public override ISettingDescription[] GetSettingDescriptions()
+        {
+            otherStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the other {getOutputDescriptor()} state for this component?", OtherState);
+            return base.GetSettingDescriptions().Append(otherStateSettingDesc).ToArray();
+        }
+
         public override void ApplySettings()
         {
-            DefaultState = stateSettingDesc.GetValue();
+            StartState = stateSettingDesc.GetValue();
+            OtherState = otherStateSettingDesc.GetValue();
         }
 
         public new void ResetToDefault()
         {
-            OutputState = DefaultState;
+            OutputState = StartState;
+        }
+    }
+    //*/
+    class UserToggleInpComponent : InpOutpBaseComponents.NoneInpSingOutpBaseComponent, ISettingsComponent, IInteractibleComponent
+    {
+        protected Pin.State OutputState, StartState, OtherState;
+
+        protected virtual string getOutputDescriptor()
+        {
+            return "output";
+        }
+
+        protected EnumSettingDescription<Pin.State> startStateSettingDesc;
+        protected EnumSettingDescription<Pin.State> otherStateSettingDesc;
+
+        public override Pos GetOutpOffset()
+        {
+            return new Pos(2, 0);
+        }
+
+        public UserToggleInpComponent(Pin.State startState, Pin.State otherState)
+        {
+            OutputState = startState;
+
+            StartState = startState;
+            OtherState = otherState;
+        }
+
+        public override void Tick()
+        {
+            GetOutpPin().SetState(OutputState);
+        }
+
+        public void Interact()
+        {
+            if (OutputState == StartState)
+            {
+                OutputState = OtherState;
+            }
+            else
+            {
+                OutputState = StartState;
+            }
+        }
+
+        public static string ID = "TOGGLE";
+        public static string DefaultDetails = $"{(int)Pin.State.LOW},{(int)Pin.State.HIGH}";
+
+        public override string GetComponentID()
+        {
+            return ID;
+        }
+
+        public override string GetComponentDetails()
+        {
+            return $"{(int)StartState},{(int)OtherState}";
+        }
+
+        public static IComponent Constructor(string details)
+        {
+            int startState, otherState;
+
+            string[] states = details.Split(',');
+
+            if (int.TryParse(states[0], out startState) && int.TryParse(states[1], out otherState))
+            {
+                return new UserToggleInpComponent((Pin.State)startState, (Pin.State)otherState);
+            }
+
+            throw new PlacementException("Did not successfully parse int.");
+        }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
+        }
+
+        public override RectangleF GetComponentBounds()
+        {
+            RectangleF rect = GetDefaultComponentBounds();
+            rect.Inflate(0, 0.5F);
+            rect.X -= 0.5F;
+            rect.Width += 0.5F;
+            return rect;
+        }
+
+        public virtual ISettingDescription[] GetSettingDescriptions()
+        {
+            startStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the starting {getOutputDescriptor()} state for this component?", OutputState);
+            otherStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the other {getOutputDescriptor()} state for this component?", OutputState);
+
+            return new ISettingDescription[] { startStateSettingDesc, otherStateSettingDesc };
+        }
+
+        public virtual void ApplySettings()
+        {
+            StartState = startStateSettingDesc.GetValue();
+            OtherState = otherStateSettingDesc.GetValue();
+        }
+
+        public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
+        {
+            GraphicsPath path = new GraphicsPath();
+
+            path.AddLines(new PointF[] { new PointF(-0.5F, -0.5F), new PointF(0.5F, -0.5F), new PointF(1, 0), new PointF(0.5F, 0.5F), new PointF(-0.5F, 0.5F) });
+            path.CloseFigure();
+
+            DrawComponentFromPath(graphics, path, colourScheme);
         }
     }
 
@@ -2006,7 +2103,7 @@ namespace CircuitMaker.Components
                 ComponentName = compName;
             }
 
-            public BoardInputComponent(string name, Pin.State defaultState, Board.InterfaceLocation interfaceLocation) : base(defaultState)
+            public BoardInputComponent(string name, Pin.State startDefaultState, Pin.State otherDefaultState, Board.InterfaceLocation interfaceLocation) : base(startDefaultState, otherDefaultState)
             {
                 ComponentName = name;
 
@@ -2014,7 +2111,7 @@ namespace CircuitMaker.Components
             }
 
             public new static string ID = "INPUT";
-            public new static string DefaultDetails = $"INPUT,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Left},{0}";
+            public new static string DefaultDetails = $"INPUT,{(int)Pin.State.LOW},{(int)Pin.State.HIGH},{(byte)Board.InterfaceLocation.SideEnum.Left},{0}";
 
             public override string GetComponentID()
             {
@@ -2023,19 +2120,19 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return $"{ComponentName},{(int)DefaultState},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
+                return $"{ComponentName},{(int)StartState},{(int)OtherState},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
             }
 
             public void SetExternalPin(Pin pin)
             {
                 externalPin = pin;
-                OutputState = DefaultState;
+                OutputState = StartState;
             }
 
             public void RemoveExternalPin()
             {
                 externalPin = null;
-                OutputState = DefaultState;
+                OutputState = StartState;
             }
 
             public override void Tick()
@@ -2052,9 +2149,9 @@ namespace CircuitMaker.Components
             {
                 string[] strings = details.Split(',');
 
-                if (int.TryParse(strings[1], out int stateInt) && int.TryParse(strings[2], out int sideInt) && int.TryParse(strings[3], out int distInt))
+                if (int.TryParse(strings[1], out int startDefaultState) && int.TryParse(strings[2], out int otherDefaultState) && int.TryParse(strings[3], out int sideInt) && int.TryParse(strings[4], out int distInt))
                 {
-                    return new BoardInputComponent(strings[0], (Pin.State)stateInt, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)(byte)sideInt, distInt));
+                    return new BoardInputComponent(strings[0], (Pin.State)startDefaultState, (Pin.State)otherDefaultState, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)(byte)sideInt, distInt));
                 }
 
                 throw new PlacementException("Did not successfully parse int.");
@@ -2460,9 +2557,9 @@ namespace CircuitMaker.Components
                 ReadWriteImplementation.PromiseBoard(boardName, ProvideInternalBoard);
             }
 
-            public BoardContainerComponent(Board internalBoard)
+            public BoardContainerComponent(Board internalBoard, bool copy = true)
             {
-                InternalBoard = internalBoard.Copy();
+                InternalBoard = copy ? internalBoard.Copy() : internalBoard;
                 InternalBoardName = internalBoard.Name;
 
                 Initialize();

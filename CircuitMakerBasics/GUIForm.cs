@@ -19,6 +19,8 @@ namespace CircuitMaker.GUI
         public GUIForm()
         {
             InitializeComponent();
+
+            UpdateFormText();
         }
 
         private void newBoardToolStripMenuItem_Click(object sender, EventArgs e)
@@ -112,7 +114,7 @@ namespace CircuitMaker.GUI
 
         private void editExternalAppearanceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ExtAppEditorForm dialog = new ExtAppEditorForm(new BoardContainerComponents.BoardContainerComponent(builder.GetBoard()), builder.colourScheme);
+            ExtAppEditorForm dialog = new ExtAppEditorForm(new BoardContainerComponents.BoardContainerComponent(builder.GetBoard(), false), builder.colourScheme);
 
             if (dialog.ShowDialog() != DialogResult.OK)
             {
