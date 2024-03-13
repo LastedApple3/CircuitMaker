@@ -1537,8 +1537,8 @@ namespace CircuitMaker.Components
 
         public virtual ISettingDescription[] GetSettingDescriptions()
         {
-            startStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the starting {getOutputDescriptor()} state for this component?", OutputState);
-            otherStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the other {getOutputDescriptor()} state for this component?", OutputState);
+            startStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the starting {getOutputDescriptor()} state for this component?", StartState);
+            otherStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the other {getOutputDescriptor()} state for this component?", OtherState);
 
             return new ISettingDescription[] { startStateSettingDesc, otherStateSettingDesc };
         }
@@ -1547,6 +1547,11 @@ namespace CircuitMaker.Components
         {
             StartState = startStateSettingDesc.GetValue();
             OtherState = otherStateSettingDesc.GetValue();
+        }
+
+        public override void ResetToDefault()
+        {
+            OutputState = StartState;
         }
 
         public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
@@ -2832,16 +2837,19 @@ namespace CircuitMaker.Components
 
                     if (loc.HasValue)
                     {
-                        matrix = new Matrix();
-                        matrix.Translate(loc.Value.X, loc.Value.Y);
-                        matrix.Scale(scale, scale);
+                        using (new TransformRestorer(graphics))
+                        {
+                            matrix = new Matrix();
+                            matrix.Translate(loc.Value.X, loc.Value.Y);
+                            matrix.Scale(scale, scale);
 
-                        graphics.MultiplyTransform(matrix);
+                            graphics.MultiplyTransform(matrix);
 
-                        graphicalComp.RenderGraphicalElement(graphics, simulating, colourScheme);
+                            graphicalComp.RenderGraphicalElement(graphics, simulating, colourScheme);
+                        }
 
-                        matrix.Invert();
-                        graphics.MultiplyTransform(matrix);
+                        //matrix.Invert();
+                        //graphics.MultiplyTransform(matrix);
                     }
                 }
             }

@@ -266,31 +266,34 @@ namespace CircuitMaker.GUI.ExtApp
 
             foreach (IGraphicalComponent graphicalComp in GetUnplacedGraphicalComponents())
             {
-                matrix.Reset();
-
-                matrix.Translate(0, offset);
-
-                boundsF = graphicalComp.GetScaledGraphicalElementBounds();
-                bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
-                compScale = graphicalComp.GetGraphicalElementScale();
-
-                offset += bounds.Height;
-
-                matrix.Translate(-bounds.X, -bounds.Y);
-                matrix.Scale(compScale, compScale);
-
-                graphics.MultiplyTransform(matrix, MatrixOrder.Append);
-
-                if (dragState.IsGraphicalComp() && dragState.GetGraphicalComp() == graphicalComp)
+                using (new TransformRestorer(graphics))
                 {
-                    //graphics.DrawRectangle(new Pen(colourScheme.Selection, 0.5F), bounds);
-                    graphics.FillRectangle(new HatchBrush(HatchStyle.ForwardDiagonal, colourScheme.Selection, Color.Transparent), boundsF);
+                    matrix.Reset();
+
+                    matrix.Translate(0, offset);
+
+                    boundsF = graphicalComp.GetScaledGraphicalElementBounds();
+                    bounds = new Rectangle((int)Math.Floor(boundsF.X * scale), (int)Math.Floor(boundsF.Y * scale), (int)Math.Ceiling(boundsF.Width * scale), (int)Math.Ceiling(boundsF.Height * scale));
+                    compScale = graphicalComp.GetGraphicalElementScale();
+
+                    offset += bounds.Height;
+
+                    matrix.Translate(-bounds.X, -bounds.Y);
+                    matrix.Scale(compScale, compScale);
+
+                    graphics.MultiplyTransform(matrix, MatrixOrder.Append);
+
+                    if (dragState.IsGraphicalComp() && dragState.GetGraphicalComp() == graphicalComp)
+                    {
+                        //graphics.DrawRectangle(new Pen(colourScheme.Selection, 0.5F), bounds);
+                        graphics.FillRectangle(new HatchBrush(HatchStyle.ForwardDiagonal, colourScheme.Selection, Color.Transparent), boundsF);
+                    }
+
+                    graphicalComp.RenderGraphicalElement(graphics, false, colourScheme);
                 }
 
-                graphicalComp.RenderGraphicalElement(graphics, false, colourScheme);
-
-                matrix.Invert();
-                graphics.MultiplyTransform(matrix, MatrixOrder.Append);
+                //matrix.Invert();
+                //graphics.MultiplyTransform(matrix, MatrixOrder.Append);
             }
         }
 

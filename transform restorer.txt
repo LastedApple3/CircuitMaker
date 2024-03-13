@@ -1,0 +1,25 @@
+class TransformRestorer : IDisposable {
+	private Graphics SavedGraphics;
+	private Matrix SavedMatrix;
+
+	public TransformRestorer(Graphics graphics) {
+		SavedGraphics = graphics;
+		SavedMatrix = graphics.Transform;
+	}
+
+	public void Dispose() {
+		SavedGraphics.Transform = SavedMatrix;
+	}
+}
+
+//GUIForm
+//	Ln 740
+
+//Basics
+//	Ln 1759
+
+//ExtAppEditor
+//	Ln 269
+
+//Components
+//	Ln 2835

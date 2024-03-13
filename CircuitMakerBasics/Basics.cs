@@ -15,6 +15,23 @@ using System.Runtime.CompilerServices;
 
 namespace CircuitMaker.Basics
 {
+    class TransformRestorer : IDisposable
+    {
+        private Graphics SavedGraphics;
+        private Matrix SavedMatrix;
+
+        public TransformRestorer(Graphics graphics)
+        {
+            SavedGraphics = graphics;
+            SavedMatrix = graphics.Transform;
+        }
+
+        public void Dispose()
+        {
+            SavedGraphics.Transform = SavedMatrix;
+        }
+    }
+
     static class RectangleFExtensions
     {
         public static int dp = 5;
@@ -1463,7 +1480,8 @@ namespace CircuitMaker.Basics
 
         private bool SubTickWire(Wire wire)
         {
-            Pin pin1 = wire.Pin1, pin2 = wire.Pin2;
+            //Pin pin1 = wire.Pin1, pin2 = wire.Pin2;
+            Pin pin1 = Pins[wire.Pos1], pin2 = Pins[wire.Pos2];
             Pin.State state1 = pin1.GetStateForWire(), state2 = pin2.GetStateForWire();
 
             if (state1 != state2)
@@ -1499,26 +1517,25 @@ namespace CircuitMaker.Basics
 
         public bool SubTickWires()
         {
-            //*
-            try
-            {
-                return SubTickJustWires() | SubTickJustWireComps();
-            } finally
-            {
-                
-            }
+            /*
+            return Wires.Select(SubTickWire)
+                //.Concat(ContainerComponents.Select(comp => comp.GetInternalBoard().SubTickJustWires()))
+                .Concat(WireComponents.Select(ActAndCheck<IWireComponent>(comp => { comp.Tick(); return false; })))
+                .Concat(ContainerComponents.Select(ActAndCheck<IBoardContainerComponent>(comp => comp.GetInternalBoard().SubTickWires())))
+                .Aggregate(false, Or);
             //*/
 
-            /*
-            return ContainerComponents.Select(comp => comp.GetInternalBoard().TickWires())
-                .Concat(Pins.Values.Select(pin => pin.EmitWireUpdate()))
-                .Concat(WireComponents.Select(TickWireComp))
-                .Aggregate(false, (b1, b2) => b1 || b2);
-            //*/
+            bool[] boolArr = Wires.Select(SubTickWire).ToArray();
+            boolArr = boolArr.Concat(WireComponents.Select(ActAndCheck<IWireComponent>(comp => { comp.Tick(); return false; }))).ToArray();
+            boolArr = boolArr.Concat(ContainerComponents.Select(ActAndCheck<IBoardContainerComponent>(comp => comp.GetInternalBoard().SubTickWires()))).ToArray();
+            return boolArr.Aggregate(false, Or);
         }
 
         public void TickWires()
         {
+            while (SubTickWires()) { }
+
+            /*
             bool repeat;
             do
             {
@@ -1527,6 +1544,7 @@ namespace CircuitMaker.Basics
                 while (SubTickJustWires()) { repeat = true; }
                 while (SubTickJustWireComps()) { repeat = true; }
             } while (repeat);
+            //*/
         }
 
         public void Tick()
@@ -1711,14 +1729,16 @@ namespace CircuitMaker.Basics
 
         public void Render(Graphics graphics, bool simulating, Rectangle bounds, ColourScheme colourScheme)
         {
+            Pen gridPen = new Pen(colourScheme.Grid, 0.005F);
+
             for (int x = bounds.Left; x <= bounds.Right; x++)
             {
-                graphics.DrawLine(new Pen(colourScheme.Grid, 0.005F), x, bounds.Top, x, bounds.Bottom);
+                graphics.DrawLine(gridPen, x, bounds.Top, x, bounds.Bottom);
             }
 
             for (int y = bounds.Top; y <= bounds.Bottom; y++)
             {
-                graphics.DrawLine(new Pen(colourScheme.Grid, 0.005F), bounds.Left, y, bounds.Right, y);
+                graphics.DrawLine(gridPen, bounds.Left, y, bounds.Right, y);
             }
 
             Pin pin;
@@ -1750,26 +1770,29 @@ namespace CircuitMaker.Basics
 
             graphics.DrawEllipse(new Pen(colourScheme.Grid, 0.01F), -0.1F, -0.1F, 0.2F, 0.2F);
 
-            Matrix matrix = new Matrix();
+            Matrix matrix;// = new Matrix();
 
             foreach (IComponent comp in Components)
             {
                 if (comp.GetOffsetComponentBounds().IntersectsWith(bounds))
                 {
-                    matrix = comp.GetRenderMatrix();
-                    graphics.MultiplyTransform(matrix);
-
-                    comp.Render(graphics, simulating, colourScheme);
-
-                    if (comp is IGraphicalComponent graphicalComp)
+                    using (new TransformRestorer(graphics))
                     {
-                        graphicalComp.RenderGraphicalElement(graphics, simulating, colourScheme);
+                        matrix = comp.GetRenderMatrix();
+                        graphics.MultiplyTransform(matrix);
+
+                        comp.Render(graphics, simulating, colourScheme);
+
+                        if (comp is IGraphicalComponent graphicalComp)
+                        {
+                            graphicalComp.RenderGraphicalElement(graphics, simulating, colourScheme);
+                        }
+
+                        RectangleF compBounds = comp.GetComponentBounds();
                     }
-
-                    RectangleF compBounds = comp.GetComponentBounds();
-
-                    matrix.Invert();
-                    graphics.MultiplyTransform(matrix);
+                    
+                    //matrix.Invert();
+                    //graphics.MultiplyTransform(matrix);
                 }
             }
 

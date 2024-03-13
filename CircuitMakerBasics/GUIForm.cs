@@ -737,17 +737,20 @@ namespace CircuitMaker.GUI
 
             if (dragType == DragType.MoveComponent)
             {
-                matrix.Reset();
-                Point newPoint = DetransformPoint(dragNewPoint);
-                matrix.Translate(newPoint.X, newPoint.Y);
-                matrix.Rotate((float)dragNewRot);
+                using (new TransformRestorer(graphics))
+                {
+                    matrix.Reset();
+                    Point newPoint = DetransformPoint(dragNewPoint);
+                    matrix.Translate(newPoint.X, newPoint.Y);
+                    matrix.Rotate((float)dragNewRot);
 
-                graphics.MultiplyTransform(matrix);
+                    graphics.MultiplyTransform(matrix);
 
-                dragComp.Render(graphics, Simulating, colourScheme);
+                    dragComp.Render(graphics, Simulating, colourScheme);
+                }
 
-                matrix.Invert();
-                graphics.MultiplyTransform(matrix);
+                //matrix.Invert();
+                //graphics.MultiplyTransform(matrix);
             }
 
             if (dragType == DragType.DrawWire)
