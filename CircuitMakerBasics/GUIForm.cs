@@ -274,7 +274,7 @@ namespace CircuitMaker.GUI
 
         public bool Simulating { get; private set; } = false;
 
-        private int tps = 1000;
+        private int tps = 100;
         public int TPS
         {
             get
@@ -980,6 +980,8 @@ namespace CircuitMaker.GUI
                                 StartWire(clickedPos);
 
                                 dragType = DragType.DrawWire;
+
+                                selection.Deselect();
                             } else
                             {
                                 selection.Select(clickedWire);

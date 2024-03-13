@@ -406,7 +406,7 @@ namespace CircuitMaker.Basics
                     return base[key];
                 } finally
                 {
-                    TrimDown();
+                    //TrimDown();
                 }
             }
             set
@@ -632,6 +632,11 @@ namespace CircuitMaker.Basics
                 return true;
             }
             else if (wire1 is null || wire2 is null)
+            {
+                return false;
+            }
+
+            if (wire1.board != wire2.board)
             {
                 return false;
             }
@@ -869,7 +874,7 @@ namespace CircuitMaker.Basics
 
         Board GetInternalBoard();
 
-        void PromiseDetails(Action<IComponent> detailProvider);
+        void PromiseDetails(Action<IBoardContainerComponent> detailProvider);
     }
 
     static class StateExtensions
@@ -1216,10 +1221,12 @@ namespace CircuitMaker.Basics
 
         private DefaultDictionary<Pos, Pin> Pins;
         private HashSet<Wire> Wires = new HashSet<Wire>();
+        private HashSet<Wire> AllWires = new HashSet<Wire>();
         private DefaultDictionary<Pos, int> ConnectionsToPin = new DefaultDictionary<Pos, int>();
 
         private HashSet<IComponent> Components = new HashSet<IComponent>();
         private HashSet<IWireComponent> WireComponents = new HashSet<IWireComponent>();
+        private HashSet<IWireComponent> AllWireComponents = new HashSet<IWireComponent>();
         private HashSet<IComponent> NonWireComponents = new HashSet<IComponent>();
         private HashSet<IBoardInterfaceComponent> InterfaceComponents = new HashSet<IBoardInterfaceComponent>();
         private HashSet<IBoardInputComponent> InputComponents = new HashSet<IBoardInputComponent>();
@@ -1284,6 +1291,7 @@ namespace CircuitMaker.Basics
         public void AddWire(Wire wire)
         {
             Wires.Add(wire);
+            AllWires.Add(wire);
 
             ConnectionsToPin[wire.Pos1]++;
             ConnectionsToPin[wire.Pos2]++;
@@ -1292,6 +1300,7 @@ namespace CircuitMaker.Basics
         public void RemoveWire(Wire wire)
         {
             Wires.Remove(wire);
+            AllWires.Remove(wire);
 
             ConnectionsToPin[wire.Pos1]--;
             ConnectionsToPin[wire.Pos2]--;
@@ -1480,8 +1489,8 @@ namespace CircuitMaker.Basics
 
         private bool SubTickWire(Wire wire)
         {
-            //Pin pin1 = wire.Pin1, pin2 = wire.Pin2;
-            Pin pin1 = Pins[wire.Pos1], pin2 = Pins[wire.Pos2];
+            Pin pin1 = wire.Pin1, pin2 = wire.Pin2;
+            //Pin pin1 = Pins[wire.Pos1], pin2 = Pins[wire.Pos2];
             Pin.State state1 = pin1.GetStateForWire(), state2 = pin2.GetStateForWire();
 
             if (state1 != state2)
@@ -1525,10 +1534,13 @@ namespace CircuitMaker.Basics
                 .Aggregate(false, Or);
             //*/
 
-            bool[] boolArr = Wires.Select(SubTickWire).ToArray();
-            boolArr = boolArr.Concat(WireComponents.Select(ActAndCheck<IWireComponent>(comp => { comp.Tick(); return false; }))).ToArray();
-            boolArr = boolArr.Concat(ContainerComponents.Select(ActAndCheck<IBoardContainerComponent>(comp => comp.GetInternalBoard().SubTickWires()))).ToArray();
-            return boolArr.Aggregate(false, Or);
+            //*
+            return AllWires.Select(SubTickWire)
+                //.Concat(ContainerComponents.Select(comp => comp.GetInternalBoard().SubTickJustWires()))
+                .Concat(AllWireComponents.Select(ActAndCheck<IWireComponent>(comp => { comp.Tick(); return false; })))
+                //.Concat(ContainerComponents.Select(ActAndCheck<IBoardContainerComponent>(comp => comp.GetInternalBoard().SubTickWires())))
+                .Aggregate(false, Or);
+            //*/
         }
 
         public void TickWires()
@@ -1578,7 +1590,18 @@ namespace CircuitMaker.Basics
 
         private void CountComponentPins(IComponent comp)
         {
-            comp.GetAllUniquePinPositions().Select(pos => ConnectionsToPin[pos]++);
+            //comp.GetAllUniquePinPositions().Select(pos => ConnectionsToPin[pos]++).ToArray();
+
+            foreach (Pos pos in comp.GetAllUniquePinPositions())
+            {
+                ConnectionsToPin[pos]++;
+            }
+        }
+
+        private void AddContainedBoardWires(IBoardContainerComponent comp)
+        {
+            AllWires.UnionWith(comp.GetInternalBoard().AllWires);
+            AllWireComponents.UnionWith(comp.GetInternalBoard().AllWireComponents);
         }
 
         internal void AddComponent(IComponent comp)
@@ -1601,6 +1624,7 @@ namespace CircuitMaker.Basics
             if (comp is IWireComponent wireComp)
             {
                 WireComponents.Add(wireComp);
+                AllWireComponents.Add(wireComp);
             } else
             {
                 NonWireComponents.Add(comp);
@@ -1611,6 +1635,7 @@ namespace CircuitMaker.Basics
                 ContainerComponents.Add(contComp);
 
                 contComp.PromiseDetails(CountComponentPins);
+                contComp.PromiseDetails(AddContainedBoardWires);
             } else
             {
                 CountComponentPins(comp);
@@ -1675,6 +1700,7 @@ namespace CircuitMaker.Basics
             if (comp is IWireComponent wireComp)
             {
                 WireComponents.Remove(wireComp);
+                AllWireComponents.Remove(wireComp);
             } else
             {
                 NonWireComponents.Remove(comp);
@@ -1698,6 +1724,9 @@ namespace CircuitMaker.Basics
             if (comp is IBoardContainerComponent contComp)
             {
                 ContainerComponents.Remove(contComp);
+
+                AllWires.ExceptWith(contComp.GetInternalBoard().AllWires);
+                AllWireComponents.ExceptWith(contComp.GetInternalBoard().AllWireComponents);
             }
         }
 

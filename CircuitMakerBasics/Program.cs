@@ -581,34 +581,6 @@ namespace CircuitMaker
             QOutp.Place(new Pos(22, 2), DLatch); // 4
             QBarOutp.Place(new Pos(22, 4), DLatch); // 5
 
-            /*
-            Pos[] intermediaries = new Pos[]
-            {
-                DInp.GetAllPinPositions()[0],
-                DNot.GetAllPinPositions()[0],
-            };
-
-            PlaceWires(new Pos[][]
-            {
-                new Pos[]
-                {
-                    DBuffer.GetAllPinPositions()[0],
-                    intermediaries[0],
-                    new Pos(intermediaries[0].X, intermediaries[1].Y),
-                    intermediaries[1]
-                },
-                new Pos[]
-                {
-                    SAnd.GetAllPinPositions()[1],
-                    EInp.GetAllPinPositions()[0],
-                    RAnd.GetAllPinPositions()[0]
-                },
-                new Pos[] { SOr.GetAllPinPositions()[2], SRNorLatch.GetAllPinPositions()[0] },
-                new Pos[] { ROr.GetAllPinPositions()[2], SRNorLatch.GetAllPinPositions()[1] }
-            }, DLatch);
-            //*/
-
-            //*
             PlaceWires(new WirePointInfo[][]
             {
                 new WirePointInfo[]
@@ -627,7 +599,6 @@ namespace CircuitMaker
                 new WirePointInfo[] { SOr.GetAllPinPositions()[2], SRNorLatch.GetAllPinPositions()[0] },
                 new WirePointInfo[] { ROr.GetAllPinPositions()[2], SRNorLatch.GetAllPinPositions()[1] }
             }, DLatch);
-            //*/
 
             DLatch.Save("Boards/D Latch.brd");
 

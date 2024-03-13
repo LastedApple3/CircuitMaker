@@ -2487,6 +2487,8 @@ namespace CircuitMaker.Components
 
         public class BoardContainerComponent : InpOutpBaseComponents.MultInpMultOutpBaseComponent, IBoardContainerComponent
         {
+            private bool isInitialized = false;
+
             private string InternalBoardName;
             public Board InternalBoard { get; private set; }
 
@@ -2570,15 +2572,23 @@ namespace CircuitMaker.Components
                 Initialize();
             }
 
-            private List<Action<IComponent>> detailsProviders = new List<Action<IComponent>>();
+            private List<Action<IBoardContainerComponent>> detailsProviders = new List<Action<IBoardContainerComponent>>();
 
-            public void PromiseDetails(Action<IComponent> detailsProvider)
+            public void PromiseDetails(Action<IBoardContainerComponent> detailsProvider)
             {
-                detailsProviders.Add(detailsProvider);
+                if (isInitialized)
+                {
+                    detailsProvider(this);
+                } else
+                {
+                    detailsProviders.Add(detailsProvider);
+                }
             }
 
             private void Initialize()
             {
+                isInitialized = true;
+
                 InternalBoard.SizeChanged += InternalBoard_SizeChanged;
 
                 ResetShape();
@@ -2911,6 +2921,11 @@ namespace CircuitMaker.Components
             public override void ResetToDefault()
             {
                 InternalBoard.ResetForSimulation();
+            }
+
+            public override string ToString()
+            {
+                return $"{GetComponentID()}:{InternalBoardName}@{GetComponentPos()}";
             }
         }
     } 
