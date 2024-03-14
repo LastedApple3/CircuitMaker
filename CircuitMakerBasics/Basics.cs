@@ -12,6 +12,7 @@ using System.Threading;
 using System.CodeDom;
 using System.Security.Permissions;
 using System.Runtime.CompilerServices;
+using System.Windows.Forms;
 
 namespace CircuitMaker.Basics
 {
@@ -935,7 +936,7 @@ namespace CircuitMaker.Basics
 
         private class BinOpTable : Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
-            private (Pin.State state1, Pin.State state2) simplifyStates((Pin.State state1, Pin.State state2) states)
+            private static (Pin.State state1, Pin.State state2) simplifyStates((Pin.State state1, Pin.State state2) states)
             {
                 if (states.state1 > states.state2)
                 {
@@ -956,11 +957,17 @@ namespace CircuitMaker.Basics
                 get => base[simplifyStates((state1, state2))];
                 set => base[simplifyStates((state1, state2))] = value;
             }
-            public BinOpTable(IEnumerable<KeyValuePair<(Pin.State state1, Pin.State state2), Pin.State>> kvps) : base(kvps.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)) { }
 
-            public BinOpTable(IDictionary<(Pin.State state1, Pin.State state2), Pin.State> dict) : base(dict) { }
+            public BinOpTable(IEnumerable<KeyValuePair<(Pin.State state1, Pin.State state2), Pin.State>> kvps) : base(kvps.ToDictionary(kvp => simplifyStates(kvp.Key), kvp => kvp.Value)) { }
+
+            public BinOpTable(IDictionary<(Pin.State state1, Pin.State state2), Pin.State> dict) : base(dict.ToDictionary(kvp => simplifyStates(kvp.Key), kvp => kvp.Value)) { }
 
             public BinOpTable() : base() { }
+
+            public new void Add((Pin.State state1, Pin.State state2) key, Pin.State val)
+            {
+                base.Add(simplifyStates(key), val);
+            }
         }
 
         private static Dictionary<Pin.State, Pin.State> NotOpTable = new Dictionary<Pin.State, Pin.State>

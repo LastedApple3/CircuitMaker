@@ -2439,40 +2439,23 @@ namespace CircuitMaker.Components
 
             public override void Tick()
             {
-                /*
-                Pin.State extState, intState = GetInpPin().GetStateForWireComponent();
-
-                Pin.State prevIntState = GetInpPin().GetStateForWireComponent();
+                Pin.State prevIntState = GetOutpPin().GetStateForWireComponent();
 
                 if (externalPin is null)
                 {
-                    extState = DefaultExternalState;
-                } else
-                {
-                    extState = externalPin.GetStateForWireComponent();
-                    externalPin.SetState(intState);
-                }
-
-                GetOutpPin().SetState(extState);
-
-                tickAgain = intState != extState;
-                //*/
-
-                if (externalPin is null)
-                {
-                    Pin.State prevIntState = GetOutpPin().GetStateForWireComponent();
                     GetOutpPin().SetState(DefaultExternalState);
-                    tickAgain = prevIntState != GetOutpPin().GetStateForWireComponent();
+                    tickAgain = false;
                 } else
                 {
-                    Pin.State prevIntState = GetOutpPin().GetStateForWireComponent(),
-                        prevExtState = externalPin.GetStateForWireComponent();
+                    Pin.State prevExtState = externalPin.GetStateForWireComponent();
 
-                    externalPin.SetState(GetInpPin().GetStateForWireComponent());
-                    GetOutpPin().SetState(externalPin.GetStateForWireComponent());
+                    externalPin.SetState(prevIntState);
+                    GetOutpPin().SetState(prevExtState);
 
-                    tickAgain = prevIntState != GetOutpPin().GetStateForWireComponent() || prevExtState != externalPin.GetStateForWireComponent();
+                    tickAgain = prevExtState != externalPin.GetStateForWireComponent();
                 }
+
+                tickAgain |= prevIntState != GetOutpPin().GetStateForWireComponent();
             }
 
             public bool TickAgain()

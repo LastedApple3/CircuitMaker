@@ -14,6 +14,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Data.SqlClient;
 using System.Security.Cryptography.X509Certificates;
+using System.Xml.Linq;
 
 namespace CircuitMaker
 {
@@ -532,8 +533,6 @@ namespace CircuitMaker
                 //*/
             }, SRNorLatch);
 
-            SRNorLatch.Save("Boards/SR Latch.brd");
-
             return SRNorLatch;
         }
 
@@ -600,15 +599,13 @@ namespace CircuitMaker
                 new WirePointInfo[] { ROr.GetAllPinPositions()[2], SRNorLatch.GetAllPinPositions()[1] }
             }, DLatch);
 
-            DLatch.Save("Boards/D Latch.brd");
-
             return DLatch;
         }
 
         static Board BuildDFlipFlop(Board DLatchBoard)
         {
             Board DFlipFlop = new Board("D Flip Flop", new System.Drawing.Size(4, 4));
-            const int timingBuffers = 8;
+            const int timingBuffers = 7;
 
             IBoardInputComponent DInp = new BoardContainerComponents.BoardInputComponent("D", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
             IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLK", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
@@ -672,8 +669,6 @@ namespace CircuitMaker
                 }
             }, DFlipFlop);
 
-            DFlipFlop.Save("Boards/D Flip Flop.brd");
-
             return DFlipFlop;
         }
 
@@ -688,7 +683,7 @@ namespace CircuitMaker
             IComponent DXor = new VarInpComponents.VarInpXorComponent(2);
 
             IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLKin", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 2));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("Rin", Pin.State.HIGH, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("Rin", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 3));
 
             IBoardContainerComponent DFlipFlop = new BoardContainerComponents.BoardContainerComponent(DFlipFlopBoard);
 
@@ -744,8 +739,6 @@ namespace CircuitMaker
                 new WirePointInfo[] { RInp.GetAllPinPositions()[0], DFlipFlop.GetAllPinPositions()[3] }
             }, SingleCounterElement);
 
-            SingleCounterElement.Save("Boards/Single Counter Element.brd");
-
             return SingleCounterElement;
         }
 
@@ -757,8 +750,6 @@ namespace CircuitMaker
             IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 5));
 
             // wires
-
-            BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
 
             return BCDDigitCounter;
         }
@@ -914,8 +905,6 @@ namespace CircuitMaker
                 }
             }
 
-            MUXBoard.Save($"Boards/{name}.brd");
-
             return MUXBoard;
         }
         //*/
@@ -941,8 +930,16 @@ namespace CircuitMaker
                     new int[][] { new int[]{ 2, -3, 4 }, new int[] { 1, -3 }, new int[] { 2, 3, -4 }, new int[] { -2, 3, 4 }, new int[] { -1, -2, -4 } },
                     new int[][] { new int[]{ -2, -4 }, new int[] { 3, -4 }, new int[] { 1, 3 }, new int[] { 1, 2 } },
                     new int[][] { new int[]{ -1, 2, -3 }, new int[] { -3, -4 }, new int[] { 2, -4 }, new int[] { 1, -2 }, new int[] { 1, 3 } },
-                    new int[][] { new int[]{ -2, 3 }, new int[] { 1, -2 }, new int[] { 1, 4 }, new int[] { 3, -4 }, new int[] { -1, 2, -3, } }
+                    new int[][] { new int[]{ -2, 3 }, new int[] { 1, -2 }, new int[] { 1, 4 }, new int[] { 3, -4 }, new int[] { -1, 2, -3 } }
                 }, "7seg decoder");
+
+            SRNorLatch.Save("Boards/SR Latch.brd");
+            DLatch.Save("Boards/D Latch.brd");
+            DFlipFlop.Save("Boards/D Flip Flop.brd");
+            SingleCounterElement.Save("Boards/Single Counter Element.brd");
+            //BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
+
+            SevenSegDecoder.Save("Boards/7seg decoder.brd");
             //*/
 
             //*
