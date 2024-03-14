@@ -799,8 +799,10 @@ namespace CircuitMaker.Basics
         void Interact();
     }
 
-    public interface IWireComponent : IComponent { }
-
+    public interface IWireComponent : IComponent
+    {
+        bool TickAgain();
+    }
     public interface IBoardInterfaceComponent : IWireComponent
     {
         string GetComponentName();
@@ -990,24 +992,24 @@ namespace CircuitMaker.Basics
             { (Pin.State.ILLEGAL, Pin.State.ILLEGAL), Pin.State.ILLEGAL }
         };
 
-        private static BinOpTable AndOpTable = new BinOpTable((new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+        private static BinOpTable AndOpTable = new BinOpTable(new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
             { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
             { (Pin.State.LOW, Pin.State.HIGH), Pin.State.LOW },
             { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
-        }.Concat(GenericOpTable)));
-        private static BinOpTable OrOpTable = new BinOpTable((new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+        }.Concat(GenericOpTable));
+        private static BinOpTable OrOpTable = new BinOpTable(new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
             { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
             { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
             { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
-        }.Concat(GenericOpTable)));
-        private static BinOpTable XorOpTable = new BinOpTable((new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+        }.Concat(GenericOpTable));
+        private static BinOpTable XorOpTable = new BinOpTable(new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
         {
             { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
             { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
             { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.LOW }
-        }.Concat(GenericOpTable)));
+        }.Concat(GenericOpTable));
 
         private static BinOpTable WireJoinTable = new BinOpTable
         {
@@ -1110,44 +1112,6 @@ namespace CircuitMaker.Basics
             OriginalState = CurrentState;
             CurrentState = Pin.State.FLOATING;
         }
-
-        /*
-        public event Action WireUpdate;
-
-        public bool EmitWireUpdate()
-        {
-            State stateBefore = CurrentState;
-
-            if (OriginalState != CurrentState)
-            {
-                //PrevState = CurrentState;
-
-                WireUpdate?.Invoke();
-            }
-
-            return stateBefore != CurrentState;
-        }
-
-        public bool HasWires()
-        {
-            if (WireUpdate == null)
-            {
-                return false;
-            }
-
-            return WireUpdate.GetInvocationList().Length != 0;
-        }
-
-        public Wire[] GetWires()
-        {
-            if (WireUpdate == null)
-            {
-                return new Wire[0];
-            }
-
-            return WireUpdate.GetInvocationList().Select(del => (Wire)del.Target).ToArray();
-        }
-        //*/
     }
 
     public static class SideEnumExtensions
@@ -1509,6 +1473,7 @@ namespace CircuitMaker.Basics
             return false;
         }
 
+        /*
         private bool SubTickJustWires()
         {
             return //Pins.Values.Select(pin => pin.EmitWireUpdate())
@@ -1523,6 +1488,7 @@ namespace CircuitMaker.Basics
                 .Concat(ContainerComponents.Select(ActAndCheck<IBoardContainerComponent>(comp => comp.GetInternalBoard().SubTickJustWireComps())))
                 .Aggregate(false, Or);
         }
+        //*/
 
         public bool SubTickWires()
         {
@@ -1534,13 +1500,30 @@ namespace CircuitMaker.Basics
                 .Aggregate(false, Or);
             //*/
 
-            //*
+            /*
             return AllWires.Select(SubTickWire)
                 //.Concat(ContainerComponents.Select(comp => comp.GetInternalBoard().SubTickJustWires()))
-                .Concat(AllWireComponents.Select(ActAndCheck<IWireComponent>(comp => { comp.Tick(); return false; })))
+                //.Concat(AllWireComponents.Select(ActAndCheck<IWireComponent>(comp => { comp.Tick(); return false; })))
+                .Concat(AllWireComponents.Select(comp => { comp.Tick(); return comp.TickAgain(); }))
+                //.Concat(ContainerComponents.Select(comp => comp.GetInternalBoard().SubTickWires()))
                 //.Concat(ContainerComponents.Select(ActAndCheck<IBoardContainerComponent>(comp => comp.GetInternalBoard().SubTickWires())))
                 .Aggregate(false, Or);
             //*/
+
+            bool retVal = false;
+
+            foreach (Wire wire in AllWires)
+            {
+                retVal |= SubTickWire(wire);
+            }
+
+            foreach (IWireComponent wireComp in AllWireComponents)
+            {
+                wireComp.Tick();
+                retVal |= wireComp.TickAgain();
+            }
+
+            return retVal;
         }
 
         public void TickWires()
@@ -1602,6 +1585,11 @@ namespace CircuitMaker.Basics
         {
             AllWires.UnionWith(comp.GetInternalBoard().AllWires);
             AllWireComponents.UnionWith(comp.GetInternalBoard().AllWireComponents);
+
+            if (!(owner is null))
+            {
+                owner.AddContainedBoardWires(comp);
+            }
         }
 
         internal void AddComponent(IComponent comp)
@@ -2040,15 +2028,7 @@ namespace CircuitMaker.Basics
 
         public override string ToString()
         {
-            StringBuilder sb = new StringBuilder("components: ");
-
-            string listBuilder(string first, string second) => first + ", " + second;
-
-            sb.Append(Components.Select(comp => comp.ToString()).Aggregate(listBuilder));
-            sb.Append(", wires: ");
-            sb.Append(Wires.Select(wire => wire.ToString()).Aggregate(listBuilder));
-
-            return sb.ToString();
+            return $"Board: {Name}";
         }
 
         private static string GetFilename(string boardname)

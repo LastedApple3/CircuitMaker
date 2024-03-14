@@ -2140,14 +2140,25 @@ namespace CircuitMaker.Components
                 OutputState = StartState;
             }
 
+            private bool tickAgain;
+
             public override void Tick()
             {
+                Pin.State prevState = GetOutpPin().GetStateForWireComponent();
+
                 if (externalPin != null)
                 {
                     OutputState = externalPin.GetStateForWireComponent();
                 }
 
                 base.Tick();
+
+                tickAgain = prevState != GetOutpPin().GetStateForWireComponent();
+            }
+
+            public bool TickAgain()
+            {
+                return tickAgain;
             }
 
             public new static BoardInputComponent Constructor(string details)
@@ -2289,12 +2300,25 @@ namespace CircuitMaker.Components
                 externalPin = null;
             }
 
+            private bool tickAgain;
+
             public override void Tick()
             {
+                tickAgain = false;
+
                 if (externalPin != null)
                 {
+                    Pin.State prevState = externalPin.GetStateForWireComponent();
+
                     externalPin.SetState(GetInpPin().GetStateForWireComponent());
+
+                    tickAgain = prevState != externalPin.GetStateForWireComponent();
                 }
+            }
+
+            public bool TickAgain()
+            {
+                return tickAgain;
             }
 
             public ISettingDescription[] GetSettingDescriptions()
@@ -2411,18 +2435,49 @@ namespace CircuitMaker.Components
                 externalPin = null;
             }
 
+            private bool tickAgain;
+
             public override void Tick()
             {
-                if (externalPin == null)
+                /*
+                Pin.State extState, intState = GetInpPin().GetStateForWireComponent();
+
+                Pin.State prevIntState = GetInpPin().GetStateForWireComponent();
+
+                if (externalPin is null)
                 {
-                    GetOutpPin().SetState(GetInpPin().GetStateForWireComponent().WireJoin(DefaultExternalState));
+                    extState = DefaultExternalState;
                 } else
                 {
-                    Pin.State state = GetInpPin().GetStateForWireComponent().WireJoin(externalPin.GetStateForWireComponent());
-
-                    GetOutpPin().SetState(state);
-                    externalPin.SetState(state);
+                    extState = externalPin.GetStateForWireComponent();
+                    externalPin.SetState(intState);
                 }
+
+                GetOutpPin().SetState(extState);
+
+                tickAgain = intState != extState;
+                //*/
+
+                if (externalPin is null)
+                {
+                    Pin.State prevIntState = GetOutpPin().GetStateForWireComponent();
+                    GetOutpPin().SetState(DefaultExternalState);
+                    tickAgain = prevIntState != GetOutpPin().GetStateForWireComponent();
+                } else
+                {
+                    Pin.State prevIntState = GetOutpPin().GetStateForWireComponent(),
+                        prevExtState = externalPin.GetStateForWireComponent();
+
+                    externalPin.SetState(GetInpPin().GetStateForWireComponent());
+                    GetOutpPin().SetState(externalPin.GetStateForWireComponent());
+
+                    tickAgain = prevIntState != GetOutpPin().GetStateForWireComponent() || prevExtState != externalPin.GetStateForWireComponent();
+                }
+            }
+
+            public bool TickAgain()
+            {
+                return tickAgain;
             }
 
             public static BoardBidirComponent Constructor(string details)
