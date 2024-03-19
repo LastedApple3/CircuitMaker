@@ -696,23 +696,23 @@ namespace CircuitMaker
 
             IBoardOutputComponent CarryOutp = new BoardContainerComponents.BoardOutputComponent("Cout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 1));
 
-            CarryInp.Place(new Pos(0, 0), SingleCounterElement);
+            CarryInp.Place(new Pos(0, 0), SingleCounterElement); // 0
 
             DXor.Place(new Pos(3, 4), Rotation.CLOCKWISE, SingleCounterElement);
 
-            ClkInp.Place(new Pos(3, 11), SingleCounterElement);
-            RInp.Place(new Pos(6, 12), SingleCounterElement);
+            ClkInp.Place(new Pos(3, 11), SingleCounterElement); // 1
+            RInp.Place(new Pos(6, 12), SingleCounterElement); // 2
 
             DFlipFlop.Place(new Pos(8, 7), SingleCounterElement);
 
-            ClkOutp.Place(new Pos(13, 11), SingleCounterElement);
-            ROutp.Place(new Pos(10, 12), SingleCounterElement);
-            DOutp.Place(new Pos(13, 6), SingleCounterElement);
+            ClkOutp.Place(new Pos(13, 11), SingleCounterElement); // 3
+            ROutp.Place(new Pos(10, 12), SingleCounterElement); // 4
+            DOutp.Place(new Pos(13, 6), SingleCounterElement); // 5
 
             CarryPullUp.Place(new Pos(9, 1), SingleCounterElement);
             CarryAnd.Place(new Pos(13, 1), SingleCounterElement);
 
-            CarryOutp.Place(new Pos(17, 1), SingleCounterElement);
+            CarryOutp.Place(new Pos(17, 1), SingleCounterElement); // 6
 
             PlaceWires(new WirePointInfo[][]
             {
@@ -742,18 +742,134 @@ namespace CircuitMaker
             return SingleCounterElement;
         }
 
-        static Board BuildBCDDigitCounter(Board SingleCounterElement)
+        static Board BuildBCDDigitCounter(Board DLatch, Board SingleCounterElement)
         {
-            Board BCDDigitCounter = new Board("BCD Digit Counter", new System.Drawing.Size(2, 6));
+            int timingBufferCount = 8; // precisely tested to be the lowest number that would not allow a brief output of 10 before resetting to 0
 
-            IBoardInputComponent IncInp = new BoardContainerComponents.BoardInputComponent("INC", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 1));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 5));
+            Board BCDDigitCounter = new Board("BCD Digit Counter", new System.Drawing.Size(4, 5));
+
+            IBoardInputComponent IncInp = new BoardContainerComponents.BoardInputComponent("INCin", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 1));
+            IBoardInputComponent EInp = new BoardContainerComponents.BoardInputComponent("Ein", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("Rin", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 3));
+
+            IComponent IncNot = new BufferComponents.NotComponent();
+            IComponent EBuffer = new BufferComponents.BufferComponent();
+
+            IComponent ClkNand = new VarInpComponents.VarInpNandComponent(2);
+
+            IComponent ROr = new VarInpComponents.VarInpOrComponent(2);
+
+            IBoardContainerComponent[] counterElements = new IBoardContainerComponent[4];
+            IComponent[,] timingBuffers = new IComponent[4,timingBufferCount];
+            IComponent[] tenSuppXnors = new IComponent[4];
+            IBoardContainerComponent[] tenSuppDLatches = new IBoardContainerComponent[4];
+            IBoardOutputComponent[] bitOutps = new IBoardOutputComponent[4];
+
+            for (int i = 0; i < 4; i++)
+            {
+                counterElements[i] = new BoardContainerComponents.BoardContainerComponent(SingleCounterElement);
+
+                for (int j = 0; j < timingBufferCount; j++)
+                {
+                    timingBuffers[i,j] = new BufferComponents.BufferComponent();
+                }
+
+                tenSuppXnors[i] = new VarInpComponents.VarInpXnorComponent(2);
+                tenSuppDLatches[i] = new BoardContainerComponents.BoardContainerComponent(DLatch);
+                bitOutps[i] = new BoardContainerComponents.BoardOutputComponent($"0{i}", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 4 - i));
+            }
+
+            IComponent RAnd = new VarInpComponents.VarInpAndComponent(2);
+
+            IBoardOutputComponent IncOutp = new BoardContainerComponents.BoardOutputComponent("INCout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 1));
+            IBoardOutputComponent EOutp = new BoardContainerComponents.BoardOutputComponent("Eout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
+            IBoardOutputComponent ROutp = new BoardContainerComponents.BoardOutputComponent("Rout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 3));
+
+            IncInp.Place(new Pos(0, 0), BCDDigitCounter);
+            EInp.Place(new Pos(0, 2), BCDDigitCounter);
+            RInp.Place(new Pos(5, 8), BCDDigitCounter);
+
+            IncNot.Place(new Pos(3, 0), BCDDigitCounter);
+            EBuffer.Place(new Pos(3, 2), BCDDigitCounter);
+
+            ClkNand.Place(new Pos(6, 1), BCDDigitCounter);
+
+            ROr.Place(new Pos(8, 5), Rotation.ANTICLOCKWISE, BCDDigitCounter);
+
+            for (int i = 0; i < 4; i++)
+            {
+                counterElements[i].Place(new Pos(11 + (i * 6), 1), BCDDigitCounter);
+
+                for (int j = 0; j < timingBufferCount; j++)
+                {
+                    timingBuffers[i,j].Place(new Pos(13 + (i * 6), -6 - (j * 2)), Rotation.ANTICLOCKWISE, BCDDigitCounter);
+                }
+
+                tenSuppXnors[i].Place(new Pos(12 + (i * 6), -7 - (timingBufferCount * 2)), Rotation.ANTICLOCKWISE, BCDDigitCounter);
+                tenSuppDLatches[i].Place(new Pos(11 + (i * 6), -12 - (timingBufferCount * 2)), Rotation.ANTICLOCKWISE, BCDDigitCounter);
+                bitOutps[i].Place(new Pos(10 + (i * 6), -17 - (timingBufferCount * 2)), Rotation.ANTICLOCKWISE, BCDDigitCounter);
+            }
+
+            RAnd.Place(new Pos(34, -3), BCDDigitCounter);
+
+            IncOutp.Place(new Pos(38, 7), BCDDigitCounter);
+            EOutp.Place(new Pos(2, 5), Rotation.CLOCKWISE, BCDDigitCounter);
+            ROutp.Place(new Pos(9, 8), BCDDigitCounter);
 
             // wires
 
+            Func<int, WirePointInfo[]> WireGenerator = i =>
+            {
+                return new WirePointInfo[]
+                {
+                    counterElements[i].GetAllPinPositions()[5],
+                    (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.ExactNext),
+                    timingBuffers[i,0].GetAllPinPositions()[0],
+                    (WirePointInfo.WirePointType.SkipBack, 2),
+                    tenSuppXnors[i].GetAllPinPositions()[0],
+                    (WirePointInfo.OrdInfo.ExactNext, WirePointInfo.OrdInfo.ExactPrev),
+                    tenSuppDLatches[i].GetAllPinPositions()[0]
+                };
+            };
+
+            /* lengthier version, reference/reuse if simplified doesn't work
+	        WirePointInfo[] bit1Wires = WireGenerator(1);
+
+	        WirePointInfo start = bit1Wires[0];
+	        bit1Wires = bit1Wires.TakeLast(bit1Wires.Length - 1);
+	        bit1Wires = new WirePointInfo[] {
+		        (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.ExactNext),
+		        RAnd.GetAllPinPositions()[0],
+		        (WirePointInfo.WirePointType.SkipBack, 2),
+	        }.Prepend(start).Concat(bit1Wires).ToArray();
+	        //*/
+
+            WirePointInfo[] bit1Wires;
+
+            PlaceWires(new WirePointInfo[][]
+            {
+                WireGenerator(0),
+                new WirePointInfo[]
+                {
+                    (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.ExactNext),
+                    RAnd.GetAllPinPositions()[0],
+                    (WirePointInfo.WirePointType.SkipBack, 2),
+                }.Prepend((bit1Wires = WireGenerator(1))[0]).Concat(bit1Wires.Reverse().Take(bit1Wires.Length - 1).Reverse()).ToArray(),
+                WireGenerator(2),
+                WireGenerator(3).Prepend(RAnd.GetAllPinPositions()[1]).ToArray(),
+                new WirePointInfo[]
+                {
+                    RAnd.GetAllPinPositions()[2],
+                    IncOutp.GetAllPinPositions()[0],
+                    ROr.GetAllPinPositions()[1],
+                },
+                new WirePointInfo[] { EInp.GetAllPinPositions()[0], EOutp.GetAllPinPositions()[0] },
+                new WirePointInfo[] { RInp.GetAllPinPositions()[0], ROr.GetAllPinPositions()[0] },
+                new WirePointInfo[] { ROr.GetAllPinPositions()[2], counterElements[0].GetAllPinPositions()[2] }
+            }, BCDDigitCounter);
+
             return BCDDigitCounter;
         }
-        //*/
 
         //*
         static Board BuildMUX(int inpCount, int[][][] decoding, string name)
@@ -920,7 +1036,7 @@ namespace CircuitMaker
                 DLatch = BuildDLatch(SRNorLatch), 
                 DFlipFlop = BuildDFlipFlop(DLatch), 
                 SingleCounterElement = BuildSingleCounterElement(DFlipFlop),
-                //BCDDigitCounter = BuildBCDDigitCounter(SingleCounterElement),
+                BCDDigitCounter = BuildBCDDigitCounter(DLatch, SingleCounterElement),
 
                 SevenSegDecoder = BuildMUX(4, new int[][][]
                 {
@@ -937,7 +1053,7 @@ namespace CircuitMaker
             DLatch.Save("Boards/D Latch.brd");
             DFlipFlop.Save("Boards/D Flip Flop.brd");
             SingleCounterElement.Save("Boards/Single Counter Element.brd");
-            //BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
+            BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
 
             SevenSegDecoder.Save("Boards/7seg decoder.brd");
             //*/

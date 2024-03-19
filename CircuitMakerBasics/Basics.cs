@@ -206,6 +206,24 @@ namespace CircuitMaker.Basics
             bw.Write(comp.GetComponentDetails());
             bw.Write(comp.GetComponentPos());
             bw.Write(comp.GetComponentRotation());
+
+            if (comp is IGraphicalComponent graphicalComp)
+            {
+                bw.Write(graphicalComp.GetGraphicalElementScale());
+
+                Point? graphicalLoc = graphicalComp.GetGraphicalElementLocation();
+                bw.Write(graphicalLoc.HasValue);
+                if (graphicalLoc.HasValue)
+                {
+                    bw.Write(graphicalLoc.Value.X);
+                    bw.Write(graphicalLoc.Value.Y);
+                }
+            }
+
+            if (comp is IBoardInterfaceComponent interfaceComp)
+            {
+
+            }
         }
 
         public static IComponent ReadComponent(this BinaryReader br, Board board)
@@ -215,6 +233,22 @@ namespace CircuitMaker.Basics
             {
                 IComponent comp = compFunc(br.ReadString());
                 comp.Place(br.ReadPos(), br.ReadEnum<Rotation>(), board);
+
+                if (comp is IGraphicalComponent graphicalComp)
+                {
+                    graphicalComp.SetGraphicalElementScale(br.ReadSingle());
+
+                    if (br.ReadBoolean())
+                    {
+                        graphicalComp.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
+                    }
+                }
+
+                if (comp is IBoardInterfaceComponent interfaceComp)
+                {
+
+                }
+
                 return comp;
             }
 
@@ -819,15 +853,18 @@ namespace CircuitMaker.Basics
     public interface IBoardInputComponent : IBoardInterfaceComponent { }
     public interface IBoardOutputComponent : IBoardInterfaceComponent { }
 
-    public interface IGraphicalComponent : IComponent
+    public interface IGraphicalComponent : IComponent // go to the implementers and remove the graphical element saving
     {
         bool HasGraphics();
         void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme);
+
         RectangleF GetGraphicalElementBounds();
+
         Point? GetGraphicalElementLocation();
+        void SetGraphicalElementLocation(Point? location);
+
         float GetGraphicalElementScale();
         void SetGraphicalElementScale(float scale);
-        void SetGraphicalElementLocation(Point? location);
     }
 
     public static class GraphicalComponentExtensions

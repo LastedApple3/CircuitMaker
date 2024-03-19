@@ -2692,6 +2692,12 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
+                return InternalBoard.Name;
+            }
+
+            /*
+            public override string GetComponentDetails()
+            {
                 using (Stream stream = new MemoryStream())
                 {
                     using (BinaryWriter bw = new BinaryWriter(stream))
@@ -2714,6 +2720,7 @@ namespace CircuitMaker.Components
                     }
                 }
             }
+            //*/
 
             private (Pos, Pos) GetOffset(Board.InterfaceLocation interfaceLocation)
             {
@@ -2788,6 +2795,12 @@ namespace CircuitMaker.Components
 
             public static BoardContainerComponent Constructor(string details)
             {
+                return new BoardContainerComponent(details);
+            }
+
+            /*
+            public static BoardContainerComponent Constructor(string details)
+            {
                 using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
                 {
                     using (BinaryReader br = new BinaryReader(stream))
@@ -2805,6 +2818,7 @@ namespace CircuitMaker.Components
                     }
                 }
             }
+            //*/
 
             public override IComponent NonStaticConstructor(string details)
             {
@@ -2850,7 +2864,7 @@ namespace CircuitMaker.Components
 
                 RenderMainShape(graphics, simulating, colourScheme);
 
-                RenderGraphicalElement(graphics, simulating, colourScheme);
+                //RenderGraphicalElement(graphics, simulating, colourScheme);
             }
 
             public override void RenderMainShape(Graphics graphics, bool simulating, ColourScheme colourScheme)
@@ -2914,7 +2928,7 @@ namespace CircuitMaker.Components
 
             public bool HasGraphics()
             {
-                return InternalBoard.GetGraphicalComponents().Where(comp => comp.HasGraphics()).Any();
+                return InternalBoard.GetGraphicalComponents().Any(comp => comp.HasGraphics());
             }
 
             public Point? GetGraphicalElementLocation()
@@ -2929,20 +2943,24 @@ namespace CircuitMaker.Components
 
             public RectangleF GetGraphicalElementBounds()
             {
-                RectangleF rect = new RectangleF(), compRect;
+                RectangleF rect = new RectangleF();
+                RectangleF? compRect;
 
                 foreach (IGraphicalComponent graphicalComp in InternalBoard.GetGraphicalComponents())
                 {
-                    compRect = graphicalComp.GetGraphicalElementBounds();
+                    compRect = graphicalComp.GetOffsetGraphicalElementBounds();
 
-                    rect = RectangleF.FromLTRB(
-                        Math.Min(rect.Left, compRect.Left),
-                        Math.Min(rect.Top, compRect.Top),
-                        Math.Max(rect.Right, compRect.Right),
-                        Math.Max(rect.Bottom, compRect.Bottom)
-                    );
+                    if (compRect.HasValue)
+                    {
+                        rect = RectangleF.FromLTRB(
+                            Math.Min(rect.Left, compRect.Value.Left),
+                            Math.Min(rect.Top, compRect.Value.Top),
+                            Math.Max(rect.Right, compRect.Value.Right),
+                            Math.Max(rect.Bottom, compRect.Value.Bottom)
+                        );
+                    }
                 }
-
+                
                 return rect;
             }
 
