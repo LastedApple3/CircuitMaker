@@ -1683,6 +1683,7 @@ namespace CircuitMaker.Components
             return new Pos(-2, 0);
         }
 
+        /*
         static LogicProbeComponent()
         {
             using (Stream stream = new MemoryStream())
@@ -1701,6 +1702,7 @@ namespace CircuitMaker.Components
                 }
             }
         }
+        //*/
 
         public LogicProbeComponent()
         {
@@ -1714,7 +1716,7 @@ namespace CircuitMaker.Components
         public override void Tick() { }
 
         public static string ID = "PROBE";
-        public static string DefaultDetails;
+        public static string DefaultDetails = "";
 
         private Point? GraphicalLocation = null;
         private float GraphicalScale = 1;
@@ -1741,6 +1743,7 @@ namespace CircuitMaker.Components
             return ID;
         }
 
+        /*
         public override string GetComponentDetails()
         {
             using (Stream stream = new MemoryStream())
@@ -1782,6 +1785,17 @@ namespace CircuitMaker.Components
                     return retVal;
                 }
             }
+        }
+        //*/
+
+        public override string GetComponentDetails()
+        {
+            return "";
+        }
+
+        public static LogicProbeComponent Constructor(string details)
+        {
+            return new LogicProbeComponent();
         }
 
         public override IComponent NonStaticConstructor(string details)
@@ -1851,6 +1865,41 @@ namespace CircuitMaker.Components
             return new Rectangle(-4, -4, 7, 8);
         }
 
+        /*
+        static SevenSegmentComponent()
+        {
+            using (Stream stream = new MemoryStream())
+            {
+                using (BinaryWriter bw = new BinaryWriter(stream))
+                {
+                    bw.Write(1F);
+                    bw.Write(false);
+
+                    stream.Position = 0;
+
+                    using (BinaryReader br = new BinaryReader(stream))
+                    {
+                        DefaultDetails = ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
+                    }
+                }
+            }
+        }
+        //*/
+
+        public static string ID = "7SEG";
+        public static string DefaultDetails = "";
+
+        public override string GetComponentID()
+        {
+            return ID;
+        }
+
+        public bool HasGraphics()
+        {
+            return true;
+        }
+
+        /*
         public override string GetComponentDetails()
         {
             using (Stream stream = new MemoryStream())
@@ -1875,31 +1924,39 @@ namespace CircuitMaker.Components
             }
         }
 
-        static SevenSegmentComponent()
+        public static SevenSegmentComponent Constructor(string details)
         {
-            using (Stream stream = new MemoryStream())
+            using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
             {
-                using (BinaryWriter bw = new BinaryWriter(stream))
+                using (BinaryReader br = new BinaryReader(stream))
                 {
-                    bw.Write(1F);
-                    bw.Write(false);
+                    SevenSegmentComponent retVal = new SevenSegmentComponent();
 
-                    stream.Position = 0;
-
-                    using (BinaryReader br = new BinaryReader(stream))
+                    retVal.GraphicalScale = br.ReadSingle();
+                    if (br.ReadBoolean())
                     {
-                        DefaultDetails = ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
+                        retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
                     }
+
+                    return retVal;
                 }
             }
         }
+        //*/
 
-        public static string DefaultDetails;
-        public static string ID = "7SEG";
-
-        public override string GetComponentID()
+        public override string GetComponentDetails()
         {
-            return ID;
+            return "";
+        }
+
+        public static SevenSegmentComponent Constructor(string details)
+        {
+            return new SevenSegmentComponent();
+        }
+
+        public override IComponent NonStaticConstructor(string details)
+        {
+            return Constructor(details);
         }
 
         public RectangleF GetGraphicalElementBounds()
@@ -1937,35 +1994,6 @@ namespace CircuitMaker.Components
                 new Pos(-4, 2),
                 new Pos(-4, 3)
             };
-        }
-
-        public bool HasGraphics()
-        {
-            return true;
-        }
-
-        public static SevenSegmentComponent Constructor(string details)
-        {
-            using (Stream stream = new MemoryStream(ByteEncoding.Byte.GetBytes(details)))
-            {
-                using (BinaryReader br = new BinaryReader(stream))
-                {
-                    SevenSegmentComponent retVal = new SevenSegmentComponent();
-
-                    retVal.GraphicalScale = br.ReadSingle();
-                    if (br.ReadBoolean())
-                    {
-                        retVal.SetGraphicalElementLocation(new Point(br.ReadInt32(), br.ReadInt32()));
-                    }
-
-                    return retVal;
-                }
-            }
-        }
-
-        public override IComponent NonStaticConstructor(string details)
-        {
-            return Constructor(details);
         }
 
         private PointF[] GetDiamond(PointF around)
@@ -2108,6 +2136,13 @@ namespace CircuitMaker.Components
                 ComponentName = compName;
             }
 
+            public BoardInputComponent(string name, Pin.State startDefaultState, Pin.State otherDefaultState) : base(startDefaultState, otherDefaultState)
+            {
+                ComponentName = name;
+
+                interfaceLocation = new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 0);
+            }
+
             public BoardInputComponent(string name, Pin.State startDefaultState, Pin.State otherDefaultState, Board.InterfaceLocation interfaceLocation) : base(startDefaultState, otherDefaultState)
             {
                 ComponentName = name;
@@ -2116,7 +2151,8 @@ namespace CircuitMaker.Components
             }
 
             public new static string ID = "INPUT";
-            public new static string DefaultDetails = $"INPUT,{(int)Pin.State.LOW},{(int)Pin.State.HIGH},{(byte)Board.InterfaceLocation.SideEnum.Left},{0}";
+            //public new static string DefaultDetails = $"I0,{(int)Pin.State.LOW},{(int)Pin.State.HIGH},{(byte)Board.InterfaceLocation.SideEnum.Left},{0}";
+            public new static string DefaultDetails = $"I0,{(int)Pin.State.LOW},{(int)Pin.State.HIGH}";
 
             public override string GetComponentID()
             {
@@ -2125,7 +2161,8 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return $"{ComponentName},{(int)StartState},{(int)OtherState},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
+                //return $"{ComponentName},{(int)StartState},{(int)OtherState},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
+                return $"{ComponentName},{(int)StartState},{(int)OtherState}";
             }
 
             public void SetExternalPin(Pin pin)
@@ -2165,9 +2202,9 @@ namespace CircuitMaker.Components
             {
                 string[] strings = details.Split(',');
 
-                if (int.TryParse(strings[1], out int startDefaultState) && int.TryParse(strings[2], out int otherDefaultState) && int.TryParse(strings[3], out int sideInt) && int.TryParse(strings[4], out int distInt))
+                if (int.TryParse(strings[1], out int startDefaultState) && int.TryParse(strings[2], out int otherDefaultState) /* && int.TryParse(strings[3], out int sideInt) && int.TryParse(strings[4], out int distInt) */)
                 {
-                    return new BoardInputComponent(strings[0], (Pin.State)startDefaultState, (Pin.State)otherDefaultState, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)(byte)sideInt, distInt));
+                    return new BoardInputComponent(strings[0], (Pin.State)startDefaultState, (Pin.State)otherDefaultState /*, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)(byte)sideInt, distInt) */);
                 }
 
                 throw new PlacementException("Did not successfully parse int.");
@@ -2253,6 +2290,13 @@ namespace CircuitMaker.Components
                 ComponentName = compName;
             }
 
+            public BoardOutputComponent(string name)
+            {
+                ComponentName = name;
+
+                interfaceLocation = new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Right, 0);
+            }
+
             public BoardOutputComponent(string name, Board.InterfaceLocation interfaceLocation)
             {
                 ComponentName = name;
@@ -2261,7 +2305,8 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "OUTPUT";
-            public static string DefaultDetails = $"OUTPUT,{(byte)Board.InterfaceLocation.SideEnum.Right},{0}";
+            //public static string DefaultDetails = $"O0,{(byte)Board.InterfaceLocation.SideEnum.Right},{0}";
+            public static string DefaultDetails = "O0";
 
             public override string GetComponentID()
             {
@@ -2270,11 +2315,13 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return $"{ComponentName},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
+                //return $"{ComponentName},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
+                return ComponentName;
             }
 
             public static BoardOutputComponent Constructor(string details)
             {
+                /*
                 string[] strings = details.Split(',');
 
                 if (int.TryParse(strings[1], out int sideInt) && int.TryParse(strings[2], out int distInt))
@@ -2283,6 +2330,7 @@ namespace CircuitMaker.Components
                 }
 
                 throw new PlacementException("Did not successfully parse int.");
+                //*/ return new BoardOutputComponent(details);
             }
 
             public override IComponent NonStaticConstructor(string details)
@@ -2403,6 +2451,15 @@ namespace CircuitMaker.Components
                 ComponentName = compName;
             }
 
+            public BoardBidirComponent(string name, Pin.State defaultState)
+            {
+                ComponentName = name;
+
+                DefaultExternalState = defaultState;
+
+                interfaceLocation = new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 0);
+            }
+
             public BoardBidirComponent(string name, Pin.State defaultState, Board.InterfaceLocation interfaceLocation)
             {
                 ComponentName = name;
@@ -2413,7 +2470,8 @@ namespace CircuitMaker.Components
             }
 
             public static string ID = "BIDIR";
-            public static string DefaultDetails = $"BIDIR,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Top},{0}";
+            //public static string DefaultDetails = $"B0,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Top},{0}";
+            public static string DefaultDetails = "B0";
 
             public override string GetComponentID()
             {
@@ -2422,7 +2480,8 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return $"{ComponentName},{(int)DefaultExternalState},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
+                //return $"{ComponentName},{(int)DefaultExternalState},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
+                return ComponentName;
             }
 
             public void SetExternalPin(Pin pin)
@@ -2467,9 +2526,9 @@ namespace CircuitMaker.Components
             {
                 string[] strings = details.Split(',');
 
-                if (int.TryParse(strings[1], out int stateInt) && int.TryParse(strings[2], out int sideInt) && int.TryParse(strings[3], out int distInt))
+                if (int.TryParse(strings[1], out int stateInt) /* && int.TryParse(strings[2], out int sideInt) && int.TryParse(strings[3], out int distInt) */)
                 {
-                    return new BoardBidirComponent(strings[0], (Pin.State)stateInt, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)sideInt, distInt));
+                    return new BoardBidirComponent(strings[0], (Pin.State)stateInt /*, new Board.InterfaceLocation((Board.InterfaceLocation.SideEnum)sideInt, distInt) */);
                 }
 
                 throw new PlacementException("Did not successfully parse int.");
@@ -2724,19 +2783,19 @@ namespace CircuitMaker.Components
 
             private (Pos, Pos) GetOffset(Board.InterfaceLocation interfaceLocation)
             {
-                if (interfaceLocation.Side == Board.InterfaceLocation.SideEnum.Top)
+                if (interfaceLocation.Side.IsTop())
                 {
                     return (new Pos(Shape.Left + interfaceLocation.Distance, Shape.Top), new Pos(0, -1));
                 }
-                else if (interfaceLocation.Side == Board.InterfaceLocation.SideEnum.Bottom)
+                else if (interfaceLocation.Side.IsBottom())
                 {
                     return (new Pos(Shape.Left + interfaceLocation.Distance, Shape.Bottom), new Pos(0, 1));
                 }
-                else if (interfaceLocation.Side == Board.InterfaceLocation.SideEnum.Left)
+                else if (interfaceLocation.Side.IsLeft())
                 {
                     return (new Pos(Shape.Left, Shape.Top + interfaceLocation.Distance), new Pos(-1, 0));
                 }
-                else if (interfaceLocation.Side == Board.InterfaceLocation.SideEnum.Right)
+                else if (interfaceLocation.Side.IsRight())
                 {
                     return (new Pos(Shape.Right, Shape.Top + interfaceLocation.Distance), new Pos(1, 0));
                 }

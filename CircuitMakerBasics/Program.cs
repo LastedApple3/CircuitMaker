@@ -1034,9 +1034,9 @@ namespace CircuitMaker
             Board 
                 SRNorLatch = BuildSRNorLatch(),
                 DLatch = BuildDLatch(SRNorLatch), 
-                DFlipFlop = BuildDFlipFlop(DLatch), 
-                SingleCounterElement = BuildSingleCounterElement(DFlipFlop),
-                BCDDigitCounter = BuildBCDDigitCounter(DLatch, SingleCounterElement),
+                //DFlipFlop = BuildDFlipFlop(DLatch),
+                //SingleCounterElement = BuildSingleCounterElement(DFlipFlop),
+                //BCDDigitCounter = BuildBCDDigitCounter(DLatch, SingleCounterElement),
 
                 SevenSegDecoder = BuildMUX(4, new int[][][]
                 {
@@ -1051,9 +1051,9 @@ namespace CircuitMaker
 
             SRNorLatch.Save("Boards/SR Latch.brd");
             DLatch.Save("Boards/D Latch.brd");
-            DFlipFlop.Save("Boards/D Flip Flop.brd");
-            SingleCounterElement.Save("Boards/Single Counter Element.brd");
-            BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
+            //DFlipFlop.Save("Boards/D Flip Flop.brd");
+            //SingleCounterElement.Save("Boards/Single Counter Element.brd");
+            //BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
 
             SevenSegDecoder.Save("Boards/7seg decoder.brd");
             //*/

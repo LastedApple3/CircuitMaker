@@ -165,10 +165,9 @@ namespace CircuitMaker.Basics
             promises = unfulfilled;
         }
 
-
         public static void Write<T>(this BinaryWriter bw, T enumVal) where T : Enum
         {
-            bw.Write(enumVal.ToString());
+            bw.Write(Enum.GetName(typeof(T), enumVal));
         }
 
         public static T ReadEnum<T>(this BinaryReader br) where T : Enum
@@ -222,7 +221,10 @@ namespace CircuitMaker.Basics
 
             if (comp is IBoardInterfaceComponent interfaceComp)
             {
+                Board.InterfaceLocation intLoc = interfaceComp.GetInterfaceLocation();
 
+                bw.Write(intLoc.Side);
+                bw.Write(intLoc.Distance);
             }
         }
 
@@ -246,7 +248,7 @@ namespace CircuitMaker.Basics
 
                 if (comp is IBoardInterfaceComponent interfaceComp)
                 {
-
+                    interfaceComp.SetInterfaceLocation(new Board.InterfaceLocation(br.ReadEnum<Board.InterfaceLocation.SideEnum>(), br.ReadInt32()));
                 }
 
                 return comp;
@@ -853,7 +855,7 @@ namespace CircuitMaker.Basics
     public interface IBoardInputComponent : IBoardInterfaceComponent { }
     public interface IBoardOutputComponent : IBoardInterfaceComponent { }
 
-    public interface IGraphicalComponent : IComponent // go to the implementers and remove the graphical element saving
+    public interface IGraphicalComponent : IComponent
     {
         bool HasGraphics();
         void RenderGraphicalElement(Graphics graphics, bool simulating, ColourScheme colourScheme);
@@ -1162,11 +1164,64 @@ namespace CircuitMaker.Basics
     {
         public static bool IsLeftRight(this Board.InterfaceLocation.SideEnum side)
         {
-            return side.HasFlag(Board.InterfaceLocation.SideEnum.LeftRight);
+            //return side.HasFlag(Board.InterfaceLocation.SideEnum.LeftRight);
+            return ((byte)side & 0b010) != 0;
         }
+
         public static bool IsBottomRight(this Board.InterfaceLocation.SideEnum side)
         {
-            return side.HasFlag(Board.InterfaceLocation.SideEnum.BottomRight);
+            //return side.HasFlag(Board.InterfaceLocation.SideEnum.BottomRight);
+            return ((byte)side & 0b001) != 0;
+        }
+
+        public static bool IsTop(this Board.InterfaceLocation.SideEnum side)
+        {
+            return !side.IsLeftRight() && !side.IsBottomRight();
+        }
+
+        public static bool IsBottom(this Board.InterfaceLocation.SideEnum side)
+        {
+            return !side.IsLeftRight() && side.IsBottomRight();
+        }
+
+        public static bool IsLeft(this Board.InterfaceLocation.SideEnum side)
+        {
+            return side.IsLeftRight() && !side.IsBottomRight();
+        }
+
+        public static bool IsRight(this Board.InterfaceLocation.SideEnum side)
+        {
+            return side.IsLeftRight() && side.IsBottomRight();
+        }
+
+        public static Board.InterfaceLocation.SideEnum ToggleLeftRight(this Board.InterfaceLocation.SideEnum side)
+        {
+            return (Board.InterfaceLocation.SideEnum)((byte)side ^ 0b10);
+        }
+
+        public static Board.InterfaceLocation.SideEnum ToggleBottomRight(this Board.InterfaceLocation.SideEnum side)
+        {
+            return (Board.InterfaceLocation.SideEnum)((byte)side ^ 0b01);
+        }
+
+        public static Board.InterfaceLocation.SideEnum ToggleLeftRightIf(this Board.InterfaceLocation.SideEnum side, bool cond)
+        {
+            return cond ? side.ToggleLeftRight() : side;
+        }
+
+        public static Board.InterfaceLocation.SideEnum ToggleBottomRightIf(this Board.InterfaceLocation.SideEnum side, bool cond)
+        {
+            return cond ? side.ToggleBottomRight() : side;
+        }
+
+        public static Board.InterfaceLocation.SideEnum WithLeftRightAs(this Board.InterfaceLocation.SideEnum side, bool cond)
+        {
+            return (Board.InterfaceLocation.SideEnum)((cond ? 0b10 : 0b00) + ((byte)side & 0b01));
+        }
+
+        public static Board.InterfaceLocation.SideEnum WithBottomRightAs(this Board.InterfaceLocation.SideEnum side, bool cond)
+        {
+            return (Board.InterfaceLocation.SideEnum)((cond ? 0b01 : 0b00) + ((byte)side & 0b10));
         }
     }
 
@@ -1174,17 +1229,24 @@ namespace CircuitMaker.Basics
     {
         public struct InterfaceLocation
         {
-            [Flags]
-            public enum SideEnum : byte { 
-                Nothing = 0b000,
-                LeftRight = 0b010, 
-                BottomRight = 0b001,
-                IsSide = 0b100,
+            //[Flags]
+            public enum SideEnum : byte {
+                Top = 0b00,
+                Bottom = 0b01,
+                Left = 0b10,
+                Right = 0b11,
 
-                Top = IsSide,
-                Bottom = IsSide | BottomRight,
-                Left = IsSide | LeftRight,
-                Right = IsSide | LeftRight | BottomRight,
+                //Nothing = Top,
+
+                //Nothing = 0b000,
+                //LeftRight = 0b010,
+                //BottomRight = 0b001,
+                //IsSide = 0b100,
+
+                //Top = IsSide,
+                //Bottom = IsSide | BottomRight,
+                //Left = IsSide | LeftRight,
+                //Right = IsSide | LeftRight | BottomRight,
             }
 
             public SideEnum Side;
@@ -1709,7 +1771,8 @@ namespace CircuitMaker.Basics
                     OutputComponents.Add(outpComp);
                 }
 
-                bool isSide = (interfaceLoc.Side & InterfaceLocation.SideEnum.LeftRight) != InterfaceLocation.SideEnum.Nothing;
+                //bool isSide = (interfaceLoc.Side & InterfaceLocation.SideEnum.LeftRight) != InterfaceLocation.SideEnum.Nothing;
+                bool isSide = interfaceLoc.Side.IsLeftRight();
 
                 while (interfaceLoc.Distance >= (isSide ? ExternalSize.Height : ExternalSize.Width))
                 {

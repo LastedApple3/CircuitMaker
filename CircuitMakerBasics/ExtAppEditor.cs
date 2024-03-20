@@ -369,9 +369,10 @@ namespace CircuitMaker.GUI.ExtApp
                 }
                 else if (onLeftRight ^ onTopBottom)
                 {
-                    Board.InterfaceLocation.SideEnum side = Board.InterfaceLocation.SideEnum.IsSide |
-                        (onLeftRight ? Board.InterfaceLocation.SideEnum.LeftRight : Board.InterfaceLocation.SideEnum.Nothing) |
-                        ((onBottom || onRight) ? Board.InterfaceLocation.SideEnum.BottomRight : Board.InterfaceLocation.SideEnum.Nothing);
+                    Board.InterfaceLocation.SideEnum side =
+                    //    (onLeftRight ? Board.InterfaceLocation.SideEnum.LeftRight : Board.InterfaceLocation.SideEnum.Nothing) |
+                    //    ((onBottom || onRight) ? Board.InterfaceLocation.SideEnum.BottomRight : Board.InterfaceLocation.SideEnum.Nothing);
+                        ((Board.InterfaceLocation.SideEnum)0).WithLeftRightAs(onLeftRight).WithBottomRightAs(onBottom || onRight);
 
                     Point clickedPoint = CompDetransformPoint(e.Location);
                     Point offset = boardContainerComp.GetShape().Location;
@@ -485,10 +486,12 @@ namespace CircuitMaker.GUI.ExtApp
                         {
                             if (sideProg == 0 || sideProg == 2)
                             {
-                                actualSide ^= Board.InterfaceLocation.SideEnum.LeftRight;
+                                //actualSide ^= Board.InterfaceLocation.SideEnum.LeftRight;
+                                actualSide = actualSide.ToggleLeftRight();
                             } else if (sideProg == 1)
                             {
-                                actualSide ^= Board.InterfaceLocation.SideEnum.BottomRight;
+                                //actualSide ^= Board.InterfaceLocation.SideEnum.BottomRight;
+                                actualSide = actualSide.ToggleBottomRight();
                             } else if (sideProg == 3)
                             {
                                 actualSide = closestSide; // logically would never happen, as the empty slot it was originally in should still exist. default so edge cases don't crash
