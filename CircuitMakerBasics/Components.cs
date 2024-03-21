@@ -201,10 +201,12 @@ namespace CircuitMaker.Components
             ).Round();
         }
 
+        /*
         public IComponent Copy()
         {
             return NonStaticConstructor(GetComponentDetails());
         }
+        //*/
 
         public override string ToString()
         {
@@ -2658,6 +2660,18 @@ namespace CircuitMaker.Components
             public BoardContainerComponent(string boardName)
             {
                 InternalBoardName = boardName;
+
+                if (IsPlaced())
+                {
+                    Board[] knownBoards = GetComponentBoard().GetTopLevelBoard().GetBoardList().Where(board => board.Name == boardName).ToArray();
+
+                    if (knownBoards.Length > 0)
+                    {
+                        ProvideInternalBoard(knownBoards[0]);
+                        return;
+                    }
+                }
+
                 ReadWriteImplementation.PromiseBoard(boardName, ProvideInternalBoard);
             }
 
@@ -2884,6 +2898,7 @@ namespace CircuitMaker.Components
                 return Constructor(details);
             }
 
+            /*
             public new IComponent Copy()
             {
                 if (InternalBoard != null)
@@ -2893,6 +2908,7 @@ namespace CircuitMaker.Components
 
                 return new BoardContainerComponent(InternalBoardName);
             }
+            //*/
 
             public override RectangleF GetComponentBounds()
             {
@@ -2987,7 +3003,7 @@ namespace CircuitMaker.Components
 
             public bool HasGraphics()
             {
-                return InternalBoard.GetGraphicalComponents().Any(comp => comp.HasGraphics());
+                return InternalBoard?.GetGraphicalComponents().Any(comp => comp.HasGraphics()) ?? false;
             }
 
             public Point? GetGraphicalElementLocation()

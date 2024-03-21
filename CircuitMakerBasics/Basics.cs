@@ -234,7 +234,9 @@ namespace CircuitMaker.Basics
             if (Constructors.TryGetValue(compType, out Func<string, IComponent> compFunc))
             {
                 IComponent comp = compFunc(br.ReadString());
-                comp.Place(br.ReadPos(), br.ReadEnum<Rotation>(), board);
+                //comp.Place(br.ReadPos(), br.ReadEnum<Rotation>(), board);
+                Pos pos = br.ReadPos();
+                Rotation rot = br.ReadEnum<Rotation>();
 
                 if (comp is IGraphicalComponent graphicalComp)
                 {
@@ -251,6 +253,8 @@ namespace CircuitMaker.Basics
                     interfaceComp.SetInterfaceLocation(new Board.InterfaceLocation(br.ReadEnum<Board.InterfaceLocation.SideEnum>(), br.ReadInt32()));
                 }
 
+                comp.Place(pos, rot, board);
+
                 return comp;
             }
 
@@ -260,6 +264,8 @@ namespace CircuitMaker.Basics
 
         public static void Write(this BinaryWriter bw, Board board)
         {
+            board.SimplifyWires();
+
             WriteBoardBasic(bw, board);
 
             Board[] boards = board.GetBoardList().Where(thisBoard => thisBoard.Name != board.Name).ToArray();
@@ -273,8 +279,6 @@ namespace CircuitMaker.Basics
 
         private static void WriteBoardBasic(BinaryWriter bw, Board board)
         {
-            board.SimplifyWires();
-
             bw.Write(board.Name);
             bw.Write(board.ExternalSize.Width);
             bw.Write(board.ExternalSize.Height);
@@ -819,7 +823,7 @@ namespace CircuitMaker.Basics
         Matrix GetRenderMatrix();
         Board GetComponentBoard();
 
-        IComponent Copy();
+        //IComponent Copy();
 
         string GetComponentID();
         string GetComponentDetails();
@@ -869,7 +873,17 @@ namespace CircuitMaker.Basics
         void SetGraphicalElementScale(float scale);
     }
 
-    public static class GraphicalComponentExtensions
+    public interface IBoardContainerComponent : IGraphicalComponent
+    {
+        Rectangle GetShape();
+        void ResetShape();
+
+        Board GetInternalBoard();
+
+        void PromiseDetails(Action<IBoardContainerComponent> detailProvider);
+    }
+
+    public static class ComponentExtensions
     {
         private static RectangleF Scale(RectangleF rect, float scale)
         {
@@ -907,16 +921,36 @@ namespace CircuitMaker.Basics
         {
             return Offset(Scale(comp.GetGraphicalElementBounds(), comp.GetGraphicalElementScale()), comp.GetGraphicalElementLocation());
         }
-    }
 
-    public interface IBoardContainerComponent : IGraphicalComponent
-    {
-        Rectangle GetShape();
-        void ResetShape();
+        public static IComponent Copy<T>(this T comp) where T : IComponent
+        {
+            /*
+            if (comp is IBoardContainerComponent contComp)
+            {
+                if (contComp.GetInternalBoard() != null)
+                {
+                    return new BoardContainerComponent(InternalBoard);
+                }
 
-        Board GetInternalBoard();
+                return new BoardContainerComponent(InternalBoardName);
+            }
+            //*/
 
-        void PromiseDetails(Action<IBoardContainerComponent> detailProvider);
+            IComponent copy = ReadWriteImplementation.Constructors[comp.GetComponentID()](comp.GetComponentDetails());
+
+            if (comp is IGraphicalComponent graphicalComp && copy is IGraphicalComponent graphicalCopy)
+            {
+                graphicalCopy.SetGraphicalElementScale(graphicalComp.GetGraphicalElementScale());
+                graphicalCopy.SetGraphicalElementLocation(graphicalComp.GetGraphicalElementLocation());
+            }
+
+            if (comp is IBoardInterfaceComponent interfaceComp && copy is IBoardInterfaceComponent interfaceCopy)
+            {
+                interfaceCopy.SetInterfaceLocation(interfaceComp.GetInterfaceLocation());
+            }
+
+            return copy;
+        }
     }
 
     static class StateExtensions
@@ -1314,6 +1348,16 @@ namespace CircuitMaker.Basics
         public void ResetOwnerBoard()
         {
             owner = null;
+        }
+
+        public Board GetTopLevelBoard()
+        {
+            if (owner is null)
+            {
+                return this;
+            }
+
+            return owner.GetTopLevelBoard();
         }
 
         private Size? externalSize;
