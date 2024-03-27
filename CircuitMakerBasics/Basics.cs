@@ -301,7 +301,7 @@ namespace CircuitMaker.Basics
 
         public static Board ReadBoard(this BinaryReader br)
         {
-            Board board = ReadBoardBasic(br);
+            Board topLevelBoard = ReadBoardBasic(br);
 
             int boardCount = br.ReadInt32();
             Board[] boards = new Board[boardCount];
@@ -310,6 +310,58 @@ namespace CircuitMaker.Basics
                 boards[i] = ReadBoardBasic(br);
             }
 
+            topLevelBoard.SupplyInternalBoards(boards);
+
+            List<Board> allBoards = new List<Board>(boards);
+
+            /*
+            List<Board> sortedBoards = new List<Board>() { topLevelBoard };
+
+            while (allBoards.Count > 0)
+            {
+                for (int i = 0; i < allBoards.Count; i++)
+                {
+                    bool thisBoardIsHighest = true;
+
+                    for (int j = 0; i < allBoards.Count; j++)
+                    {
+                        if (i == j) { break; }
+
+                        if (allBoards[j].GetContainerComponents().Select(comp => comp.GetInternalBoardName()).Contains(allBoards[i].Name)) {
+                            thisBoardIsHighest = false;
+                            break;
+                        }
+                    }
+
+                    if (thisBoardIsHighest)
+                    {
+                        sortedBoards.Add(allBoards[i]);
+                        allBoards.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+
+            for (int i = 0; i < allBoards.Count - 1; i++)
+            {
+                for (int j = 1 + 1; j < allBoards.Count; j++)
+                {
+
+                }
+            }
+
+            for (int i = sortedBoards.Count - 2; i >= 0; i--)
+            {
+                sortedBoards[i].SupplyInternalBoards(sortedBoards.GetRange(i, sortedBoards.Count - i).ToArray());
+            }
+            //*/
+
+            //foreach (Board board in boards.Append(topLevelBoard))
+            //{
+            //    board.SupplyInternalBoards(boards);
+            //}
+
+            /*
             FulfillPromises(boards);
 
             if (promises.Count > 0)
@@ -318,10 +370,11 @@ namespace CircuitMaker.Basics
 
                 throw new PlacementException($"Board with name{(promises.Count > 1 ? "s" : "")} {names.Select(s => "'" + s + "'").Aggregate((s1, s2) => s1 + ", " + s2)} not found");
             }
+            //*/
 
             //board.SimplifyWires();
 
-            return board;
+            return topLevelBoard;
         }
 
         private static Board ReadBoardBasic(BinaryReader br)
@@ -350,11 +403,13 @@ namespace CircuitMaker.Basics
 
     class DefaultDictionary<TKey, TValue> : Dictionary<TKey, TValue>
     {
-        private readonly Func<TValue> BlindGenerator;
-        private readonly Func<TKey, TValue> KeyBasedGenerator;
+        protected readonly Func<TValue> BlindGenerator;
+        protected readonly Func<TKey, TValue> KeyBasedGenerator;
+        protected readonly Func<DefaultDictionary<TKey, TValue>, TValue> DictBasedGenerator;
+        protected readonly Func<DefaultDictionary<TKey, TValue>, TKey, TValue> DictAndKeyBasedGenerator;
 
-        private readonly Func<TKey, bool> KeyKeepChecker;
-        private readonly Func<TValue, bool> ValKeepChecker;
+        protected readonly Func<TKey, bool> KeyKeepChecker;
+        protected readonly Func<TValue, bool> ValKeepChecker;
 
         public DefaultDictionary()
         {
@@ -371,6 +426,17 @@ namespace CircuitMaker.Basics
             KeyBasedGenerator = generator;
         }
 
+        public DefaultDictionary(Func<DefaultDictionary<TKey, TValue>, TValue> generator)
+        {
+            DictBasedGenerator = generator;
+        }
+
+        public DefaultDictionary(Func<DefaultDictionary<TKey, TValue>, TKey, TValue> generator)
+        {
+            DictAndKeyBasedGenerator = generator;
+        }
+
+
         public DefaultDictionary(Func<TValue> generator, Func<TValue, bool> valKeepChecker)
         {
             BlindGenerator = generator;
@@ -383,6 +449,19 @@ namespace CircuitMaker.Basics
             ValKeepChecker = valKeepChecker;
         }
 
+        public DefaultDictionary(Func<DefaultDictionary<TKey, TValue>, TValue> generator, Func<TValue, bool> valKeepChecker)
+        {
+            DictBasedGenerator = generator;
+            ValKeepChecker = valKeepChecker;
+        }
+
+        public DefaultDictionary(Func<DefaultDictionary<TKey, TValue>, TKey, TValue> generator, Func<TValue, bool> valKeepChecker)
+        {
+            DictAndKeyBasedGenerator = generator;
+            ValKeepChecker = valKeepChecker;
+        }
+
+
         public DefaultDictionary(Func<TValue> generator, Func<TKey, bool> keyKeepChecker)
         {
             BlindGenerator = generator;
@@ -392,6 +471,18 @@ namespace CircuitMaker.Basics
         public DefaultDictionary(Func<TKey, TValue> generator, Func<TKey, bool> keyKeepChecker)
         {
             KeyBasedGenerator = generator;
+            KeyKeepChecker = keyKeepChecker;
+        }
+
+        public DefaultDictionary(Func<DefaultDictionary<TKey, TValue>, TValue> generator, Func<TKey, bool> keyKeepChecker)
+        {
+            DictBasedGenerator = generator;
+            KeyKeepChecker = keyKeepChecker;
+        }
+
+        public DefaultDictionary(Func<DefaultDictionary<TKey, TValue>, TKey, TValue> generator, Func<TKey, bool> keyKeepChecker)
+        {
+            DictAndKeyBasedGenerator = generator;
             KeyKeepChecker = keyKeepChecker;
         }
 
@@ -433,12 +524,16 @@ namespace CircuitMaker.Basics
                         if (BlindGenerator != null)
                         {
                             Add(key, BlindGenerator());
-                        }
-                        else if (KeyBasedGenerator != null)
+                        } else if (KeyBasedGenerator != null)
                         {
                             Add(key, KeyBasedGenerator(key));
-                        }
-                        else
+                        } else if (DictBasedGenerator != null)
+                        {
+                            Add(key, DictBasedGenerator(this));
+                        } else if (DictAndKeyBasedGenerator != null)
+                        {
+                            Add(key, DictAndKeyBasedGenerator(this, key));
+                        } else
                         {
                             Add(key, default);
                         }
@@ -456,6 +551,93 @@ namespace CircuitMaker.Basics
                 TrimDown();
             }
         }
+    }
+
+    public class InstanceTracker<T> where T : class, InstanceTracker<T>.ITrackable
+    {
+        public interface ITrackable
+        {
+            void SetTrackingID(uint id);
+            uint GetTrackingID();
+        }
+
+        Dictionary<uint, WeakReference<T>> dict = new Dictionary<uint, WeakReference<T>>();
+
+        public InstanceTracker()
+        {
+            
+        }
+
+        private uint GetFirstEmptyID()
+        {
+            TrimDown();
+
+            uint id = 0;
+
+            while (dict.ContainsKey(id))
+            {
+                id++;
+            }
+
+            return id;
+        }
+
+        public void TrimDown()
+        {
+            bool loop;
+            do
+            {
+                loop = false;
+
+                foreach (uint id in dict.Keys)
+                {
+                    if (!dict[id].TryGetTarget(out T obj))
+                    {
+                        dict.Remove(id);
+                        loop = true;
+                        break;
+                    }
+                }
+            } while (loop);
+        }
+
+        private void Add(uint id, T obj)
+        {
+            obj.SetTrackingID(id);
+            dict.Add(id, new WeakReference<T>(obj));
+        }
+
+        public void Add(T obj)
+        {
+            //dict.Add(GetFirstEmptyID(), new WeakReference<T>(obj));
+            Add(GetFirstEmptyID(), obj);
+        }
+
+        public T this[uint id]
+        {
+            get
+            {
+                if (dict[id].TryGetTarget(out T retObj))
+                {
+                    return retObj;
+                }
+
+                return null;
+            }
+            set
+            {
+                TrimDown();
+                if (dict.ContainsKey(id))
+                {
+                    dict[id].SetTarget(value);
+                } else
+                {
+                    //dict.Add(id, new WeakReference<T>(value));
+                    Add(id, value);
+                }
+            }
+        }
+        
     }
 
     public readonly struct Pos// : IEquatable<Pos>
@@ -671,8 +853,7 @@ namespace CircuitMaker.Basics
             if (wire1 is null && wire2 is null)
             {
                 return true;
-            }
-            else if (wire1 is null || wire2 is null)
+            } else if (wire1 is null || wire2 is null)
             {
                 return false;
             }
@@ -691,6 +872,11 @@ namespace CircuitMaker.Basics
             {
                 return false;
             } else if (wire1 is null || wire2 is null)
+            {
+                return true;
+            }
+
+            if (wire1.board != wire2.board)
             {
                 return true;
             }
@@ -878,8 +1064,10 @@ namespace CircuitMaker.Basics
         Rectangle GetShape();
         void ResetShape();
 
+        string GetInternalBoardName();
         Board GetInternalBoard();
 
+        void ProvideInternalBoard(Board board);
         void PromiseDetails(Action<IBoardContainerComponent> detailProvider);
     }
 
@@ -947,6 +1135,16 @@ namespace CircuitMaker.Basics
             if (comp is IBoardInterfaceComponent interfaceComp && copy is IBoardInterfaceComponent interfaceCopy)
             {
                 interfaceCopy.SetInterfaceLocation(interfaceComp.GetInterfaceLocation());
+            }
+
+            if (comp is IBoardContainerComponent contComp && copy is IBoardContainerComponent contCopy)
+            {
+                Board intBoard = contComp.GetInternalBoard();
+                if (!(intBoard is null))
+                {
+                    contCopy.ProvideInternalBoard(intBoard.Copy());
+                }
+                //contCopy.ProvideInternalBoard(contComp.GetInternalBoard().Copy());
             }
 
             return copy;
@@ -1259,8 +1457,22 @@ namespace CircuitMaker.Basics
         }
     }
 
-    public class Board
+    public class Board : InstanceTracker<Board>.ITrackable
     {
+        public static InstanceTracker<Board> AllBoards = new InstanceTracker<Board>();
+
+        private uint trackingID;
+
+        public void SetTrackingID(uint id)
+        {
+            trackingID = id;
+        }
+
+        public uint GetTrackingID()
+        {
+            return trackingID;
+        }
+
         public struct InterfaceLocation
         {
             //[Flags]
@@ -1400,6 +1612,8 @@ namespace CircuitMaker.Basics
             }
 
             Pins = new DefaultDictionary<Pos, Pin>(() => new Pin(), (pos) => ConnectionsToPin[pos] != 0);
+
+            AllBoards.Add(this);
         }
 
         public void AddWire(Wire wire)
@@ -1509,19 +1723,40 @@ namespace CircuitMaker.Basics
             return ContainerComponents.ToArray();
         }
 
+        public void SupplyInternalBoards(Board[] internalBoards)
+        {
+            foreach (IBoardContainerComponent contComp in ContainerComponents)
+            {
+                try
+                {
+                    contComp.ProvideInternalBoard(internalBoards.First(board => board.Name == contComp.GetInternalBoardName()).Copy());
+                } catch (InvalidOperationException) { }
+            }
+
+            foreach (IBoardContainerComponent contComp in ContainerComponents)
+            {
+                contComp.GetInternalBoard()?.SupplyInternalBoards(internalBoards);
+            }
+        }
+
         public Board[] GetBoardList()
         {
             List<Board> checkedBoardList = new List<Board>(), uncheckedBoardList = new List<Board> { this };
 
-            Func<Board, bool> notSeen = board => !checkedBoardList.Select(checkedBoard => checkedBoard.Name).Concat(uncheckedBoardList.Select(uncheckedBoard => uncheckedBoard.Name)).Contains(board.Name);
+            Func<string, bool> notSeen = boardName => !checkedBoardList.Select(checkedBoard => checkedBoard.Name).Concat(uncheckedBoardList.Select(uncheckedBoard => uncheckedBoard.Name)).Contains(boardName);
 
             while (uncheckedBoardList.Count > 0)
             {
                 foreach (IBoardContainerComponent contComp in uncheckedBoardList[0].GetContainerComponents())
                 {
-                    if (notSeen(contComp.GetInternalBoard()))
+                    if (notSeen(contComp.GetInternalBoardName()))
                     {
-                        uncheckedBoardList.Add(contComp.GetInternalBoard());
+                        Board intBoard = contComp.GetInternalBoard();
+                        if (!(intBoard is null))
+                        {
+                            uncheckedBoardList.Add(intBoard);
+                        }
+                        
                     }
                 }
 
@@ -2179,7 +2414,7 @@ namespace CircuitMaker.Basics
 
         public override string ToString()
         {
-            return $"Board: {Name}";
+            return $"{Name} ({trackingID})";
         }
 
         private static string GetFilename(string boardname)
@@ -2209,7 +2444,7 @@ namespace CircuitMaker.Basics
             }
         }
 
-        public Board Copy(string copyName = null)
+        private Board CopySingle(string copyName = null)
         {
             Board copy = new Board(copyName ?? Name, new Size(ExternalSize.Width, ExternalSize.Height));
 
@@ -2217,7 +2452,7 @@ namespace CircuitMaker.Basics
             {
                 comp.Copy().Place(comp.GetComponentPos(), comp.GetComponentRotation(), copy);
             }
-            
+
             //private HashSet<IComponent> Components = new HashSet<IComponent>();
             //private HashSet<IWireComponent> WireComponents = new HashSet<IWireComponent>();
             //private HashSet<IComponent> NonWireComponents = new HashSet<IComponent>();
@@ -2233,6 +2468,49 @@ namespace CircuitMaker.Basics
             }
 
             return copy;
+        }
+
+        public Board Copy(string copyName = null)
+        {
+            Board copy = CopySingle(copyName);
+
+            Board[] copiedBoards = GetBoardList();
+
+            for (int i = 0; i < copiedBoards.Length; i++)
+            {
+                copiedBoards[i] = copiedBoards[i].CopySingle();
+            }
+
+            copy.SupplyInternalBoards(copiedBoards);
+
+            return copy;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Board board)
+            {
+                return this == board;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return GetTrackingID().GetHashCode();
+        }
+
+        public static bool operator ==(Board board1, Board board2)
+        {
+            if (board1 is null) { if (board2 is null) { return true; } else { return false; } } else if (board2 is null) { return false; }
+            return board1.GetTrackingID() == board2.GetTrackingID();
+        }
+
+        public static bool operator !=(Board board1, Board board2)
+        {
+            if (board1 is null) { if (board2 is null) { return false; } else { return true; } } else if (board2 is null) { return true; }
+            return board1.GetTrackingID() != board2.GetTrackingID();
         }
     }
 }

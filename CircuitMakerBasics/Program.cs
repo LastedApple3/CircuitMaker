@@ -744,13 +744,14 @@ namespace CircuitMaker
 
         static Board BuildBCDDigitCounter(Board DLatch, Board SingleCounterElement)
         {
-            int timingBufferCount = 8; // precisely tested to be the lowest number that would not allow a brief output of 10 before resetting to 0
+            // 8 previously precisely tested to be the lowest number that would not allow a brief output of 10 before resetting to 0
+            int timingBufferCount = 7;
 
             Board BCDDigitCounter = new Board("BCD Digit Counter", new System.Drawing.Size(4, 5));
 
-            IBoardInputComponent IncInp = new BoardContainerComponents.BoardInputComponent("INCin", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 1));
-            IBoardInputComponent EInp = new BoardContainerComponents.BoardInputComponent("Ein", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 2));
-            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("Rin", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Bottom, 3));
+            IBoardInputComponent ClkInp = new BoardContainerComponents.BoardInputComponent("CLK", Pin.State.LOW, Pin.State.HIGH, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 1));
+            IBoardInputComponent EInp = new BoardContainerComponents.BoardInputComponent("E", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 2));
+            IBoardInputComponent RInp = new BoardContainerComponents.BoardInputComponent("R", Pin.State.HIGH, Pin.State.LOW, new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Left, 4));
 
             IComponent IncNot = new BufferComponents.NotComponent();
             IComponent EBuffer = new BufferComponents.BufferComponent();
@@ -781,11 +782,11 @@ namespace CircuitMaker
 
             IComponent RAnd = new VarInpComponents.VarInpAndComponent(2);
 
-            IBoardOutputComponent IncOutp = new BoardContainerComponents.BoardOutputComponent("INCout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 1));
-            IBoardOutputComponent EOutp = new BoardContainerComponents.BoardOutputComponent("Eout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
-            IBoardOutputComponent ROutp = new BoardContainerComponents.BoardOutputComponent("Rout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 3));
+            //IBoardOutputComponent IncOutp = new BoardContainerComponents.BoardOutputComponent("INCout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 1));
+            //IBoardOutputComponent EOutp = new BoardContainerComponents.BoardOutputComponent("Eout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 2));
+            //IBoardOutputComponent ROutp = new BoardContainerComponents.BoardOutputComponent("Rout", new Board.InterfaceLocation(Board.InterfaceLocation.SideEnum.Top, 3));
 
-            IncInp.Place(new Pos(0, 0), BCDDigitCounter);
+            ClkInp.Place(new Pos(0, 0), BCDDigitCounter);
             EInp.Place(new Pos(0, 2), BCDDigitCounter);
             RInp.Place(new Pos(5, 8), BCDDigitCounter);
 
@@ -812,9 +813,9 @@ namespace CircuitMaker
 
             RAnd.Place(new Pos(34, -3), BCDDigitCounter);
 
-            IncOutp.Place(new Pos(38, 7), BCDDigitCounter);
-            EOutp.Place(new Pos(2, 5), Rotation.CLOCKWISE, BCDDigitCounter);
-            ROutp.Place(new Pos(9, 8), BCDDigitCounter);
+            //IncOutp.Place(new Pos(38, 7), BCDDigitCounter);
+            //EOutp.Place(new Pos(2, 5), Rotation.CLOCKWISE, BCDDigitCounter);
+            //ROutp.Place(new Pos(9, 8), BCDDigitCounter);
 
             // wires
 
@@ -832,18 +833,6 @@ namespace CircuitMaker
                 };
             };
 
-            /* lengthier version, reference/reuse if simplified doesn't work
-	        WirePointInfo[] bit1Wires = WireGenerator(1);
-
-	        WirePointInfo start = bit1Wires[0];
-	        bit1Wires = bit1Wires.TakeLast(bit1Wires.Length - 1);
-	        bit1Wires = new WirePointInfo[] {
-		        (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.ExactNext),
-		        RAnd.GetAllPinPositions()[0],
-		        (WirePointInfo.WirePointType.SkipBack, 2),
-	        }.Prepend(start).Concat(bit1Wires).ToArray();
-	        //*/
-
             WirePointInfo[] bit1Wires;
 
             PlaceWires(new WirePointInfo[][]
@@ -860,10 +849,11 @@ namespace CircuitMaker
                 new WirePointInfo[]
                 {
                     RAnd.GetAllPinPositions()[2],
-                    IncOutp.GetAllPinPositions()[0],
+                    //IncOutp.GetAllPinPositions()[0],
+                    (WirePointInfo.OrdInfo.ExactPrev, WirePointInfo.OrdInfo.ExactNext),
                     ROr.GetAllPinPositions()[1],
                 },
-                new WirePointInfo[] { EInp.GetAllPinPositions()[0], EOutp.GetAllPinPositions()[0] },
+                //new WirePointInfo[] { EInp.GetAllPinPositions()[0], EOutp.GetAllPinPositions()[0] },
                 new WirePointInfo[] { RInp.GetAllPinPositions()[0], ROr.GetAllPinPositions()[0] },
                 new WirePointInfo[] { ROr.GetAllPinPositions()[2], counterElements[0].GetAllPinPositions()[2] }
             }, BCDDigitCounter);
@@ -1025,13 +1015,10 @@ namespace CircuitMaker
         }
         //*/
 
-        [STAThread]
-        static void Main(string[] args)
+        //*
+        static void BuildPremadeBoards()
         {
-            ComponentRegisterer.RegisterComponents();
-
-            //*
-            Board 
+            Board
                 SRNorLatch = BuildSRNorLatch(),
                 DLatch = BuildDLatch(SRNorLatch),
                 DFlipFlop = BuildDFlipFlop(DLatch),
@@ -1056,7 +1043,17 @@ namespace CircuitMaker
             BCDDigitCounter.Save("Boards/BCD Digit Counter.brd");
 
             SevenSegDecoder.Save("Boards/7seg decoder.brd");
-            //*/
+        }
+        //*/
+
+        [STAThread]
+        static void Main(string[] args)
+        {
+            ComponentRegisterer.RegisterComponents();
+
+            BuildPremadeBoards();
+            GC.Collect();
+            Board.AllBoards.TrimDown();
 
             //*
             Application.EnableVisualStyles();

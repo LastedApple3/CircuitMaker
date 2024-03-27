@@ -2641,7 +2641,7 @@ namespace CircuitMaker.Components
                 };
             }
 
-            private void ProvideInternalBoard(Board board)
+            public void ProvideInternalBoard(Board board)
             {
                 if (InternalBoard == null)
                 {
@@ -2663,16 +2663,14 @@ namespace CircuitMaker.Components
 
                 if (IsPlaced())
                 {
-                    Board[] knownBoards = GetComponentBoard().GetTopLevelBoard().GetBoardList().Where(board => board.Name == boardName).ToArray();
-
-                    if (knownBoards.Length > 0)
+                    try
                     {
-                        ProvideInternalBoard(knownBoards[0]);
+                        ProvideInternalBoard(GetComponentBoard().GetTopLevelBoard().GetBoardList().First(board => board.Name == boardName));
                         return;
-                    }
+                    } catch (InvalidOperationException) { }
                 }
 
-                ReadWriteImplementation.PromiseBoard(boardName, ProvideInternalBoard);
+                //ReadWriteImplementation.PromiseBoard(boardName, ProvideInternalBoard);
             }
 
             public BoardContainerComponent(Board internalBoard, bool copy = true)
@@ -2765,7 +2763,7 @@ namespace CircuitMaker.Components
 
             public override string GetComponentDetails()
             {
-                return InternalBoard.Name;
+                return GetInternalBoardName();
             }
 
             /*
@@ -2848,14 +2846,17 @@ namespace CircuitMaker.Components
             {
                 base.Remove();
 
-                foreach (IBoardInputComponent inpComp in InternalBoard.GetInputComponents())
+                if (isInitialized)
                 {
-                    inpComp.RemoveExternalPin();
-                }
+                    foreach (IBoardInputComponent inpComp in InternalBoard.GetInputComponents())
+                    {
+                        inpComp.RemoveExternalPin();
+                    }
 
-                foreach (IBoardOutputComponent outpComp in InternalBoard.GetOutputComponents())
-                {
-                    outpComp.RemoveExternalPin();
+                    foreach (IBoardOutputComponent outpComp in InternalBoard.GetOutputComponents())
+                    {
+                        outpComp.RemoveExternalPin();
+                    }
                 }
 
                 InternalBoard.ResetOwnerBoard();
@@ -2994,6 +2995,11 @@ namespace CircuitMaker.Components
             public Rectangle GetShape()
             {
                 return Shape;
+            }
+
+            public string GetInternalBoardName()
+            {
+                return InternalBoard?.Name ?? InternalBoardName;
             }
 
             public Board GetInternalBoard()
