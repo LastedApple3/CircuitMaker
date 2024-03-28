@@ -1,0 +1,60 @@
+there is a Board, which contains Components.
+there is a Component which wants a Board
+
+we have a top level board, and a list of other boards.
+we want to give each component in the top level board a copy of the board it wants
+
+
+
+
+Sorting:
+
+board can contain other boards
+sort it so that boards are only contained by boards prior in the sequence
+
+1: [2, 3]
+2: [3]
+3: [4]
+4: []
+
+would sort [1, 2, 3, 4]
+
+
+1: [2, 4]
+2: [3, 5]
+3: [4]
+4: []
+5: []
+
+would sort [1, 2, 3, 4, 5] or [1, 2, 3, 5, 4]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+starting list of boards

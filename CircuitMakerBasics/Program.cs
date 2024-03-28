@@ -745,7 +745,8 @@ namespace CircuitMaker
         static Board BuildBCDDigitCounter(Board DLatch, Board SingleCounterElement)
         {
             // 8 previously precisely tested to be the lowest number that would not allow a brief output of 10 before resetting to 0
-            int timingBufferCount = 7;
+            // later testing after changes found 9 to work instead
+            int timingBufferCount = 9;
 
             Board BCDDigitCounter = new Board("BCD Digit Counter", new System.Drawing.Size(4, 5));
 

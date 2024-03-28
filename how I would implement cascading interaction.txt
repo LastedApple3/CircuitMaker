@@ -5,11 +5,3 @@ IInteractibleComponent.Interact takes a PointF representing the relative locatio
 
 existing IInteractibleComponents are updated to match this
 BOARD component is updated to be IInteractibleComponent instead of IGraphicalComponent
-
-
-
-SRL: 4
-DL: 6 + 1SRL = 6 + 4 = 10
-DFF = 6 + 2DL = 6 + 20 = 26
-SCE = 7 + 1DFF = 7 + 26 = 33
-BCDC = 7 + 4SCE + 4DL = 7 + 132 + 40 = 179

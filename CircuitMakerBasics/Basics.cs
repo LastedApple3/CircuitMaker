@@ -1725,6 +1725,7 @@ namespace CircuitMaker.Basics
 
         public void SupplyInternalBoards(Board[] internalBoards)
         {
+            /*
             foreach (IBoardContainerComponent contComp in ContainerComponents)
             {
                 try
@@ -1737,6 +1738,45 @@ namespace CircuitMaker.Basics
             {
                 contComp.GetInternalBoard()?.SupplyInternalBoards(internalBoards);
             }
+            //*/
+
+            //*
+            Func<Board, string[]> getContainedBoardNames = board => board.ContainerComponents.Select(contComp => contComp.GetInternalBoardName()).ToArray();
+            List<string> foundBoardNames = getContainedBoardNames(this).ToList();
+            Dictionary<string, string[]> internalBoardContainedBoardNames = internalBoards.ToDictionary(board => board.Name, getContainedBoardNames);
+
+            List<string> sortedBoardNames = new List<string>();
+
+            bool thisBoardIsContained;
+
+            for (int i = 0; i < foundBoardNames.Count(); i++) // foundBoardNames[i] is the one we are currently checking
+            {
+                thisBoardIsContained = false;
+
+                for (int j = 0; j < foundBoardNames.Count(); j++) // foundBoardNames[j] is the one we are checking if foundBoardNames[i] is contained int
+                {
+                    if (i == j)
+                    {
+                        continue; // don't check against itself
+                    }
+
+                    if (internalBoardContainedBoardNames[foundBoardNames[j]].Contains(foundBoardNames[i]))
+                    {
+                        thisBoardIsContained = true;
+                        break; // and we don't need to check any more js for this i
+                    }
+                }
+
+                if (!thisBoardIsContained)
+                {
+                    sortedBoardNames.Add(foundBoardNames[i]); // this is the next element in the sorted list
+                    foundBoardNames.RemoveAt(i); // we no longer need to check it 
+                    foundBoardNames.AddRange(internalBoardContainedBoardNames[foundBoardNames[i]]); // we now need to check the boards contained
+                    foundBoardNames = foundBoardNames.Where((name, idx) => !foundBoardNames.GetRange(0, idx).Contains(name) && !sortedBoardNames.Contains(name)).ToList();
+                    // but only if we haven't already checked or decided to check them
+                }
+            }
+            //*/
         }
 
         public Board[] GetBoardList()
@@ -2452,15 +2492,6 @@ namespace CircuitMaker.Basics
             {
                 comp.Copy().Place(comp.GetComponentPos(), comp.GetComponentRotation(), copy);
             }
-
-            //private HashSet<IComponent> Components = new HashSet<IComponent>();
-            //private HashSet<IWireComponent> WireComponents = new HashSet<IWireComponent>();
-            //private HashSet<IComponent> NonWireComponents = new HashSet<IComponent>();
-            //private HashSet<IBoardInterfaceComponent> InterfaceComponents = new HashSet<IBoardInterfaceComponent>();
-            //private HashSet<IBoardInputComponent> InputComponents = new HashSet<IBoardInputComponent>();
-            //private HashSet<IBoardOutputComponent> OutputComponents = new HashSet<IBoardOutputComponent>();
-            //private List<IGraphicalComponent> GraphicalComponents = new List<IGraphicalComponent>();
-            //private HashSet<IBoardContainerComponent> ContainerComponents = new HashSet<IBoardContainerComponent>();
 
             foreach (Wire wire in Wires)
             {
