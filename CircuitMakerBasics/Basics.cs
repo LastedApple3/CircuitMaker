@@ -113,6 +113,7 @@ namespace CircuitMaker.Basics
 
     public static class ReadWriteImplementation
     {
+        /*
         public static void PromiseBoard(string boardName, Action<Board> provider)
         {
             promises.Add(new BoardPromise(boardName, provider));
@@ -164,6 +165,7 @@ namespace CircuitMaker.Basics
 
             promises = unfulfilled;
         }
+        //*/
 
         public static void Write<T>(this BinaryWriter bw, T enumVal) where T : Enum
         {
@@ -312,7 +314,7 @@ namespace CircuitMaker.Basics
 
             topLevelBoard.SupplyInternalBoards(boards);
 
-            List<Board> allBoards = new List<Board>(boards);
+            //List<Board> allBoards = new List<Board>(boards);
 
             /*
             List<Board> sortedBoards = new List<Board>() { topLevelBoard };
@@ -1725,58 +1727,33 @@ namespace CircuitMaker.Basics
 
         public void SupplyInternalBoards(Board[] internalBoards)
         {
-            /*
-            foreach (IBoardContainerComponent contComp in ContainerComponents)
+            Dictionary<string, Board> internalBoardsFromName = internalBoards.ToDictionary(board => board.Name);
+
+            Queue<Board> unsuppliedBoards = new Queue<Board>(); // Code Reference: Queue usage
+            unsuppliedBoards.Enqueue(this);
+
+            string boardName;
+            Board supplyingBoard, providedBoard;
+
+            while (unsuppliedBoards.Count > 0)
             {
-                try
+                supplyingBoard = unsuppliedBoards.Dequeue();
+
+                foreach (IBoardContainerComponent contComp in supplyingBoard.ContainerComponents) // for every ContainerComponent, there is a new board needed
                 {
-                    contComp.ProvideInternalBoard(internalBoards.First(board => board.Name == contComp.GetInternalBoardName()).Copy());
-                } catch (InvalidOperationException) { }
-            }
+                    boardName = contComp.GetInternalBoardName(); // so we find out what type it is
 
-            foreach (IBoardContainerComponent contComp in ContainerComponents)
-            {
-                contComp.GetInternalBoard()?.SupplyInternalBoards(internalBoards);
-            }
-            //*/
-
-            //*
-            Func<Board, string[]> getContainedBoardNames = board => board.ContainerComponents.Select(contComp => contComp.GetInternalBoardName()).ToArray();
-            List<string> foundBoardNames = getContainedBoardNames(this).ToList();
-            Dictionary<string, string[]> internalBoardContainedBoardNames = internalBoards.ToDictionary(board => board.Name, getContainedBoardNames);
-
-            List<string> sortedBoardNames = new List<string>();
-
-            bool thisBoardIsContained;
-
-            for (int i = 0; i < foundBoardNames.Count(); i++) // foundBoardNames[i] is the one we are currently checking
-            {
-                thisBoardIsContained = false;
-
-                for (int j = 0; j < foundBoardNames.Count(); j++) // foundBoardNames[j] is the one we are checking if foundBoardNames[i] is contained int
-                {
-                    if (i == j)
+                    if (internalBoardsFromName.ContainsKey(boardName)) // and if we have that type
                     {
-                        continue; // don't check against itself
-                    }
-
-                    if (internalBoardContainedBoardNames[foundBoardNames[j]].Contains(foundBoardNames[i]))
+                        providedBoard = internalBoardsFromName[boardName].Copy(supplyBoards: false); // we create one
+                        unsuppliedBoards.Enqueue(providedBoard); // add it to the queue
+                        contComp.ProvideInternalBoard(providedBoard); // and also give a reference to the ContainerComponent that wants it
+                    } else // and if we don't have that type
                     {
-                        thisBoardIsContained = true;
-                        break; // and we don't need to check any more js for this i
+                        throw new InvalidDataException($"{supplyingBoard.Name} board contains {boardName} board, which has not been supplied"); // throw an exception
                     }
                 }
-
-                if (!thisBoardIsContained)
-                {
-                    sortedBoardNames.Add(foundBoardNames[i]); // this is the next element in the sorted list
-                    foundBoardNames.RemoveAt(i); // we no longer need to check it 
-                    foundBoardNames.AddRange(internalBoardContainedBoardNames[foundBoardNames[i]]); // we now need to check the boards contained
-                    foundBoardNames = foundBoardNames.Where((name, idx) => !foundBoardNames.GetRange(0, idx).Contains(name) && !sortedBoardNames.Contains(name)).ToList();
-                    // but only if we haven't already checked or decided to check them
-                }
             }
-            //*/
         }
 
         public Board[] GetBoardList()
@@ -2501,18 +2478,21 @@ namespace CircuitMaker.Basics
             return copy;
         }
 
-        public Board Copy(string copyName = null)
+        public Board Copy(string copyName = null, bool supplyBoards = true)
         {
             Board copy = CopySingle(copyName);
 
-            Board[] copiedBoards = GetBoardList();
-
-            for (int i = 0; i < copiedBoards.Length; i++)
+            if (supplyBoards)
             {
-                copiedBoards[i] = copiedBoards[i].CopySingle();
-            }
+                Board[] copiedBoards = GetBoardList();
 
-            copy.SupplyInternalBoards(copiedBoards);
+                for (int i = 0; i < copiedBoards.Length; i++)
+                {
+                    copiedBoards[i] = copiedBoards[i].CopySingle();
+                }
+
+                copy.SupplyInternalBoards(copiedBoards);
+            }
 
             return copy;
         }

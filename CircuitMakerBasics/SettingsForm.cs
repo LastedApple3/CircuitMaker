@@ -29,9 +29,10 @@ namespace CircuitMaker.GUI.Settings
 
             AnchorStyles anchorStyle = AnchorStyles.Bottom | AnchorStyles.Left;
 
-            for (int i = 0; i < settingDescs.Length; i++)
+            // Code Reference: Dynamic Control generation
+            for (int i = 0; i < settingDescs.Length; i++) // for every ISettingDescription given in the invocation
             {
-                tbls[i] = new TableLayoutPanel();
+                tbls[i] = new TableLayoutPanel(); // create the containing table
                 tbls[i].Name = $"tblSetting{i}";
                 tbls[i].AutoSize = true;
                 tbls[i].AutoSizeMode = AutoSizeMode.GrowAndShrink;
@@ -41,13 +42,13 @@ namespace CircuitMaker.GUI.Settings
                 tbls[i].RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
                 tbls[i].RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
 
-                labels[i] = new Label();
+                labels[i] = new Label(); // create the label that will display the prompt for this setting
                 labels[i].Name = $"lblSetting{i}";
                 labels[i].Text = settingDescs[i].GetPrompt();
                 labels[i].AutoSize = true;
                 labels[i].Anchor = anchorStyle;
 
-                inputControls[i] = settingDescs[i].GetInputControl();
+                inputControls[i] = settingDescs[i].GetInputControl(); // get the ISettingDescription to give a reference to its input control
                 inputControls[i].Name = $"inpSetting{i}";
 
                 tbls[i].Controls.Add(labels[i], 0, 0);

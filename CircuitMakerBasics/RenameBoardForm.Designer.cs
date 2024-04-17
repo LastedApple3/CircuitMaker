@@ -1,4 +1,4 @@
-﻿namespace CircuitMaker
+﻿namespace CircuitMaker.GUI
 {
     partial class RenameBoardForm
     {

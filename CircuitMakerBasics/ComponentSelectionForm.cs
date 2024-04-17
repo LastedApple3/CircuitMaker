@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CircuitMaker.Basics;
 
-namespace CircuitMaker
+namespace CircuitMaker.GUI
 {
     public partial class ComponentSelectionForm : Form
     {

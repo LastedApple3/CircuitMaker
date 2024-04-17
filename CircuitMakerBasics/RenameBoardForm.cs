@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CircuitMaker
+namespace CircuitMaker.GUI
 {
     public partial class RenameBoardForm : Form
     {

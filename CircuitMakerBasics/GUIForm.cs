@@ -561,7 +561,7 @@ namespace CircuitMaker.GUI
                         }
                     }
 
-                    StartDraggingComponent(new BoardContainerComponents.BoardContainerComponent(intBoard), new Point(), true, true);
+                    StartDraggingComponent(new BoardContainerComponents.BoardContainerComponent(intBoard, false), new Point(), true, true);
 
                     dragType = DragType.MoveComponent;
                 }

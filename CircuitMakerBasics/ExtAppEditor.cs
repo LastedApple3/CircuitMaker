@@ -253,6 +253,7 @@ namespace CircuitMaker.GUI.ExtApp
             graphics.MultiplyTransform(compTransformationMatrix);
 
             boardContainerComp.Render(graphics, false, colourScheme);
+            boardContainerComp.RenderGraphicalElement(graphics, false, colourScheme);
 
             graphics.ResetTransform();
 
