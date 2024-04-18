@@ -1406,54 +1406,6 @@ namespace CircuitMaker.Components
         }
     }
 
-    /*
-    class UserToggleInpComponent : FixedStateComponent, IInteractibleComponent
-    {
-
-        public override string GetComponentDetails()
-        {
-            return $"{(int)StartState},{(int)OtherState}";
-        }
-
-        public static new IComponent Constructor(string details)
-        {
-            int startState, otherState;
-
-            string[] states = details.Split(',');
-
-            if (int.TryParse(states[0], out startState) && int.TryParse(states[1], out otherState))
-            {
-                return new UserToggleInpComponent((Pin.State)startState, (Pin.State)otherState);
-            }
-
-            throw new PlacementException("Did not successfully parse int.");
-        }
-
-        public override IComponent NonStaticConstructor(string details)
-        {
-            return Constructor(details);
-        }
-
-        EnumSettingDescription<Pin.State> otherStateSettingDesc;
-
-        public override ISettingDescription[] GetSettingDescriptions()
-        {
-            otherStateSettingDesc = new EnumSettingDescription<Pin.State>($"What is the other {getOutputDescriptor()} state for this component?", OtherState);
-            return base.GetSettingDescriptions().Append(otherStateSettingDesc).ToArray();
-        }
-
-        public override void ApplySettings()
-        {
-            StartState = stateSettingDesc.GetValue();
-            OtherState = otherStateSettingDesc.GetValue();
-        }
-
-        public new void ResetToDefault()
-        {
-            OutputState = StartState;
-        }
-    }
-    //*/
     class UserToggleInpComponent : InpOutpBaseComponents.NoneInpSingOutpBaseComponent, ISettingsComponent, IInteractibleComponent
     {
         protected Pin.State OutputState, StartState, OtherState;
@@ -1685,27 +1637,6 @@ namespace CircuitMaker.Components
             return new Pos(-2, 0);
         }
 
-        /*
-        static LogicProbeComponent()
-        {
-            using (Stream stream = new MemoryStream())
-            {
-                using (BinaryWriter bw = new BinaryWriter(stream))
-                {
-                    bw.Write(1F);
-                    bw.Write(false);
-
-                    stream.Position = 0;
-
-                    using (BinaryReader br = new BinaryReader(stream))
-                    {
-                        DefaultDetails = ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
-                    }
-                }
-            }
-        }
-        //*/
-
         public LogicProbeComponent()
         {
             DisplayFormat = new StringFormat
@@ -1866,27 +1797,6 @@ namespace CircuitMaker.Components
         {
             return new Rectangle(-4, -4, 7, 8);
         }
-
-        /*
-        static SevenSegmentComponent()
-        {
-            using (Stream stream = new MemoryStream())
-            {
-                using (BinaryWriter bw = new BinaryWriter(stream))
-                {
-                    bw.Write(1F);
-                    bw.Write(false);
-
-                    stream.Position = 0;
-
-                    using (BinaryReader br = new BinaryReader(stream))
-                    {
-                        DefaultDetails = ByteEncoding.Byte.GetString(br.ReadBytes((int)stream.Length));
-                    }
-                }
-            }
-        }
-        //*/
 
         public static string ID = "7SEG";
         public static string DefaultDetails = "";
