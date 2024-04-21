@@ -67,11 +67,6 @@ namespace CircuitMaker.Components
             ReadWriteImplementation.DefaultDetails.Add(BoardContainerComponents.BoardBidirComponent.ID, BoardContainerComponents.BoardBidirComponent.DefaultDetails);
 
         }
-
-        /* More Components:
-         * Multiplexer?
-         * Specialised 7seg MUX?
-         */
     }
 
     abstract class BaseComponent : IComponent
