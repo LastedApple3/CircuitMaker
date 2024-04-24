@@ -838,16 +838,16 @@ public struct ColourScheme
 {
     public Color Background, ComponentBackground, ComponentEdge, Wire, WireFloating, WireLow, WirePulledLow, WireHigh, WirePulledHigh, WireIllegal, Grid, Selection;
 
-    public Color GetWireColour(Pin.State state)
+    public Color GetWireColour(State state)
     {
         switch (state)
         {
-            case Pin.State.FLOATING:    return WireFloating;
-            case Pin.State.LOW:         return WireLow;
-            case Pin.State.PULLEDLOW:   return WirePulledLow;
-            case Pin.State.HIGH:        return WireHigh;
-            case Pin.State.PULLEDHIGH:  return WirePulledHigh;
-            case Pin.State.ILLEGAL:     return WireIllegal;
+            case State.FLOATING:    return WireFloating;
+            case State.LOW:         return WireLow;
+            case State.PULLEDLOW:   return WirePulledLow;
+            case State.HIGH:        return WireHigh;
+            case State.PULLEDHIGH:  return WirePulledHigh;
+            case State.ILLEGAL:     return WireIllegal;
             default:                    return Wire;
         }
     }
@@ -1001,13 +1001,13 @@ public static class ComponentExtensions
     }
 }
 
-public class Pin
-{
-    public enum State
+public enum State
     {
         FLOATING, LOW, PULLEDLOW, HIGH, PULLEDHIGH, ILLEGAL
     }
 
+public class Pin
+{
     private State CurrentState, OriginalState;
 
     public State GetStateForComponent()
@@ -1044,15 +1044,15 @@ public class Pin
     public void SetupForTick()
     {
         OriginalState = CurrentState;
-        CurrentState = Pin.State.FLOATING;
+        CurrentState = State.FLOATING;
     }
     }
 
 static class StateExtensions
 {
-    private class BinOpTable : Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+    private class BinOpTable : Dictionary<(State state1, State state2), State>
     {
-        private static (Pin.State state1, Pin.State state2) simplifyStates((Pin.State state1, Pin.State state2) states)
+        private static (State state1, State state2) simplifyStates((State state1, State state2) states)
         {
             if (states.state1 > states.state2)
             {
@@ -1062,129 +1062,129 @@ static class StateExtensions
             return states;
         }
 
-        public new Pin.State this[(Pin.State state1, Pin.State state2) states]
+        public new State this[(State state1, State state2) states]
         {
             get => base[simplifyStates(states)];
             set => base[simplifyStates(states)] = value;
         }
 
-        public Pin.State this[Pin.State state1, Pin.State state2]
+        public State this[State state1, State state2]
         {
             get => base[simplifyStates((state1, state2))];
             set => base[simplifyStates((state1, state2))] = value;
         }
 
-        public BinOpTable(IEnumerable<KeyValuePair<(Pin.State state1, Pin.State state2), Pin.State>> kvps) : base(kvps.ToDictionary(kvp => simplifyStates(kvp.Key), kvp => kvp.Value)) { }
+        public BinOpTable(IEnumerable<KeyValuePair<(State state1, State state2), State>> kvps) : base(kvps.ToDictionary(kvp => simplifyStates(kvp.Key), kvp => kvp.Value)) { }
 
-        public BinOpTable(IDictionary<(Pin.State state1, Pin.State state2), Pin.State> dict) : base(dict.ToDictionary(kvp => simplifyStates(kvp.Key), kvp => kvp.Value)) { }
+        public BinOpTable(IDictionary<(State state1, State state2), State> dict) : base(dict.ToDictionary(kvp => simplifyStates(kvp.Key), kvp => kvp.Value)) { }
 
         public BinOpTable() : base() { }
 
-        public new void Add((Pin.State state1, Pin.State state2) key, Pin.State val)
+        public new void Add((State state1, State state2) key, State val)
         {
             base.Add(simplifyStates(key), val);
         }
     }
 
-    private static Dictionary<Pin.State, Pin.State> NotOpTable = new Dictionary<Pin.State, Pin.State>
+    private static Dictionary<State, State> NotOpTable = new Dictionary<State, State>
     {
-        { Pin.State.FLOATING, Pin.State.FLOATING },
-        { Pin.State.LOW, Pin.State.HIGH },
-        { Pin.State.HIGH, Pin.State.LOW },
-        { Pin.State.ILLEGAL, Pin.State.ILLEGAL }
+        { State.FLOATING, State.FLOATING },
+        { State.LOW, State.HIGH },
+        { State.HIGH, State.LOW },
+        { State.ILLEGAL, State.ILLEGAL }
     };
 
-    private static Dictionary<Pin.State, Pin.State> PullTable = new Dictionary<Pin.State, Pin.State>
+    private static Dictionary<State, State> PullTable = new Dictionary<State, State>
     {
-        { Pin.State.FLOATING, Pin.State.FLOATING },
-        { Pin.State.LOW, Pin.State.LOW },
-        { Pin.State.PULLEDLOW, Pin.State.LOW },
-        { Pin.State.HIGH, Pin.State.HIGH },
-        { Pin.State.PULLEDHIGH, Pin.State.HIGH },
-        { Pin.State.ILLEGAL, Pin.State.ILLEGAL }
+        { State.FLOATING, State.FLOATING },
+        { State.LOW, State.LOW },
+        { State.PULLEDLOW, State.LOW },
+        { State.HIGH, State.HIGH },
+        { State.PULLEDHIGH, State.HIGH },
+        { State.ILLEGAL, State.ILLEGAL }
     };
 
-    private static Dictionary<(Pin.State state1, Pin.State state2), Pin.State> GenericOpTable = new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+    private static Dictionary<(State state1, State state2), State> GenericOpTable = new Dictionary<(State state1, State state2), State>
     {
-        { (Pin.State.FLOATING, Pin.State.FLOATING), Pin.State.FLOATING },
-        { (Pin.State.FLOATING, Pin.State.LOW), Pin.State.LOW },
-        { (Pin.State.FLOATING, Pin.State.HIGH), Pin.State.HIGH },
-        { (Pin.State.FLOATING, Pin.State.ILLEGAL), Pin.State.ILLEGAL },
-        { (Pin.State.ILLEGAL, Pin.State.LOW), Pin.State.ILLEGAL },
-        { (Pin.State.ILLEGAL, Pin.State.HIGH), Pin.State.ILLEGAL },
-        { (Pin.State.ILLEGAL, Pin.State.ILLEGAL), Pin.State.ILLEGAL }
+        { (State.FLOATING, State.FLOATING), State.FLOATING },
+        { (State.FLOATING, State.LOW), State.LOW },
+        { (State.FLOATING, State.HIGH), State.HIGH },
+        { (State.FLOATING, State.ILLEGAL), State.ILLEGAL },
+        { (State.ILLEGAL, State.LOW), State.ILLEGAL },
+        { (State.ILLEGAL, State.HIGH), State.ILLEGAL },
+        { (State.ILLEGAL, State.ILLEGAL), State.ILLEGAL }
     };
 
-    private static BinOpTable AndOpTable = new BinOpTable(new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+    private static BinOpTable AndOpTable = new BinOpTable(new Dictionary<(State state1, State state2), State>
     {
-        { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
-        { (Pin.State.LOW, Pin.State.HIGH), Pin.State.LOW },
-        { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
+        { (State.LOW, State.LOW), State.LOW },
+        { (State.LOW, State.HIGH), State.LOW },
+        { (State.HIGH, State.HIGH), State.HIGH }
     }.Concat(GenericOpTable));
-    private static BinOpTable OrOpTable = new BinOpTable(new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+    private static BinOpTable OrOpTable = new BinOpTable(new Dictionary<(State state1, State state2), State>
     {
-        { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
-        { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
-        { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.HIGH }
+        { (State.LOW, State.LOW), State.LOW },
+        { (State.LOW, State.HIGH), State.HIGH },
+        { (State.HIGH, State.HIGH), State.HIGH }
     }.Concat(GenericOpTable));
-    private static BinOpTable XorOpTable = new BinOpTable(new Dictionary<(Pin.State state1, Pin.State state2), Pin.State>
+    private static BinOpTable XorOpTable = new BinOpTable(new Dictionary<(State state1, State state2), State>
     {
-        { (Pin.State.LOW, Pin.State.LOW), Pin.State.LOW },
-        { (Pin.State.LOW, Pin.State.HIGH), Pin.State.HIGH },
-        { (Pin.State.HIGH, Pin.State.HIGH), Pin.State.LOW }
+        { (State.LOW, State.LOW), State.LOW },
+        { (State.LOW, State.HIGH), State.HIGH },
+        { (State.HIGH, State.HIGH), State.LOW }
     }.Concat(GenericOpTable));
 
     private static BinOpTable WireJoinTable = new BinOpTable
     {
-        { (Pin.State.FLOATING,      Pin.State.FLOATING),    Pin.State.FLOATING },
-        { (Pin.State.FLOATING,      Pin.State.LOW),         Pin.State.LOW },
-        { (Pin.State.FLOATING,      Pin.State.PULLEDLOW),   Pin.State.PULLEDLOW },
-        { (Pin.State.FLOATING,      Pin.State.HIGH),        Pin.State.HIGH },
-        { (Pin.State.FLOATING,      Pin.State.PULLEDHIGH),  Pin.State.PULLEDHIGH },
-        { (Pin.State.FLOATING,      Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
-        { (Pin.State.LOW,           Pin.State.LOW),         Pin.State.LOW },
-        { (Pin.State.LOW,           Pin.State.PULLEDLOW),   Pin.State.LOW },
-        { (Pin.State.LOW,           Pin.State.HIGH),        Pin.State.ILLEGAL },
-        { (Pin.State.LOW,           Pin.State.PULLEDHIGH),  Pin.State.LOW },
-        { (Pin.State.LOW,           Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
-        { (Pin.State.PULLEDLOW,     Pin.State.PULLEDLOW),   Pin.State.PULLEDLOW },
-        { (Pin.State.PULLEDLOW,     Pin.State.HIGH),        Pin.State.HIGH },
-        { (Pin.State.PULLEDLOW,     Pin.State.PULLEDHIGH),  Pin.State.ILLEGAL },
-        { (Pin.State.PULLEDLOW,     Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
-        { (Pin.State.HIGH,          Pin.State.HIGH),        Pin.State.HIGH },
-        { (Pin.State.HIGH,          Pin.State.PULLEDHIGH),  Pin.State.HIGH },
-        { (Pin.State.HIGH,          Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
-        { (Pin.State.PULLEDHIGH,    Pin.State.PULLEDHIGH),  Pin.State.PULLEDHIGH },
-        { (Pin.State.PULLEDHIGH,    Pin.State.ILLEGAL),     Pin.State.ILLEGAL },
-        { (Pin.State.ILLEGAL,       Pin.State.ILLEGAL),     Pin.State.ILLEGAL }
+        { (State.FLOATING,      State.FLOATING),    State.FLOATING },
+        { (State.FLOATING,      State.LOW),         State.LOW },
+        { (State.FLOATING,      State.PULLEDLOW),   State.PULLEDLOW },
+        { (State.FLOATING,      State.HIGH),        State.HIGH },
+        { (State.FLOATING,      State.PULLEDHIGH),  State.PULLEDHIGH },
+        { (State.FLOATING,      State.ILLEGAL),     State.ILLEGAL },
+        { (State.LOW,           State.LOW),         State.LOW },
+        { (State.LOW,           State.PULLEDLOW),   State.LOW },
+        { (State.LOW,           State.HIGH),        State.ILLEGAL },
+        { (State.LOW,           State.PULLEDHIGH),  State.LOW },
+        { (State.LOW,           State.ILLEGAL),     State.ILLEGAL },
+        { (State.PULLEDLOW,     State.PULLEDLOW),   State.PULLEDLOW },
+        { (State.PULLEDLOW,     State.HIGH),        State.HIGH },
+        { (State.PULLEDLOW,     State.PULLEDHIGH),  State.ILLEGAL },
+        { (State.PULLEDLOW,     State.ILLEGAL),     State.ILLEGAL },
+        { (State.HIGH,          State.HIGH),        State.HIGH },
+        { (State.HIGH,          State.PULLEDHIGH),  State.HIGH },
+        { (State.HIGH,          State.ILLEGAL),     State.ILLEGAL },
+        { (State.PULLEDHIGH,    State.PULLEDHIGH),  State.PULLEDHIGH },
+        { (State.PULLEDHIGH,    State.ILLEGAL),     State.ILLEGAL },
+        { (State.ILLEGAL,       State.ILLEGAL),     State.ILLEGAL }
     };
 
-    public static Pin.State WireJoin(this Pin.State state1, Pin.State state2)
+    public static State WireJoin(this State state1, State state2)
     {
         return WireJoinTable[state1, state2];
     }
 
-    public static Pin.State Not(this Pin.State state)
+    public static State Not(this State state)
     {
         return NotOpTable[state];
     }
 
-    public static Pin.State And(this Pin.State state1, Pin.State state2)
+    public static State And(this State state1, State state2)
     {
         return AndOpTable[state1, state2];
     }
 
-    public static Pin.State Or(this Pin.State state1, Pin.State state2)
+    public static State Or(this State state1, State state2)
     {
         return OrOpTable[state1, state2];
     }
 
-    public static Pin.State Xor(this Pin.State state1, Pin.State state2)
+    public static State Xor(this State state1, State state2)
     {
         return XorOpTable[state1, state2];
     }
 
-    public static Pin.State Pulled(this Pin.State state)
+    public static State Pulled(this State state)
     {
         return PullTable[state];
     }
@@ -1591,7 +1591,7 @@ public class Board : InstanceTracker<Board>.ITrackable
     private bool SubTickWire(Wire wire)
     {
         Pin pin1 = wire.Pin1, pin2 = wire.Pin2;
-        Pin.State state1 = pin1.GetStateForWire(), state2 = pin2.GetStateForWire();
+        State state1 = pin1.GetStateForWire(), state2 = pin2.GetStateForWire();
 
         if (state1 != state2)
         {
@@ -2036,7 +2036,7 @@ public class Board : InstanceTracker<Board>.ITrackable
         }
     }
 
-    public Dictionary<Pos, Pin.State> GetStateToCheckForChanges()
+    public Dictionary<Pos, State> GetStateToCheckForChanges()
     {
         return Pins.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.GetStateForDisplay());
     }

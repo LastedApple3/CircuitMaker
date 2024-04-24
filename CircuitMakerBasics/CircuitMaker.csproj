@@ -90,7 +90,15 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="SettingDescriptions.cd" />
+    <None Include="Basics - Simple.cd" />
+    <None Include="Basics - Complex.cd" />
+    <None Include="Boards.cd" />
+    <None Include="Entire Project V2.cd" />
+    <None Include="Entire Project V1.cd" />
+    <None Include="Components - Simple.cd" />
+    <None Include="Components - Complex.cd" />
+    <None Include="SettingsForm - Simple.cd" />
+    <None Include="SettingsForm - Complex.cd" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ComponentSelectionForm.resx">

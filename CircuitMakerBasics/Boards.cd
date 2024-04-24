@@ -1,0 +1,164 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="CircuitMaker.Basics.Board" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="4.5" Y="1.25" Width="1.5" />
+    <Members>
+      <Method Name="AddComponent" Hidden="true" />
+      <Method Name="AddContainedBoardWires" Hidden="true" />
+      <Method Name="AddWire" Hidden="true" />
+      <Field Name="AllBoards" Hidden="true" />
+      <Field Name="AllWireComponents" Hidden="true" />
+      <Field Name="AllWires" Hidden="true" />
+      <Method Name="Board" Hidden="true" />
+      <Method Name="CheckAllowed" Hidden="true" />
+      <Method Name="ClearUnusedPins" Hidden="true" />
+      <Field Name="Components" Hidden="true" />
+      <Field Name="ConnectionsToPin" Hidden="true" />
+      <Method Name="Copy" Hidden="true" />
+      <Method Name="CopySingle" Hidden="true" />
+      <Method Name="CountComponentPins" Hidden="true" />
+      <Method Name="Equals" Hidden="true" />
+      <Field Name="externalSize" Hidden="true" />
+      <Property Name="ExternalSize" Hidden="true" />
+      <Method Name="GetAllWires" Hidden="true" />
+      <Method Name="GetBoardList" Hidden="true" />
+      <Method Name="GetComponents" Hidden="true" />
+      <Method Name="GetContainerComponents" Hidden="true" />
+      <Method Name="GetFilename" Hidden="true" />
+      <Method Name="GetGraphicalComponent" Hidden="true" />
+      <Method Name="GetGraphicalComponents" Hidden="true" />
+      <Method Name="GetHashCode" Hidden="true" />
+      <Method Name="GetInputComponent" Hidden="true" />
+      <Method Name="GetInputComponents" Hidden="true" />
+      <Method Name="GetInterfaceComponent" Hidden="true" />
+      <Method Name="GetInterfaceComponents" Hidden="true" />
+      <Method Name="GetNonWireComponents" Hidden="true" />
+      <Method Name="GetOutputComponent" Hidden="true" />
+      <Method Name="GetOutputComponents" Hidden="true" />
+      <Method Name="GetStateToCheckForChanges" Hidden="true" />
+      <Method Name="GetTopLevelBoard" Hidden="true" />
+      <Method Name="GetTrackingID" Hidden="true" />
+      <Method Name="GetWireComponents" Hidden="true" />
+      <Field Name="GraphicalComponents" Hidden="true" />
+      <Method Name="GuaranteeUniqueName" Hidden="true" />
+      <Field Name="InputComponents" Hidden="true" />
+      <Field Name="InterfaceComponents" Hidden="true" />
+      <Method Name="Load" Hidden="true" />
+      <Field Name="Name" Hidden="true" />
+      <Field Name="NonWireComponents" Hidden="true" />
+      <Method Name="operator !=" Hidden="true" />
+      <Method Name="operator ==" Hidden="true" />
+      <Field Name="OutputComponents" Hidden="true" />
+      <Field Name="owner" Hidden="true" />
+      <Field Name="Pins" Hidden="true" />
+      <Method Name="RemoveComponent" Hidden="true" />
+      <Method Name="RemoveWire" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="ResetForSimulation" Hidden="true" />
+      <Method Name="ResetOwnerBoard" Hidden="true" />
+      <Method Name="ResetToFloating" Hidden="true" />
+      <Method Name="Save" Hidden="true" />
+      <Method Name="SetOwnerBoard" Hidden="true" />
+      <Method Name="SetTrackingID" Hidden="true" />
+      <Method Name="SimplifyWires" Hidden="true" />
+      <Event Name="SizeChanged" Hidden="true" />
+      <Method Name="SubTickWire" Hidden="true" />
+      <Method Name="SubTickWires" Hidden="true" />
+      <Method Name="SupplyInternalBoards" Hidden="true" />
+      <Property Name="this" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Method Name="TickComponents" Hidden="true" />
+      <Method Name="TickSetup" Hidden="true" />
+      <Method Name="TickWires" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+      <Field Name="trackingID" Hidden="true" />
+      <Method Name="TrySimplifyWirePair" Hidden="true" />
+      <Field Name="WireComponents" Hidden="true" />
+      <Field Name="Wires" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Struct Name="CircuitMaker.Basics.Board.InterfaceLocation" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Basics.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>iAQCgJAuhgAKgKEEjARSAIQoAsEANNCFAVCEBDBAQmA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsCollectionAssociation>
+      <Field Name="ContainerComponents" />
+    </ShowAsCollectionAssociation>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardContainerComponent" Collapsed="true">
+    <Position X="7.75" Y="2.75" Width="2.25" />
+    <Members>
+      <Method Name="BoardContainerComponent" Hidden="true" />
+      <Field Name="BottomStringFormat" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Field Name="detailsProviders" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetGraphicalElementBounds" Hidden="true" />
+      <Method Name="GetGraphicalElementLocation" Hidden="true" />
+      <Method Name="GetGraphicalElementScale" Hidden="true" />
+      <Method Name="GetInpOffsets" Hidden="true" />
+      <Method Name="GetInternalBoard" Hidden="true" />
+      <Method Name="GetInternalBoardName" Hidden="true" />
+      <Method Name="GetOffset" Hidden="true" />
+      <Method Name="GetOutpOffsets" Hidden="true" />
+      <Method Name="GetShape" Hidden="true" />
+      <Field Name="GraphicalLocation" Hidden="true" />
+      <Field Name="GraphicalScale" Hidden="true" />
+      <Method Name="HasGraphics" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="Initialize" Hidden="true" />
+      <Field Name="InpNames" Hidden="true" />
+      <Field Name="InpOffsets" Hidden="true" />
+      <Method Name="InternalBoard_SizeChanged" Hidden="true" />
+      <Field Name="InternalBoardName" Hidden="true" />
+      <Field Name="isInitialized" Hidden="true" />
+      <Field Name="LeftStringFormat" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Field Name="OutpNames" Hidden="true" />
+      <Field Name="OutpOffsets" Hidden="true" />
+      <Method Name="Place" Hidden="true" />
+      <Method Name="PlaceForInternalBoard" Hidden="true" />
+      <Method Name="PromiseDetails" Hidden="true" />
+      <Method Name="ProvideInternalBoard" Hidden="true" />
+      <Method Name="Remove" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="RenderGraphicalElement" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="ResetShape" Hidden="true" />
+      <Method Name="ResetToDefault" Hidden="true" />
+      <Field Name="RightStringFormat" Hidden="true" />
+      <Method Name="SetGraphicalElementLocation" Hidden="true" />
+      <Method Name="SetGraphicalElementScale" Hidden="true" />
+      <Field Name="Shape" Hidden="true" />
+      <Field Name="StringFormats" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Field Name="TopStringFormat" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>gFIUAkAIAAQQgUokAAAARBkGIwQAEAgHBFAACBAQQVA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="InternalBoard" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="CircuitMaker.Basics.IBoardContainerComponent" Collapsed="true">
+    <Position X="7.75" Y="1.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAgAAAAAAAAAAAAAAAAAAIAAAAAgBBAAAAAAAABA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

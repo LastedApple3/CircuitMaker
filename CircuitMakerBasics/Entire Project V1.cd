@@ -1,0 +1,1171 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="CircuitMaker.Basics.TransformRestorer" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="56.25" Y="4.5" Width="1.5" />
+    <Members>
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="TransformRestorer" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAAAAAAQAAAAAAAAAAACAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="CircuitMaker.Basics.RectangleFExtensions" Collapsed="true">
+    <Position X="52.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAIAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.ByteEncoding" Collapsed="true">
+    <Position X="56.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAQAAABAAAEAAAAgAAABABAAACAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.PlacementException" Collapsed="true">
+    <Position X="58" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.ReadWriteImplementation" Collapsed="true">
+    <Position X="56.75" Y="6" Width="1.5" />
+    <Members>
+      <Method Name="ReadBoard" Hidden="true" />
+      <Method Name="ReadBoardBasic" Hidden="true" />
+      <Method Name="ReadComponent" Hidden="true" />
+      <Method Name="ReadEnum" Hidden="true" />
+      <Method Name="ReadPos" Hidden="true" />
+      <Method Name="ReadWire" Hidden="true" />
+      <Method Name="Write" Hidden="true" />
+      <Method Name="WriteBoardBasic" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAEAABAAAAAAIAAAAACAAAAAAQAAAACQBAAUAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.DefaultDictionary&lt;TKey, TValue&gt;" Collapsed="true">
+    <Position X="54.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAAgAAAAQAAGAAAAAAAAAACgAAAAAAAAIAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.InstanceTracker&lt;T&gt;" Collapsed="true">
+    <Position X="54.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAICAAAAgAAAAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.RotationExtensions" Collapsed="true">
+    <Position X="56.25" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.Wire">
+    <Position X="1.75" Y="21.25" Width="1.5" />
+    <Members>
+      <Method Name="Bounds" Hidden="true" />
+      <Method Name="Collision" Hidden="true" />
+      <Method Name="Equals" Hidden="true" />
+      <Method Name="GetHashCode" Hidden="true" />
+      <Method Name="InflatedBounds" Hidden="true" />
+      <Method Name="IsHori" Hidden="true" />
+      <Property Name="IsPlaced" Hidden="true" />
+      <Method Name="IsVert" Hidden="true" />
+      <Method Name="OnWireUpdate" Hidden="true" />
+      <Method Name="operator !=" Hidden="true" />
+      <Method Name="operator ==" Hidden="true" />
+      <Property Name="Pin1" Hidden="true" />
+      <Property Name="Pin2" Hidden="true" />
+      <Method Name="Remove" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+      <Method Name="TrySplitWire" Hidden="true" />
+      <Method Name="Wire" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAkAAIAAAEAGgAAABAABAAAAAIAAoAQAAAAAgjA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.ComponentExtensions" Collapsed="true">
+    <Position X="58" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAIAAAAAAgAAACAAAAAAAAAEgIA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.Pin">
+    <Position X="4" Y="21.25" Width="1.5" />
+    <Members>
+      <Method Name="GetStateForComponent" Hidden="true" />
+      <Method Name="GetStateForDisplay" Hidden="true" />
+      <Method Name="GetStateForWire" Hidden="true" />
+      <Method Name="GetStateForWireComponent" Hidden="true" />
+      <Method Name="ResetToFloating" Hidden="true" />
+      <Method Name="SetState" Hidden="true" />
+      <Method Name="SetupForTick" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Enum Name="CircuitMaker.Basics.State" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Basics.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AABABBAAAAAAAAAAEAAAACAAAQAAEAABAAAAAAAAAAE=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.StateExtensions" Collapsed="true">
+    <Position X="54.5" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAAUAAAAAAAAAAAAgAAAIAgAAGBAgAAgAAAAAAABAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.SideEnumExtensions" Collapsed="true">
+    <Position X="52.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAICAAgACAAAACABAAgAAAAABAAAAAAgAAEEAAAAg=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Basics.Board" BaseTypeListCollapsed="true">
+    <Position X="11.5" Y="19.25" Width="1.5" />
+    <Members>
+      <Method Name="AddComponent" Hidden="true" />
+      <Method Name="AddContainedBoardWires" Hidden="true" />
+      <Method Name="AddWire" Hidden="true" />
+      <Method Name="Board" Hidden="true" />
+      <Method Name="CheckAllowed" Hidden="true" />
+      <Method Name="ClearUnusedPins" Hidden="true" />
+      <Method Name="Copy" Hidden="true" />
+      <Method Name="CopySingle" Hidden="true" />
+      <Method Name="CountComponentPins" Hidden="true" />
+      <Method Name="Equals" Hidden="true" />
+      <Field Name="externalSize" Hidden="true" />
+      <Property Name="ExternalSize" Hidden="true" />
+      <Method Name="GetAllWires" Hidden="true" />
+      <Method Name="GetBoardList" Hidden="true" />
+      <Method Name="GetComponents" Hidden="true" />
+      <Method Name="GetContainerComponents" Hidden="true" />
+      <Method Name="GetFilename" Hidden="true" />
+      <Method Name="GetGraphicalComponent" Hidden="true" />
+      <Method Name="GetGraphicalComponents" Hidden="true" />
+      <Method Name="GetHashCode" Hidden="true" />
+      <Method Name="GetInputComponent" Hidden="true" />
+      <Method Name="GetInputComponents" Hidden="true" />
+      <Method Name="GetInterfaceComponent" Hidden="true" />
+      <Method Name="GetInterfaceComponents" Hidden="true" />
+      <Method Name="GetNonWireComponents" Hidden="true" />
+      <Method Name="GetOutputComponent" Hidden="true" />
+      <Method Name="GetOutputComponents" Hidden="true" />
+      <Method Name="GetStateToCheckForChanges" Hidden="true" />
+      <Method Name="GetTopLevelBoard" Hidden="true" />
+      <Method Name="GetTrackingID" Hidden="true" />
+      <Method Name="GetWireComponents" Hidden="true" />
+      <Method Name="GuaranteeUniqueName" Hidden="true" />
+      <Method Name="Load" Hidden="true" />
+      <Field Name="Name" Hidden="true" />
+      <Method Name="operator !=" Hidden="true" />
+      <Method Name="operator ==" Hidden="true" />
+      <Field Name="owner" Hidden="true" />
+      <Method Name="RemoveComponent" Hidden="true" />
+      <Method Name="RemoveWire" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="ResetForSimulation" Hidden="true" />
+      <Method Name="ResetOwnerBoard" Hidden="true" />
+      <Method Name="ResetToFloating" Hidden="true" />
+      <Method Name="Save" Hidden="true" />
+      <Method Name="SetOwnerBoard" Hidden="true" />
+      <Method Name="SetTrackingID" Hidden="true" />
+      <Method Name="SimplifyWires" Hidden="true" />
+      <Event Name="SizeChanged" Hidden="true" />
+      <Method Name="SubTickWire" Hidden="true" />
+      <Method Name="SubTickWires" Hidden="true" />
+      <Method Name="SupplyInternalBoards" Hidden="true" />
+      <Property Name="this" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Method Name="TickComponents" Hidden="true" />
+      <Method Name="TickSetup" Hidden="true" />
+      <Method Name="TickWires" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+      <Field Name="trackingID" Hidden="true" />
+      <Method Name="TrySimplifyWirePair" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Struct Name="CircuitMaker.Basics.Board.InterfaceLocation" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Basics.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>iAQCgJAuhgAKgKEEjARSAIQoAsEANNCFAVCEBDBAQmA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="CircuitMaker.Components.ComponentRegisterer" Collapsed="true">
+    <Position X="59.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.BaseComponent">
+    <Position X="20" Y="17.25" Width="1.5" />
+    <Members>
+      <Method Name="CreateSmallestRect" Hidden="true" />
+      <Method Name="DrawComponentFromPath" Hidden="true" />
+      <Method Name="DrawInversionCircle" Hidden="true" />
+      <Method Name="GetAllPinOffsets" Hidden="true" />
+      <Method Name="GetAllPinPositions" Hidden="true" />
+      <Method Name="GetAllUniquePinPositions" Hidden="true" />
+      <Method Name="GetComponentBoard" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetComponentPos" Hidden="true" />
+      <Method Name="GetComponentRotation" Hidden="true" />
+      <Method Name="GetDefaultComponentBounds" Hidden="true" />
+      <Method Name="GetOffsetComponentBounds" Hidden="true" />
+      <Method Name="GetRenderMatrix" Hidden="true" />
+      <Field Name="isPlaced" Hidden="true" />
+      <Method Name="IsPlaced" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="Place" Hidden="true" />
+      <Method Name="Remove" Hidden="true" />
+      <Method Name="RemoveDuplicates" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="ResetToDefault" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>ABAgEAAAAAAQghIMCAAAJAACAAAgEwoAQFAAAAQAQRA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.InpOutpTools" Collapsed="true">
+    <Position X="52.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gAAAAEAAAAAgAAAAiAAAAAAAAAACAgAAAQgAAIAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.SingInpNoneOutpBaseComponent" Collapsed="true">
+    <Position X="30.25" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAAAAAAAAAAAAAQAAAAAEAAAAQBAAABAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.MultInpNoneOutpBaseComponent" Collapsed="true">
+    <Position X="36" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAAAAAAAAAAAAAAAAAAAAACAAQBAACBAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.NoneInpSingOutpBaseComponent" Collapsed="true">
+    <Position X="40.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgABAAAAAAAAAAAAAAAAAAEAAAAAAAQBAAAAAEAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.NoneInpMultOutpBaseComponent" Collapsed="true">
+    <Position X="2.25" Y="1.75" Width="1.5" />
+    <Members>
+      <Method Name="GetAllPinOffsets" Hidden="true" />
+      <Method Name="GetAllPinPositions" Hidden="true" />
+      <Method Name="GetOutpOffsets" Hidden="true" />
+      <Method Name="GetOutpPins" Hidden="true" />
+      <Method Name="GetOutpPositions" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAAAAAAAAAAAAAgAAAAAAQBAAAAIAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.SingInpSingOutpBaseComponent" Collapsed="true">
+    <Position X="4.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgABAAAAAAAAAAAAAAAQAAEAAEAAAAQBAAABAEAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.SingInpMultOutpBaseComponent" Collapsed="true">
+    <Position X="6.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAAAAAAAAAQAAAgAEAAAAQBAAABIAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.MultInpSingOutpBaseComponent" Collapsed="true">
+    <Position X="18" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgABAAAAAAAAAAAAAAAAAAEAAAACAAQBAACBAEAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.MultInpMultOutpBaseComponent" Collapsed="true">
+    <Position X="33.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAAAAAAAAAAAAAgAAACAAQBAACBIAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BaseBufferComponent" Collapsed="true">
+    <Position X="24.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAABAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.BufferComponent" Collapsed="true">
+    <Position X="27" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAgAIIAAAAAAACAAAAEAAAAAAACAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.NotComponent" Collapsed="true">
+    <Position X="22.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAAAEAAAAAAgAIIAAAAAAACAAAAEAAAAAAACAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.TristateBufferComponent" Collapsed="true">
+    <Position X="24.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAgAIIAAAAAAACAAAAEAAAABAACAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.BaseVarInpComponent">
+    <Position X="13.25" Y="17.25" Width="1.5" />
+    <Members>
+      <Method Name="Accumulator" Hidden="true" />
+      <Method Name="AddAndShape" Hidden="true" />
+      <Method Name="AddOrShape" Hidden="true" />
+      <Method Name="AddXorShape" Hidden="true" />
+      <Method Name="ApplySettings" Hidden="true" />
+      <Method Name="BaseVarInpComponent" Hidden="true" />
+      <Method Name="DefineInpOffsets" Hidden="true" />
+      <Field Name="Details" Hidden="true" />
+      <Method Name="DrawAndComponent" Hidden="true" />
+      <Method Name="DrawOrComponent" Hidden="true" />
+      <Method Name="DrawXorComponent" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetInpOffsets" Hidden="true" />
+      <Method Name="GetOutpOffset" Hidden="true" />
+      <Method Name="GetSettingDescriptions" Hidden="true" />
+      <Field Name="InpCount" Hidden="true" />
+      <Method Name="IsNegated" Hidden="true" />
+      <Method Name="ParseInpCount" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAQEABAIBBBBgAAACEAAAAAAAQAAEAEAIQACigAAQAg=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpAndComponent" Collapsed="true">
+    <Position X="13.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpOrComponent" Collapsed="true">
+    <Position X="15.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpXorComponent" Collapsed="true">
+    <Position X="18" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpNandComponent" Collapsed="true">
+    <Position X="20.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpNorComponent" Collapsed="true">
+    <Position X="9" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpXnorComponent" Collapsed="true">
+    <Position X="11.25" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.FixedStateComponent">
+    <Position X="23.75" Y="19" Width="1.5" />
+    <Members>
+      <Method Name="ApplySettings" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Field Name="DefaultDetails" Hidden="true" />
+      <Method Name="FixedStateComponent" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetOutpOffset" Hidden="true" />
+      <Method Name="getOutputDescriptor" Hidden="true" />
+      <Method Name="GetSettingDescriptions" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>ABAAANAAAABAgAIIAQAAAAACAAAAEAAAIAAAgAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.UserToggleInpComponent">
+    <Position X="29" Y="19.25" Width="1.5" />
+    <Members>
+      <Method Name="ApplySettings" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Field Name="DefaultDetails" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetOutpOffset" Hidden="true" />
+      <Method Name="getOutputDescriptor" Hidden="true" />
+      <Method Name="GetSettingDescriptions" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="Interact" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="ResetToDefault" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Method Name="UserToggleInpComponent" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>ABAAANACAABAgAIIAAAAAAACIAAAEAAAIABAgQgAQQA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.UserPulseInpComponent">
+    <Position X="23.75" Y="21" Width="1.5" />
+    <Members>
+      <Method Name="ApplySettings" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Field Name="DefaultDetails" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetOutpOffset" Hidden="true" />
+      <Method Name="GetSettingDescriptions" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="Interact" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Field Name="PulseLength" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="ResetToDefault" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Field Name="ticksLeft" Hidden="true" />
+      <Method Name="UserPulseInpComponent" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>IBAAAFAIAABAgQIIAAAAEAACIAAAEAAAKAQAIAAAQQA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.LogicProbeComponent" Collapsed="true">
+    <Position X="32.5" Y="0.5" Width="1.5" />
+    <Members>
+      <Method Name="Constructor" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetGraphicalElementBounds" Hidden="true" />
+      <Method Name="GetGraphicalElementLocation" Hidden="true" />
+      <Method Name="GetGraphicalElementScale" Hidden="true" />
+      <Method Name="GetInpOffset" Hidden="true" />
+      <Method Name="HasGraphics" Hidden="true" />
+      <Method Name="LogicProbeComponent" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="RenderGraphicalElement" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="SetGraphicalElementLocation" Hidden="true" />
+      <Method Name="SetGraphicalElementScale" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AFAAAEAAAAQggEIIAAAAQRECAQQAEAAAAAAAAAAQQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.SevenSegmentComponent" Collapsed="true">
+    <Position X="38.5" Y="1.75" Width="1.5" />
+    <Members>
+      <Method Name="Constructor" Hidden="true" />
+      <Method Name="DrawSegment" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetDiamond" Hidden="true" />
+      <Method Name="GetGraphicalElementBounds" Hidden="true" />
+      <Method Name="GetGraphicalElementLocation" Hidden="true" />
+      <Method Name="GetGraphicalElementScale" Hidden="true" />
+      <Method Name="GetInpOffsets" Hidden="true" />
+      <Method Name="HasGraphics" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="RenderGraphicalElement" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="SetGraphicalElementLocation" Hidden="true" />
+      <Method Name="SetGraphicalElementScale" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AFAAAEAAAAQAgEIIAAAAQBECAQQAEAgAAAABCAAQQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardInputComponent">
+    <Position X="26" Y="20.5" Width="1.5" />
+    <Members>
+      <Method Name="ApplySettings" Hidden="true" />
+      <Method Name="BoardInputComponent" Hidden="true" />
+      <Field Name="ComponentName" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Field Name="DefaultDetails" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetComponentName" Hidden="true" />
+      <Method Name="GetInterfaceLocation" Hidden="true" />
+      <Method Name="GetOutpOffset" Hidden="true" />
+      <Method Name="getOutputDescriptor" Hidden="true" />
+      <Method Name="GetSettingDescriptions" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="RemoveExternalPin" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="SetComponentName" Hidden="true" />
+      <Method Name="SetExternalPin" Hidden="true" />
+      <Method Name="SetInterfaceLocation" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Field Name="tickAgain" Hidden="true" />
+      <Method Name="TickAgain" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AJBAANCAAABAgAIIAAAABAACZAACGAAEIBBAEAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardOutputComponent">
+    <Position X="17.25" Y="22" Width="1.5" />
+    <Members>
+      <Method Name="ApplySettings" Hidden="true" />
+      <Method Name="BoardOutputComponent" Hidden="true" />
+      <Field Name="ComponentName" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Field Name="DefaultDetails" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetComponentName" Hidden="true" />
+      <Method Name="GetInpOffset" Hidden="true" />
+      <Method Name="GetInterfaceLocation" Hidden="true" />
+      <Method Name="GetSettingDescriptions" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="RemoveExternalPin" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="SetComponentName" Hidden="true" />
+      <Method Name="SetExternalPin" Hidden="true" />
+      <Method Name="SetInterfaceLocation" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Field Name="tickAgain" Hidden="true" />
+      <Method Name="TickAgain" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AJBAAECAAABAgAIIAAAABQACZAACGAAEIBBAEAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardBidirComponent">
+    <Position X="5" Y="16.75" Width="1.5" />
+    <Members>
+      <Method Name="ApplySettings" Hidden="true" />
+      <Method Name="BoardBidirComponent" Hidden="true" />
+      <Field Name="ComponentName" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Field Name="DefaultDetails" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetComponentName" Hidden="true" />
+      <Method Name="GetInpOffset" Hidden="true" />
+      <Method Name="GetInterfaceLocation" Hidden="true" />
+      <Method Name="GetOutpOffset" Hidden="true" />
+      <Method Name="GetSettingDescriptions" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Method Name="RemoveExternalPin" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="SetComponentName" Hidden="true" />
+      <Method Name="SetExternalPin" Hidden="true" />
+      <Method Name="SetInterfaceLocation" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Field Name="tickAgain" Hidden="true" />
+      <Method Name="TickAgain" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AJDAAFSAAABAgAIICAAABQACZAACGAAEIBBAEAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardContainerComponent">
+    <Position X="21.75" Y="21" Width="1.5" />
+    <Members>
+      <Method Name="BoardContainerComponent" Hidden="true" />
+      <Field Name="BottomStringFormat" Hidden="true" />
+      <Method Name="Constructor" Hidden="true" />
+      <Method Name="GetComponentBounds" Hidden="true" />
+      <Method Name="GetComponentDetails" Hidden="true" />
+      <Method Name="GetComponentID" Hidden="true" />
+      <Method Name="GetGraphicalElementBounds" Hidden="true" />
+      <Method Name="GetGraphicalElementLocation" Hidden="true" />
+      <Method Name="GetGraphicalElementScale" Hidden="true" />
+      <Method Name="GetInpOffsets" Hidden="true" />
+      <Method Name="GetInternalBoard" Hidden="true" />
+      <Method Name="GetInternalBoardName" Hidden="true" />
+      <Method Name="GetOffset" Hidden="true" />
+      <Method Name="GetOutpOffsets" Hidden="true" />
+      <Method Name="GetShape" Hidden="true" />
+      <Field Name="GraphicalLocation" Hidden="true" />
+      <Field Name="GraphicalScale" Hidden="true" />
+      <Method Name="HasGraphics" Hidden="true" />
+      <Field Name="ID" Hidden="true" />
+      <Method Name="Initialize" Hidden="true" />
+      <Field Name="InpNames" Hidden="true" />
+      <Property Name="InternalBoard" Hidden="true" />
+      <Method Name="InternalBoard_SizeChanged" Hidden="true" />
+      <Field Name="InternalBoardName" Hidden="true" />
+      <Field Name="isInitialized" Hidden="true" />
+      <Field Name="LeftStringFormat" Hidden="true" />
+      <Method Name="NonStaticConstructor" Hidden="true" />
+      <Field Name="OutpNames" Hidden="true" />
+      <Method Name="Place" Hidden="true" />
+      <Method Name="PlaceForInternalBoard" Hidden="true" />
+      <Method Name="PromiseDetails" Hidden="true" />
+      <Method Name="ProvideInternalBoard" Hidden="true" />
+      <Method Name="Remove" Hidden="true" />
+      <Method Name="Render" Hidden="true" />
+      <Method Name="RenderGraphicalElement" Hidden="true" />
+      <Method Name="RenderMainShape" Hidden="true" />
+      <Method Name="ResetShape" Hidden="true" />
+      <Method Name="ResetToDefault" Hidden="true" />
+      <Field Name="RightStringFormat" Hidden="true" />
+      <Method Name="SetGraphicalElementLocation" Hidden="true" />
+      <Method Name="SetGraphicalElementScale" Hidden="true" />
+      <Field Name="Shape" Hidden="true" />
+      <Method Name="Tick" Hidden="true" />
+      <Field Name="TopStringFormat" Hidden="true" />
+      <Method Name="ToString" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>gFIUAkAIAAQQgUokAAAARBkGIwQAEAgHBFAACBAQQVA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.GUI.ComponentSelectionForm" Collapsed="true">
+    <Position X="52.75" Y="1.5" Width="1.5" />
+    <Members>
+      <Method Name="ComponentSelectionForm" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="GetComponent" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAACAAAAEQAACABAACAAAAAEAAAAAAAAAAACA=</HashCode>
+      <FileName>ComponentSelectionForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.ExtApp.ExtAppEditor">
+    <Position X="9.5" Y="21" Width="1.5" />
+    <Members>
+      <Method Name="CompDetransformPoint" Hidden="true" />
+      <Method Name="CompDetransformPointF" Hidden="true" />
+      <Method Name="CompDetransformPointFs" Hidden="true" />
+      <Method Name="CompDetransformPoints" Hidden="true" />
+      <Field Name="compDisplayBounds" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Field Name="compTransformationMatrix" Hidden="true" />
+      <Method Name="DetectUnplacedGraphicalClick" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="ExtAppEditor" Hidden="true" />
+      <Method Name="GetGraphicalComponents" Hidden="true" />
+      <Method Name="GetInterfaceComponent" Hidden="true" />
+      <Method Name="GetInterfaceComponents" Hidden="true" />
+      <Method Name="GetInvertedCompTransformationMatrix" Hidden="true" />
+      <Method Name="GetUnplacedGraphicalComponents" Hidden="true" />
+      <Field Name="graphicalsDisplayBounds" Hidden="true" />
+      <Field Name="graphicalsTransformationMatrix" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Field Name="mouseDragLoc" Hidden="true" />
+      <Method Name="OnMouseDown" Hidden="true" />
+      <Method Name="OnMouseMove" Hidden="true" />
+      <Method Name="OnMouseUp" Hidden="true" />
+      <Method Name="OnMouseWheel" Hidden="true" />
+      <Method Name="OnPaint" Hidden="true" />
+      <Method Name="ResetChanges" Hidden="true" />
+      <Method Name="ResetSize" Hidden="true" />
+      <Field Name="resizeStartRange" Hidden="true" />
+      <Method Name="SaveChanges" Hidden="true" />
+      <Field Name="scale" Hidden="true" />
+      <Field Name="sizeSave" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Class Name="CircuitMaker.GUI.ExtApp.ExtAppEditor.DragState" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>ExtAppEditor.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>kBSAqBAAACIAAECAAACQAAoiAJAAABACIAAEiIICAAA=</HashCode>
+      <FileName>ExtAppEditor.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.ExtApp.ExtAppEditorForm">
+    <Position X="7.75" Y="21.25" Width="1.5" />
+    <Members>
+      <Field Name="btnCancel" Hidden="true" />
+      <Field Name="btnOK" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="ExtAppEditorForm" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Method Name="ResetChanges" Hidden="true" />
+      <Method Name="SaveChanges" Hidden="true" />
+      <Field Name="tblMain" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAACAAAAEAAACAAAAiAQAAAEAAAAAAAABAAAA=</HashCode>
+      <FileName>ExtAppEditorForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.GUIForm">
+    <Position X="6" Y="21.25" Width="1.5" />
+    <Members>
+      <Field Name="btnSimulate" Hidden="true" />
+      <Method Name="BtnSimulate_Click" Hidden="true" />
+      <Method Name="BtnSimulate_UpdateText" Hidden="true" />
+      <Method Name="Builder_SimulatingChange" Hidden="true" />
+      <Field Name="components" Hidden="true" />
+      <Field Name="copyToolStripMenuItem" Hidden="true" />
+      <Method Name="copyToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="cutToolStripMenuItem" Hidden="true" />
+      <Method Name="cutToolStripMenuItem_Click" Hidden="true" />
+      <Method Name="Dispose" Hidden="true" />
+      <Field Name="editExternalAppearanceToolStripMenuItem" Hidden="true" />
+      <Method Name="editExternalAppearanceToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="editToolStripMenuItem" Hidden="true" />
+      <Field Name="fileToolStripMenuItem" Hidden="true" />
+      <Method Name="GUIForm" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Field Name="insertBoardComponentToolStripMenuItem" Hidden="true" />
+      <Method Name="insertBoardComponentToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="insertBuiltinComponentToolStripMenuItem" Hidden="true" />
+      <Method Name="insertBuiltinComponentToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="insertToolStripMenuItem" Hidden="true" />
+      <Field Name="menuStrip" Hidden="true" />
+      <Field Name="newBoardToolStripMenuItem" Hidden="true" />
+      <Method Name="newBoardToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="openBoardToolStripMenuItem" Hidden="true" />
+      <Method Name="openBoardToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="pasteToolStripMenuItem" Hidden="true" />
+      <Method Name="pasteToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="renameToolStripMenuItem" Hidden="true" />
+      <Method Name="renameToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="saveBoardAsToolStripMenuItem" Hidden="true" />
+      <Method Name="saveBoardAsToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="saveBoardToolStripMenuItem" Hidden="true" />
+      <Method Name="saveBoardToolStripMenuItem_Click" Hidden="true" />
+      <Field Name="tblSelector" Hidden="true" />
+      <Field Name="tblWholePage" Hidden="true" />
+      <Field Name="toolStripSeparator1" Hidden="true" />
+      <Field Name="toolStripSeparator2" Hidden="true" />
+      <Field Name="toolStripSeparator3" Hidden="true" />
+      <Method Name="UpdateFormText" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>BIhAAg0wACAg0EIKAACAAgMCAYEIAIABBQAAMCEAwgA=</HashCode>
+      <FileName>GUIForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Builder">
+    <Position X="13.25" Y="19.5" Width="1.5" />
+    <Members>
+      <Method Name="Builder" Hidden="true" />
+      <Property Name="colourScheme" Hidden="true" />
+      <Field Name="compNameMenuLabel" Hidden="true" />
+      <Field Name="compNameMenuSep" Hidden="true" />
+      <Field Name="componentMenu" Hidden="true" />
+      <Method Name="ConstructDefaultFilename" Hidden="true" />
+      <Field Name="copyCompMenuItem" Hidden="true" />
+      <Method Name="CopyCompMenuItem_Click" Hidden="true" />
+      <Method Name="CopySelection" Hidden="true" />
+      <Field Name="createBoardCompMenuItem" Hidden="true" />
+      <Method Name="CreateBoardCompMenuItem_Click" Hidden="true" />
+      <Method Name="CreateBoardComponent" Hidden="true" />
+      <Field Name="createBuiltinCompMenuItem" Hidden="true" />
+      <Method Name="CreateBuiltinCompMenuItem_Click" Hidden="true" />
+      <Method Name="CreateBuiltinComponent" Hidden="true" />
+      <Method Name="CutSelection" Hidden="true" />
+      <Field Name="deleteCompMenuItem" Hidden="true" />
+      <Method Name="DeleteCompMenuItem_Click" Hidden="true" />
+      <Method Name="DetransformPoint" Hidden="true" />
+      <Method Name="DetransformPointF" Hidden="true" />
+      <Method Name="DetransformPointFs" Hidden="true" />
+      <Method Name="DetransformPoints" Hidden="true" />
+      <Field Name="dragNewPoint" Hidden="true" />
+      <Field Name="dragOffset" Hidden="true" />
+      <Field Name="dragResetIsDel" Hidden="true" />
+      <Field Name="genericMenu" Hidden="true" />
+      <Method Name="GetBoard" Hidden="true" />
+      <Method Name="GetClickedComponent" Hidden="true" />
+      <Method Name="GetClickedWire" Hidden="true" />
+      <Method Name="GetInvertedTransformationMatrix" Hidden="true" />
+      <Method Name="LoadBoard" Hidden="true" />
+      <Field Name="moveCompMenuItem" Hidden="true" />
+      <Method Name="MoveCompMenuItem_Click" Hidden="true" />
+      <Method Name="NewBoard" Hidden="true" />
+      <Method Name="OnKeyDown" Hidden="true" />
+      <Method Name="OnLayout" Hidden="true" />
+      <Method Name="OnMouseClick" Hidden="true" />
+      <Method Name="OnMouseDoubleClick" Hidden="true" />
+      <Method Name="OnMouseDown" Hidden="true" />
+      <Method Name="OnMouseMove" Hidden="true" />
+      <Method Name="OnMouseUp" Hidden="true" />
+      <Method Name="OnMouseWheel" Hidden="true" />
+      <Method Name="OnPaint" Hidden="true" />
+      <Method Name="OpenLoadBoard" Hidden="true" />
+      <Method Name="OpenNewBoard" Hidden="true" />
+      <Field Name="openSettingsMenuItem" Hidden="true" />
+      <Method Name="OpenSettingsMenuItem_Click" Hidden="true" />
+      <Field Name="openSettingsMenuSep" Hidden="true" />
+      <Field Name="panLastMouseLocation" Hidden="true" />
+      <Field Name="panning" Hidden="true" />
+      <Field Name="pasteCompMenuItem" Hidden="true" />
+      <Method Name="PasteCompMenuItem_Click" Hidden="true" />
+      <Method Name="PasteSelection" Hidden="true" />
+      <Method Name="PutDownDraggedComponent" Hidden="true" />
+      <Method Name="ResetDraggedComponent" Hidden="true" />
+      <Field Name="rightClickedComp" Hidden="true" />
+      <Field Name="rightClickMouseLoc" Hidden="true" />
+      <Method Name="SaveBoard" Hidden="true" />
+      <Field Name="selection" Hidden="true" />
+      <Method Name="SetSimulation" Hidden="true" />
+      <Property Name="Simulating" Hidden="true" />
+      <Event Name="SimulatingChange" Hidden="true" />
+      <Method Name="SimulationTick" Hidden="true" />
+      <Field Name="simulationTimer" Hidden="true" />
+      <Method Name="StartDraggingComponent" Hidden="true" />
+      <Field Name="startSimMenuItem" Hidden="true" />
+      <Method Name="StartSimMenuItem_Click" Hidden="true" />
+      <Method Name="StartWire" Hidden="true" />
+      <Field Name="storedFilename" Hidden="true" />
+      <Field Name="tps" Hidden="true" />
+      <Property Name="TPS" Hidden="true" />
+      <Field Name="transformationMatrix" Hidden="true" />
+    </Members>
+    <NestedTypes>
+      <Enum Name="CircuitMaker.GUI.Builder.DragType" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>GUIForm.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Struct Name="CircuitMaker.GUI.Builder.Selection" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>GUIForm.cs</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>JNSRAwgakE8OQWCAUgBQiglQAFYgAYEQYxhCRxhCAgA=</HashCode>
+      <FileName>GUIForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.RenameBoardForm" Collapsed="true">
+    <Position X="54.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgQACAAAAEAAACAIAACAAAIAEAAAAAAAQAAACQ=</HashCode>
+      <FileName>RenameBoardForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.SettingsDialog" Collapsed="true">
+    <Position X="59.75" Y="3.5" Width="1.5" />
+    <Members>
+      <Method Name="Dispose" Hidden="true" />
+      <Method Name="InitializeComponent" Hidden="true" />
+      <Method Name="SettingsDialog" Hidden="true" />
+    </Members>
+    <TypeIdentifier>
+      <HashCode>IAAAAAAAACAAIBEAAACAAACCAQAACEAAAAAAAAAAACA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.SettingsComponentExtensions" Collapsed="true">
+    <Position X="58" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.SettingDescription&lt;T&gt;" Collapsed="true">
+    <Position X="42" Y="15" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAACIAAAAEAAIAAAAAAAAAAAAAACAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.TextBoxSettingDescription&lt;T&gt;" Collapsed="true">
+    <Position X="40.75" Y="16.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAGAAAAAAAAAAAABAAAAAAAAAIAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.CharLimitTextBoxSettingDescription&lt;T&gt;" Collapsed="true">
+    <Position X="40.75" Y="17.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.PositiveIntSettingDescription" Collapsed="true">
+    <Position X="42" Y="19.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.SignedIntSettingDescription" Collapsed="true">
+    <Position X="42" Y="20.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.NameSettingDescription" Collapsed="true">
+    <Position X="39.75" Y="19.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.GUI.Settings.EnumSettingDescription&lt;E&gt;" Collapsed="true">
+    <Position X="44.25" Y="16.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAIAAAAEAAAAAAAAAAAABAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="CircuitMaker.Basics.Pos" Collapsed="true">
+    <Position X="54.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAEAAAAAAEgAAAAAAAEACAAIAAAAAAAAAAYiA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="CircuitMaker.Basics.ColourScheme" Collapsed="true">
+    <Position X="60" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>gBAAAwAAAAAAAAAAABBAAAAAAAAAAkBAAQAoAAAAQAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Interface Name="CircuitMaker.Basics.IComponent" Collapsed="true">
+    <Position X="51.75" Y="11" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>ABAgAAAAAAAAgAIACAAABAAAAAAAEwoAQFAAAAQAQRA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IInteractibleComponent" Collapsed="true">
+    <Position X="42.75" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IWireComponent" Collapsed="true">
+    <Position X="48.5" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardInterfaceComponent" Collapsed="true">
+    <Position X="48.5" Y="13.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAYAACAAAEAABAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardInputComponent" Collapsed="true">
+    <Position X="47.25" Y="15.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardOutputComponent" Collapsed="true">
+    <Position X="49.5" Y="15.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IGraphicalComponent" Collapsed="true">
+    <Position X="45" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAAAAAAQBEAAQQAAAAAAAAAAAAQAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardContainerComponent" Collapsed="true">
+    <Position X="45" Y="13.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAgAAAAAAAAAAAAAAAAAAIAAAAAgBBAAAAAAAABA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.ISingInpComponent" Collapsed="true">
+    <Position X="51.75" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAQAAAAAEAAAAAAAAABAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.IMultInpComponent" Collapsed="true">
+    <Position X="54" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAACBAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.ISingOutpComponent" Collapsed="true">
+    <Position X="56.25" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAABAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAEAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.IMultOutpComponent" Collapsed="true">
+    <Position X="58.5" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAIAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.ISingInpSingOutpComponent" Collapsed="true">
+    <Position X="54" Y="13.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.ISingInpMultOutpComponent" Collapsed="true">
+    <Position X="57.25" Y="13.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.IMultInpSingOutpComponent" Collapsed="true">
+    <Position X="55.25" Y="15.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Components.IMultInpMultOutpComponent" Collapsed="true">
+    <Position X="58.25" Y="15.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.GUI.Settings.ISettingDescription" Collapsed="true">
+    <Position X="52.75" Y="7" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAACAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.GUI.Settings.ISettingsComponent" Collapsed="true">
+    <Position X="60.75" Y="12.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAA=</HashCode>
+      <FileName>SettingsForm.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="CircuitMaker.Basics.Rotation" Collapsed="true">
+    <Position X="52.75" Y="8" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAACAAAAAAAAAAAAAAQAAACAAAAAAAAAAQA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

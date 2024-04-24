@@ -18,17 +18,18 @@ using System.Xml.Linq;
 
 namespace CircuitMaker
 {
-internal class Program
-{
-    [STAThread]
-    static void Main(string[] args)
+    internal class Program
     {
-        ComponentRegisterer.RegisterComponents();
+        [STAThread]
+        static void Main(string[] args)
+        {
+            ComponentRegisterer.RegisterComponents();
 
-        Application.EnableVisualStyles();
-        Application.SetCompatibleTextRenderingDefault(false);
-        Application.Run(new GUIForm());
+            //*
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new GUIForm());
+            //*/
+        }
     }
-}
-
 }

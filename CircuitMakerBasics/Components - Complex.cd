@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="CircuitMaker.Components.BaseComponent">
+    <Position X="31.5" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>ABAgEAAAAAAQghIMCAAAJAACAAAgEwoAQFAAAAQAQRA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.SingInpNoneOutpBaseComponent">
+    <Position X="40.25" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAAAAAAAAAAAAAQAAAAAEAAAAQBAAABAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.MultInpNoneOutpBaseComponent">
+    <Position X="49" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAAAAAAAAAAAAAAAAAAAAAAAACAAQBAACBAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.NoneInpSingOutpBaseComponent">
+    <Position X="55.25" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgABAAAAAAAAAAAAAAAAAAEAAAAAAAQBAAAAAEAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.NoneInpMultOutpBaseComponent">
+    <Position X="4.5" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAAAAAAAAAAAAAgAAAAAAQBAAAAIAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.SingInpSingOutpBaseComponent">
+    <Position X="7.75" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgABAAAAAAAAAAAAAAAQAAEAAEAAAAQBAAABAEAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.SingInpMultOutpBaseComponent">
+    <Position X="11" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAAAAAAAAAQAAAgAEAAAAQBAAABIAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.MultInpSingOutpBaseComponent">
+    <Position X="24.75" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgABAAAAAAAAAAAAAAAAAAEAAAACAAQBAACBAEAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.MultInpMultOutpBaseComponent">
+    <Position X="45.5" Y="8" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAAAAAAAAAAAAAgAAACAAQBAACBIAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BaseBufferComponent">
+    <Position X="33" Y="11.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABAAABAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.BufferComponent">
+    <Position X="35.75" Y="14" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAgAIIAAAAAAACAAAAEAAAAAAACAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.NotComponent">
+    <Position X="30.25" Y="14" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABAAAEAAAAAAgAIIAAAAAAACAAAAEAAAAAAACAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.TristateBufferComponent">
+    <Position X="33" Y="14" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAgAIIAAAAAAACAAAAEAAAABAACAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.BaseVarInpComponent">
+    <Position X="20.75" Y="11.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAQEABAIBBBBgAAACEAAAAAAAQAAEAEAIQACigAAQAg=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpAndComponent">
+    <Position X="19.5" Y="18" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpOrComponent">
+    <Position X="22.25" Y="18" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpXorComponent">
+    <Position X="24.75" Y="18" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpNandComponent">
+    <Position X="27.5" Y="18" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpNorComponent">
+    <Position X="14" Y="18" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.VarInpXnorComponent">
+    <Position X="16.75" Y="18" Width="2" />
+    <TypeIdentifier>
+      <HashCode>ABQAAEAAAAAAgAIIAAAAAAACAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="CircuitMaker.Components.FixedStateComponent">
+    <Position X="52" Y="11" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>ABAAANAAAABAgAIIAQAAAAACAAAAEAAAIAAAgAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.UserToggleInpComponent">
+    <Position X="55.25" Y="11" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>ABAAANACAABAgAIIAAAAAAACIAAAEAAAIABAgQgAQQA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.UserPulseInpComponent">
+    <Position X="58.5" Y="11" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>IBAAAFAIAABAgQIIAAAAEAACIAAAEAAAKAQAIAAAQQA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.LogicProbeComponent">
+    <Position X="42.25" Y="11" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AFAAAEAAAAQggEIIAAAAQRECAQQAEAAAAAAAAAAQQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.SevenSegmentComponent">
+    <Position X="49" Y="11" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AFAAAEAAAAQAgEIIAAAAQBECAQQAEAgAAAABCAAQQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardInputComponent">
+    <Position X="55" Y="17" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AJBAANCAAABAgAIIAAAABAACZAACGAAEIBBAEAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardOutputComponent">
+    <Position X="38.5" Y="11" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AJBAAECAAABAgAIIAAAABQACZAACGAAEIBBAEAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardBidirComponent">
+    <Position X="7.5" Y="11.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AJDAAFSAAABAgAIICAAABQACZAACGAAEIBBAEAAAQAA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="CircuitMaker.Components.BoardContainerComponent">
+    <Position X="45.25" Y="11.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>gFIUAkAIAAQQgUokAAAARBkGIwQAEAgHBFAACBAQQVA=</HashCode>
+      <FileName>Components.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

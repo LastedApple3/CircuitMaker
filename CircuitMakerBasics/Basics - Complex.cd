@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="FullSignature">
+  <Interface Name="CircuitMaker.Basics.IComponent">
+    <Position X="5" Y="0.5" Width="5.75" />
+    <TypeIdentifier>
+      <HashCode>ABAgAAAAAAAAgAIACAAABAAAAAAAEwoAQFAAAAQAQRA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IInteractibleComponent">
+    <Position X="0.5" Y="5.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IWireComponent">
+    <Position X="12" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardInterfaceComponent">
+    <Position X="10.75" Y="7.75" Width="3.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAABAAAYAACAAAEAABAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardInputComponent">
+    <Position X="10.25" Y="10.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardOutputComponent">
+    <Position X="13" Y="10.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IGraphicalComponent">
+    <Position X="3.25" Y="5.75" Width="6.25" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAAAAAAAAAAAAQBEAAQQAAAAAAAAAAAAQAAA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="CircuitMaker.Basics.IBoardContainerComponent">
+    <Position X="4" Y="9" Width="4.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAgAAAAAAAAAAAAAAAAAAIAAAAAgBBAAAAAAAABA=</HashCode>
+      <FileName>Basics.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
