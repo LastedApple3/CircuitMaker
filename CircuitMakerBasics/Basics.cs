@@ -1541,6 +1541,7 @@ public class Board : InstanceTracker<Board>.ITrackable
     {
         List<Board> checkedBoardList = new List<Board>(), uncheckedBoardList = new List<Board> { this };
 
+        // Code Reference: List operations
         Func<string, bool> notSeen = boardName => !checkedBoardList.Select(checkedBoard => checkedBoard.Name).Concat(uncheckedBoardList.Select(uncheckedBoard => uncheckedBoard.Name)).Contains(boardName);
 
         while (uncheckedBoardList.Count > 0)

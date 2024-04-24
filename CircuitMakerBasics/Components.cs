@@ -166,6 +166,7 @@ abstract class BaseComponent : IComponent
 
     protected RectangleF CreateSmallestRect(Pos[] containedPoints)
     {
+        // Code Reference: List operations
         return RectangleF.FromLTRB(
             containedPoints.Select(offset => offset.X).Aggregate(Math.Min),
             containedPoints.Select(offset => offset.Y).Aggregate(Math.Min),
@@ -932,6 +933,7 @@ abstract class BaseVarInpComponent : MultInpSingOutpBaseComponent, ISettingsComp
 
     public override void Tick()
     {
+        // Code Reference: List operations
         State state = GetInpPins().Select(inpPin => inpPin.GetStateForComponent()).Aggregate(Accumulator);
 
         state = IsNegated() ? state.Not() : state;
