@@ -2473,7 +2473,7 @@ namespace CircuitMaker.Components
 
             public static string ID = "BIDIR";
             //public static string DefaultDetails = $"B0,{(int)Pin.State.LOW},{(byte)Board.InterfaceLocation.SideEnum.Top},{0}";
-            public static string DefaultDetails = "B0";
+            public static string DefaultDetails = $"B0,{(int)Pin.State.LOW}";
 
             public override string GetComponentID()
             {
@@ -2483,7 +2483,7 @@ namespace CircuitMaker.Components
             public override string GetComponentDetails()
             {
                 //return $"{ComponentName},{(int)DefaultExternalState},{(byte)interfaceLocation.Side},{interfaceLocation.Distance}";
-                return ComponentName;
+                return $"{ComponentName},{(int)DefaultExternalState}";
             }
 
             public void SetExternalPin(Pin pin)
@@ -2607,12 +2607,12 @@ namespace CircuitMaker.Components
 
             public override Pos[] GetInpOffsets()
             {
-                return InpOffsets.ToArray();
+                return InpOffsets?.ToArray() ?? new Pos[0];
             }
 
             public override Pos[] GetOutpOffsets()
             {
-                return OutpOffsets.ToArray();
+                return OutpOffsets?.ToArray() ?? new Pos[0];
             }
 
             static BoardContainerComponent()
@@ -2742,6 +2742,8 @@ namespace CircuitMaker.Components
 
                     detailsProviders.RemoveAt(0);
                 }
+
+                GetComponentBoard()?.RecountPinConnections();
             }
 
             private void InternalBoard_SizeChanged()

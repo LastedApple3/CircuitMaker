@@ -113,60 +113,6 @@ namespace CircuitMaker.Basics
 
     public static class ReadWriteImplementation
     {
-        /*
-        public static void PromiseBoard(string boardName, Action<Board> provider)
-        {
-            promises.Add(new BoardPromise(boardName, provider));
-        }
-
-        private class BoardPromise
-        {
-            public string BoardName;
-            private Action<Board> BoardProvider;
-
-            public BoardPromise(string boardName, Action<Board> provider)
-            {
-                BoardName = boardName;
-                BoardProvider = provider;
-            }
-
-            public void FulfillPromise(Board board)
-            {
-                BoardProvider(board.Copy());
-            }
-        }
-
-        private static List<BoardPromise> promises = new List<BoardPromise>();
-
-        private static void FulfillPromises(Board[] boards)
-        {
-            Dictionary<string, Board> namedBoards = new Dictionary<string, Board>();
-
-            foreach (Board board in boards)
-            {
-                namedBoards.Add(board.Name, board);
-            }
-
-            List<BoardPromise> unfulfilled = new List<BoardPromise>();
-
-            while (promises.Count > 0)
-            {
-                if (namedBoards.ContainsKey(promises[0].BoardName))
-                {
-                    promises[0].FulfillPromise(namedBoards[promises[0].BoardName]);
-                }
-                else
-                {
-                    unfulfilled.Add(promises[0]);
-                }
-
-                promises.RemoveAt(0);
-            }
-
-            promises = unfulfilled;
-        }
-        //*/
-
         public static void Write<T>(this BinaryWriter bw, T enumVal) where T : Enum
         {
             bw.Write(Enum.GetName(typeof(T), enumVal));
@@ -1112,7 +1058,7 @@ namespace CircuitMaker.Basics
             return Offset(Scale(comp.GetGraphicalElementBounds(), comp.GetGraphicalElementScale()), comp.GetGraphicalElementLocation());
         }
 
-        public static IComponent Copy<T>(this T comp) where T : IComponent
+        public static IComponent Copy<T>(this T comp, bool dealWithInternalBoards = true) where T : IComponent
         {
             /*
             if (comp is IBoardContainerComponent contComp)
@@ -1139,12 +1085,20 @@ namespace CircuitMaker.Basics
                 interfaceCopy.SetInterfaceLocation(interfaceComp.GetInterfaceLocation());
             }
 
-            if (comp is IBoardContainerComponent contComp && copy is IBoardContainerComponent contCopy)
+            if (dealWithInternalBoards && comp is IBoardContainerComponent contComp && copy is IBoardContainerComponent contCopy)
             {
                 Board intBoard = contComp.GetInternalBoard();
+
                 if (!(intBoard is null))
                 {
-                    contCopy.ProvideInternalBoard(intBoard.Copy());
+                    Board[] recursivelyContainedBoards = intBoard.GetBoardList();
+
+                    Board copyBoard = intBoard.Copy(dealWithInternalBoards: false);
+
+                    copyBoard.SupplyInternalBoards(recursivelyContainedBoards);
+
+                    contCopy.ProvideInternalBoard(copyBoard);
+                    //contCopy.ProvideInternalBoard(intBoard.Copy());
                 }
                 //contCopy.ProvideInternalBoard(contComp.GetInternalBoard().Copy());
             }
@@ -1623,8 +1577,7 @@ namespace CircuitMaker.Basics
             Wires.Add(wire);
             AllWires.Add(wire);
 
-            ConnectionsToPin[wire.Pos1]++;
-            ConnectionsToPin[wire.Pos2]++;
+            RecountPinConnections();
         }
 
         public void RemoveWire(Wire wire)
@@ -1632,8 +1585,7 @@ namespace CircuitMaker.Basics
             Wires.Remove(wire);
             AllWires.Remove(wire);
 
-            ConnectionsToPin[wire.Pos1]--;
-            ConnectionsToPin[wire.Pos2]--;
+            RecountPinConnections();
         }
 
         public Wire[] GetAllWires()
@@ -1745,7 +1697,7 @@ namespace CircuitMaker.Basics
 
                     if (internalBoardsFromName.ContainsKey(boardName)) // and if we have that type
                     {
-                        providedBoard = internalBoardsFromName[boardName].Copy(supplyBoards: false); // we create one
+                        providedBoard = internalBoardsFromName[boardName].Copy(dealWithInternalBoards: false); // we create one
                         unsuppliedBoards.Enqueue(providedBoard); // add it to the queue
                         contComp.ProvideInternalBoard(providedBoard); // and also give a reference to the ContainerComponent that wants it
                     } else // and if we don't have that type
@@ -1973,6 +1925,7 @@ namespace CircuitMaker.Basics
             return current;
         }
 
+        /*
         private void CountComponentPins(IComponent comp)
         {
             //comp.GetAllUniquePinPositions().Select(pos => ConnectionsToPin[pos]++).ToArray();
@@ -1980,6 +1933,26 @@ namespace CircuitMaker.Basics
             foreach (Pos pos in comp.GetAllUniquePinPositions())
             {
                 ConnectionsToPin[pos]++;
+            }
+        }
+        //*/
+
+        public void RecountPinConnections()
+        {
+            ConnectionsToPin = new DefaultDictionary<Pos, int>();
+
+            foreach (Wire wire in Wires)
+            {
+                ConnectionsToPin[wire.Pos1]++;
+                ConnectionsToPin[wire.Pos2]++;
+            }
+
+            foreach (IComponent comp in Components)
+            {
+                foreach (Pos pos in comp.GetAllUniquePinPositions())
+                {
+                    ConnectionsToPin[pos]++;
+                }
             }
         }
 
@@ -2024,11 +1997,7 @@ namespace CircuitMaker.Basics
             {
                 ContainerComponents.Add(contComp);
 
-                contComp.PromiseDetails(CountComponentPins);
                 contComp.PromiseDetails(AddContainedBoardWires);
-            } else
-            {
-                CountComponentPins(comp);
             }
 
             if (comp is IBoardInterfaceComponent interfaceComp)
@@ -2075,6 +2044,8 @@ namespace CircuitMaker.Basics
                     ExternalSize = new Size(ExternalSize.Width + (isSide ? 0 : 1), ExternalSize.Height + (isSide ? 1 : 0));
                 }
             }
+
+            RecountPinConnections();
         }
 
         internal void RemoveComponent(IComponent comp)
@@ -2461,13 +2432,13 @@ namespace CircuitMaker.Basics
             }
         }
 
-        private Board CopySingle(string copyName = null)
+        private Board CopySingle(string copyName = null, bool dealWithInternalBoards = true)
         {
             Board copy = new Board(copyName ?? Name, new Size(ExternalSize.Width, ExternalSize.Height));
 
             foreach (IComponent comp in Components)
             {
-                comp.Copy().Place(comp.GetComponentPos(), comp.GetComponentRotation(), copy);
+                comp.Copy(dealWithInternalBoards).Place(comp.GetComponentPos(), comp.GetComponentRotation(), copy);
             }
 
             foreach (Wire wire in Wires)
@@ -2478,11 +2449,11 @@ namespace CircuitMaker.Basics
             return copy;
         }
 
-        public Board Copy(string copyName = null, bool supplyBoards = true)
+        public Board Copy(string copyName = null, bool dealWithInternalBoards = true)
         {
-            Board copy = CopySingle(copyName);
+            Board copy = CopySingle(copyName, dealWithInternalBoards);
 
-            if (supplyBoards)
+            if (dealWithInternalBoards)
             {
                 Board[] copiedBoards = GetBoardList();
 
